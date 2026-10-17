@@ -7,7 +7,7 @@ import { useEventListener, useProperties, type TypedEvent } from './react-utils.
 
 export type FxButtonEventProps = {
   /** Fired when the button is activated. Has no detail. */
-  onFxPress?: (event: TypedEvent<FxButtonElement, null>) => void;
+  onFxPress?: (event: TypedEvent<FxButtonElement, unknown>) => void;
 };
 
 export type FxButtonProps = Partial<Pick<FxButtonElement, 'variant' | 'disabled'>> &

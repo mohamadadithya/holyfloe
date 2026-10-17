@@ -26,8 +26,9 @@ Component rules:
 5. Props by `PropKind`:
    - **Boolean:** pass `true` as an empty attribute, omit when `false`. Set the property on the element in a layout effect after mount so updates work post-upgrade.
    - **Primitive:** pass as attribute in JSX (SSR-correct), and also assign the property in the layout effect when the element is upgraded.
+   - Unsetting a Primitive or Boolean prop (value -> `undefined`) removes the attribute, and Lit then sets the property to `null` (Primitive) or `false` (Boolean), not back to its default. This is documented behavior, not reset by the wrapper.
    - **Complex:** never an attribute. Assign as a property in `useLayoutEffect`. Re-apply after `customElements.whenDefined(tag)` resolves.
-6. Events: for each event emit an `on<PascalName>` prop. Attach with `addEventListener(dom_name, handler)` in an effect; clean up on unmount and when the handler changes. Handler type: `(e: TypedEvent<MyButtonElement, Detail>) => void` where `TypedEvent` makes `e.target` the element class.
+6. Events: for each event emit an `on<PascalName>` prop. Attach one stable listener per event with `addEventListener(dom_name, …)` in a layout effect (not `useEffect`: Lit's first update runs before passive effects, so events fired there would be lost). The listener calls the latest handler from a ref, so changing the handler never re-subscribes. Clean up on unmount. Handler type: `(e: TypedEvent<MyButtonElement, Detail>) => void` where `TypedEvent` makes `e.target`/`e.currentTarget` the element class. `Detail` is `T` only when the CEM type is `CustomEvent<T>` (or a `@fires {CustomEvent<T>}` tag); a bare `CustomEvent` or a missing type gives `unknown`, never `null`.
 7. Ref: forward to the custom element. For React 19 peer ranges, `ref` may be a normal prop; for 18, use `forwardRef`. Choose by `peerDependencies`, do not emit both.
 8. Children: pass through unchanged. They become the default slot.
 9. Named slots: consumers put `slot="name"` on child elements. Optionally emit `<MyButton.Slot name="icon">` helper (config `react.slotHelpers`, default off).
