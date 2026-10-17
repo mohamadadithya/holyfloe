@@ -17,6 +17,10 @@ clippy:
 fmt:
     cargo fmt --all -- --check
 
+# Compile fixtures/src to fixtures/dist (.js + .d.ts, git-ignored). Generated wrappers import from here.
+build-fixtures:
+    pnpm -C fixtures build
+
 # Run the CEM analyzer on each fixture; output is committed.
 gen-fixtures-cem:
     cd fixtures && for dir in src/*/; do \
