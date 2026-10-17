@@ -17,6 +17,10 @@ version = "0.0.0"
 [[package]]
 name = "holyfloe-emit-core"
 version = "0.0.0"
+dependencies = [
+ "minijinja",
+ "serde",
+]
 
 [[package]]
 name = "holyfloe-emit-react"
@@ -61,6 +65,15 @@ name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
+
+[[package]]
+name = "minijinja"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "789a6b737c4a13bec43cd3c1b982aa8a8a192ff4bf444e0fb1fd5a324f064fd1"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "proc-macro2"

@@ -128,7 +128,7 @@ Do NOT pin from memory. Resolve each from the registry first, then record here. 
 # Rust (pin exact: =x.y.z)                 license             MSRV
 oxc_parser / oxc_ast / oxc_semantic 0.154.0  MIT               1.97.0   # sets workspace MSRV
 oxc_resolver                       11.24.3   MIT               1.95.0
-minijinja                          3.0.1     Apache-2.0        1.70     # 3.x: serde is opt-in (D-032 spike)
+minijinja                          3.0.1     Apache-2.0        1.70     # feature "serde"; wrap data in Serde(&x) (D-032)
 typify                             0.8.0     Apache-2.0
 insta                              1.49.0    Apache-2.0
 clap                               4.6.7     MIT OR Apache-2.0
