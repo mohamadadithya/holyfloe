@@ -10,6 +10,7 @@ mod passes;
 pub use config::{BindingsMode, ComponentOverride, Config, PackageInfo};
 pub use error::IrError;
 pub use model::*;
+pub use passes::name_derive::pascal;
 
 use passes::*;
 

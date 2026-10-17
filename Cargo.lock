@@ -75,8 +75,8 @@ version = "0.0.0"
 name = "holyfloe-emit-core"
 version = "0.0.0"
 dependencies = [
+ "holyfloe-ir",
  "minijinja",
- "serde",
 ]
 
 [[package]]
