@@ -20,6 +20,33 @@ pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
     for c in &mut lib.components {
         c.name = pascal(&c.tag);
         let overrides = cfg.overrides.get(&c.tag);
+        // Overrides for absent tags are fine: one config can serve several manifests.
+        if let Some(dom) = overrides
+            .into_iter()
+            .flat_map(|o| o.events.keys())
+            .find(|dom| !c.events.iter().any(|e| &e.dom_name == *dom))
+        {
+            let known: Vec<_> = c
+                .events
+                .iter()
+                .map(|e| format!("`{}`", e.dom_name))
+                .collect();
+            return Err(IrError::new(
+                "E009",
+                format!("event override `{dom}` matches no event of `{}`", c.tag),
+                Some(&c.tag),
+                Some(&c.module.path),
+                format!(
+                    "fix `overrides.{}.events` in holyfloe.config.json; events are: {}",
+                    c.tag,
+                    if known.is_empty() {
+                        "none".to_owned()
+                    } else {
+                        known.join(", ")
+                    }
+                ),
+            ));
+        }
         for e in &mut c.events {
             e.base_name = overrides
                 .and_then(|o| o.events.get(&e.dom_name))
@@ -85,6 +112,26 @@ mod tests {
         assert_eq!(c.name, "XA");
         let names: Vec<_> = c.events.iter().map(|e| e.base_name.as_str()).collect();
         assert_eq!(names, ["MyChange", "MyChangeCamel"]);
+    }
+
+    #[test]
+    fn override_for_missing_event_is_e009() {
+        let cfg = Config {
+            overrides: [
+                (
+                    "x-a".to_owned(),
+                    ComponentOverride {
+                        events: [("my-chnage".to_owned(), "X".to_owned())].into(),
+                    },
+                ),
+                ("x-other".to_owned(), ComponentOverride::default()),
+            ]
+            .into(),
+            ..Config::default()
+        };
+        let err = build_json_with(cem_one(element("x-a", "XA")), &cfg).unwrap_err();
+        assert_eq!(err.code, "E009");
+        assert!(err.message.contains("my-chnage"));
     }
 
     #[test]

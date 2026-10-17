@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-list/fx-list.ts",
         "specifier": "@holyfloe/fixtures/fx-list/fx-list.js"
       },
+      "definition": {
+        "path": "src/fx-list/fx-list.ts",
+        "specifier": "@holyfloe/fixtures/fx-list/fx-list.js"
+      },
       "summary": null,
       "description": "Renders a list of items. All props are complex and set as properties.",
       "deprecated": null,

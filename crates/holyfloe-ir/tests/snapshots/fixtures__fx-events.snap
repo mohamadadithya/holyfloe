@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-events/fx-events.ts",
         "specifier": "@holyfloe/fixtures/fx-events/fx-events.js"
       },
+      "definition": {
+        "path": "src/fx-events/fx-events.ts",
+        "specifier": "@holyfloe/fixtures/fx-events/fx-events.js"
+      },
       "summary": null,
       "description": "Dispatches events whose names use every common casing.",
       "deprecated": null,

@@ -24,6 +24,8 @@ pub(crate) struct Class {
     pub name: String,
     pub module: String,
     pub tag: Option<String>,
+    /// Module holding the `custom-element-definition` export, when the manifest has one.
+    pub definition_module: Option<String>,
     pub superclass: Option<cem::Reference>,
     pub summary: Option<String>,
     pub description: Option<String>,
@@ -60,14 +62,15 @@ pub(crate) struct Field {
 /// `tagName` or a `custom-element-definition` export. `customElement: true` without a tag
 /// (e.g. `FxBase`) is a base class (OQ-015).
 pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
-    let mut tags: HashMap<(&str, &str), &str> = HashMap::new();
+    // (declaring module, class name) -> (tag, module that defines it)
+    let mut tags: HashMap<(&str, &str), (&str, &str)> = HashMap::new();
     for module in &pkg.modules {
         for export in &module.exports {
             if let cem::JavaScriptModuleExportsItem::CustomElementExport(e) = export {
                 let decl_module = e.declaration.module.as_deref().unwrap_or(&module.path);
                 tags.insert(
                     (module_path::normalize(decl_module), &e.declaration.name),
-                    &e.name,
+                    (&e.name, &module.path),
                 );
             }
         }
@@ -85,9 +88,10 @@ pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
                 // shortcut: mixins are not flattened yet; fx-mixin brings them in M2.
                 _ => continue,
             };
-            if class.tag.is_none() {
-                let key = (module_path::normalize(&module.path), class.name.as_str());
-                class.tag = tags.get(&key).map(|t| (*t).to_owned());
+            let key = (module_path::normalize(&module.path), class.name.as_str());
+            if let Some((tag, definition)) = tags.get(&key) {
+                class.tag.get_or_insert_with(|| (*tag).to_owned());
+                class.definition_module = Some((*definition).to_owned());
             }
             classes.push(class);
         }
@@ -121,6 +125,7 @@ fn from_element(d: &cem::CustomElementDeclaration, module: &str) -> Class {
         name: d.name.clone(),
         module: module.to_owned(),
         tag: d.tag_name.clone(),
+        definition_module: None,
         superclass: d.superclass.clone(),
         summary: d.summary.clone(),
         description: d.description.clone(),
@@ -160,6 +165,7 @@ fn from_class(d: &cem::ClassDeclaration, module: &str) -> Class {
         name: d.name.clone(),
         module: module.to_owned(),
         tag: None,
+        definition_module: None,
         superclass: d.superclass.clone(),
         summary: d.summary.clone(),
         description: d.description.clone(),
@@ -189,8 +195,20 @@ impl Class {
     /// left empty for the passes that compute them.
     pub(crate) fn lower(self, pkg: &PackageInfo, cfg: &Config) -> Result<Component, IrError> {
         let tag = self.tag.unwrap_or_default();
-        let specifier = module_path::specifier(&self.module, pkg, cfg)
-            .map_err(|file| unexported(&file, Some(&tag), &self.module))?;
+        let module_ref = |path: String| {
+            module_path::specifier(&path, pkg, cfg)
+                .map(|specifier| ModuleRef {
+                    path: path.clone(),
+                    specifier,
+                })
+                .map_err(|file| unexported(&file, Some(&tag), &path))
+        };
+        // A separate `define.ts` registers the element; importing the class module would not.
+        let definition = module_ref(
+            self.definition_module
+                .unwrap_or_else(|| self.module.clone()),
+        )?;
+        let module = module_ref(self.module)?;
         let mut props = Vec::new();
         let mut methods = Vec::new();
         for m in self.members {
@@ -237,10 +255,8 @@ impl Class {
         Ok(Component {
             name: String::new(),
             class_name: self.name,
-            module: ModuleRef {
-                path: self.module,
-                specifier,
-            },
+            module,
+            definition,
             summary: self.summary,
             description: self.description,
             deprecated: self.deprecated,
@@ -351,5 +367,33 @@ mod tests {
         assert_eq!(err.tag.as_deref(), Some("x-a"));
         assert_eq!(err.module.as_deref(), Some("src/x.ts"));
         assert!(err.hint.contains("moduleRewrite"));
+    }
+
+    #[test]
+    fn definition_module_can_differ_from_declaration() {
+        let mut class = element("x-a", "XA");
+        class.as_object_mut().unwrap().remove("tagName");
+        let cem = serde_json::from_value(json!({
+            "schemaVersion": "1.0.0",
+            "modules": [
+                { "kind": "javascript-module", "path": "src/x-a.ts", "declarations": [class] },
+                { "kind": "javascript-module", "path": "src/define.ts", "exports": [{
+                    "kind": "custom-element-definition", "name": "x-a",
+                    "declaration": { "name": "XA", "module": "src/x-a.ts" }
+                }] }
+            ]
+        }))
+        .unwrap();
+        let pkg = PackageInfo {
+            name: "pkg".into(),
+            ..PackageInfo::default()
+        };
+        let c = crate::build(&cem, &pkg, &Config::default())
+            .unwrap()
+            .components
+            .remove(0);
+        assert_eq!(c.tag, "x-a");
+        assert_eq!(c.module.specifier, "pkg/src/x-a.js");
+        assert_eq!(c.definition.specifier, "pkg/src/define.js");
     }
 }

@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-deprecated/fx-deprecated.ts",
         "specifier": "@holyfloe/fixtures/fx-deprecated/fx-deprecated.js"
       },
+      "definition": {
+        "path": "src/fx-deprecated/fx-deprecated.ts",
+        "specifier": "@holyfloe/fixtures/fx-deprecated/fx-deprecated.js"
+      },
       "summary": null,
       "description": "Old alert element.",
       "deprecated": "Use fx-card instead.",

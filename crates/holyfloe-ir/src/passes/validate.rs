@@ -32,6 +32,26 @@ pub(crate) fn run(lib: &Library) -> Result<(), IrError> {
                 "give the event a name in its `@fires` tag".to_owned(),
             ));
         }
+        if !is_identifier(&c.name) {
+            return Err(err(
+                "E008",
+                format!("tag `{}` gives `{}`, which is not a valid identifier", c.tag, c.name),
+                "use a tag of letters, digits and `-`; component name overrides are not supported yet".to_owned(),
+            ));
+        }
+        if let Some(e) = c.events.iter().find(|e| !is_identifier(&e.base_name)) {
+            return Err(err(
+                "E008",
+                format!(
+                    "event `{}` gives the prop name `{}`, which is not a valid identifier",
+                    e.dom_name, e.base_name
+                ),
+                format!(
+                    "set `overrides.{}.events.{}: \"<PropName>\"` in holyfloe.config.json",
+                    c.tag, e.dom_name
+                ),
+            ));
+        }
         if let Some(clash) = event_clash(c) {
             return Err(err(
                 "E006",
@@ -55,6 +75,14 @@ pub(crate) fn run(lib: &Library) -> Result<(), IrError> {
         }
     }
     Ok(())
+}
+
+/// Base names may start with a digit: every emitter adds a prefix (React: `on`).
+fn is_identifier(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
 }
 
 /// DOM names of the first group of events sharing a base name.
@@ -90,6 +118,20 @@ mod tests {
             "events `my-change`, `myChange`, `MyChange` all map to the prop name `MyChange`"
         );
         assert!(err.hint.contains("overrides.x-a.events"));
+    }
+
+    #[test]
+    fn non_identifier_names_are_e008() {
+        let err = build_json(events(&["item:select"])).unwrap_err();
+        assert_eq!(err.code, "E008");
+        assert!(err.hint.contains("overrides.x-a.events.item:select"));
+        assert_eq!(
+            build_json(cem_one(element("x-a.v2", "A")))
+                .unwrap_err()
+                .code,
+            "E008"
+        );
+        assert!(build_json(events(&["2fa-done", "$x_y"])).is_ok());
     }
 
     #[test]

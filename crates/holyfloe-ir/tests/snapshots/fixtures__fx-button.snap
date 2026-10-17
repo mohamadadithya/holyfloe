@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-button/fx-button.ts",
         "specifier": "@holyfloe/fixtures/fx-button/fx-button.js"
       },
+      "definition": {
+        "path": "src/fx-button/fx-button.ts",
+        "specifier": "@holyfloe/fixtures/fx-button/fx-button.js"
+      },
       "summary": "Basic action button.",
       "description": "A clickable button.",
       "deprecated": null,

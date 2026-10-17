@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-derived/fx-derived.ts",
         "specifier": "@holyfloe/fixtures/fx-derived/fx-derived.js"
       },
+      "definition": {
+        "path": "src/fx-derived/fx-derived.ts",
+        "specifier": "@holyfloe/fixtures/fx-derived/fx-derived.js"
+      },
       "summary": null,
       "description": "Element that inherits `size`, `loading` and `fx-ready` from FxBase.",
       "deprecated": null,

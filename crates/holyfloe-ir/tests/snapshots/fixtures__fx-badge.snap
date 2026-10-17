@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-badge/fx-badge.ts",
         "specifier": "@holyfloe/fixtures/fx-badge/fx-badge.js"
       },
+      "definition": {
+        "path": "src/fx-badge/fx-badge.ts",
+        "specifier": "@holyfloe/fixtures/fx-badge/fx-badge.js"
+      },
       "summary": null,
       "description": "A small count badge.",
       "deprecated": null,

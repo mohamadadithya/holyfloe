@@ -17,7 +17,11 @@ pub struct Component {
     pub name: String,
     /// Element class name from the CEM declaration.
     pub class_name: String,
+    /// Declares the class: `import type { El } from ...`.
     pub module: ModuleRef,
+    /// Registers the tag: the side-effect import. Same as `module` unless a separate
+    /// file holds the `custom-element-definition` export.
+    pub definition: ModuleRef,
     pub summary: Option<String>,
     pub description: Option<String>,
     /// `Some("")` when deprecated without a reason.

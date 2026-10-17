@@ -19,6 +19,10 @@ expression: build_fixture(name)
         "path": "src/fx-card/fx-card.ts",
         "specifier": "@holyfloe/fixtures/fx-card/fx-card.js"
       },
+      "definition": {
+        "path": "src/fx-card/fx-card.ts",
+        "specifier": "@holyfloe/fixtures/fx-card/fx-card.js"
+      },
       "summary": null,
       "description": "A content card with header and footer slots.",
       "deprecated": null,

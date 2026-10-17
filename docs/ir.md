@@ -18,7 +18,8 @@ pub struct Component {
     pub tag: String,                   // CEM: tagName, or a custom-element-definition export
     pub name: String,                  // derived: Pascal(tag), e.g. "FxButton"
     pub class_name: String,            // CEM: declaration.name
-    pub module: ModuleRef,             // { path: CEM module.path, specifier: "<pkg>/<subpath>" }
+    pub module: ModuleRef,             // { path: CEM module.path, specifier: "<pkg>/<subpath>" }; declares the class (import type)
+    pub definition: ModuleRef,         // registers the tag (side-effect import); the custom-element-definition export's module, else `module`
     pub summary: Option<String>,
     pub props: Vec<Prop>,
     pub events: Vec<Event>,
@@ -76,8 +77,10 @@ pub enum ValuePath { Detail, DetailField(String), TargetProp(String) }
    - `boolean` -> Boolean
    - `string`, `number`, string/number literal unions, `bigint` -> Primitive
    - everything else (objects, arrays, functions, `unknown`, `any`, imported types) -> Complex
+
+   `PropKind` comes from the type only. A Boolean or Primitive prop with `attribute: None` (Lit `attribute: false`) has no attribute to render: emitters set it as a property only.
 5. **infer-bindings.** Apply the heuristic below, then overlay explicit `@model` JSDoc and config. Explicit always wins.
-6. **validate.** Duplicate tags, duplicate prop names, events with empty names are errors with source locations.
+6. **validate.** Duplicate tags, duplicate prop names, events with empty names, event base names that clash, and component or event names that are not identifiers (`[A-Za-z0-9_$]`) are errors with source locations. An event override for a present tag that names no event of it is an error; overrides for absent tags are ignored, so one config can serve several manifests.
 
 ## Binding inference heuristic
 
