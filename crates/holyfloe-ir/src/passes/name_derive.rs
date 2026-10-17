@@ -88,7 +88,7 @@ pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
 
 /// Split on `-` and `_`, uppercase each segment's first letter, keep the rest as written:
 /// `my-change` and `myChange` -> `MyChange`, `MYEVENT` -> `MYEVENT`.
-pub fn pascal(name: &str) -> String {
+pub(crate) fn pascal(name: &str) -> String {
     name.split(['-', '_'])
         .flat_map(|seg| {
             let mut chars = seg.chars();

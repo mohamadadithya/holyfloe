@@ -3,8 +3,6 @@
 use minijinja::syntax::SyntaxConfig;
 use minijinja::{AutoEscape, Environment, Error, UndefinedBehavior};
 
-pub use holyfloe_ir::pascal;
-
 /// One generated file. `path` is relative to the output root, `/`-separated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OutputFile {
@@ -27,47 +25,9 @@ pub fn env() -> Result<Environment<'static>, Error> {
     );
     env.set_auto_escape_callback(|_| AutoEscape::None);
     env.set_undefined_behavior(UndefinedBehavior::Strict);
-    env.add_filter("pascal", |s: &str| pascal(s));
-    env.add_filter("camel", |s: &str| camel(s));
-    env.add_filter("kebab", |s: &str| kebab(s));
     env.add_filter("ts_string", |s: &str| ts_string(s));
-    env.add_filter("jsdoc", |s: &str, indent: Option<usize>| {
-        jsdoc(s, indent.unwrap_or(0))
-    });
+    env.add_filter("jsdoc", |s: &str| jsdoc(s));
     Ok(env)
-}
-
-/// [`pascal`] with the first letter lowercased: `my-change` -> `myChange`.
-pub fn camel(name: &str) -> String {
-    let p = pascal(name);
-    let mut chars = p.chars();
-    chars
-        .next()
-        .into_iter()
-        .flat_map(char::to_lowercase)
-        .chain(chars)
-        .collect()
-}
-
-/// `FxButton` -> `fx-button`, `HTMLElement` -> `html-element`, `my_change` -> `my-change`.
-pub fn kebab(name: &str) -> String {
-    let chars: Vec<char> = name.chars().collect();
-    let mut out = String::with_capacity(name.len() + 4);
-    for (i, &c) in chars.iter().enumerate() {
-        if c == '-' || c == '_' {
-            out.push('-');
-            continue;
-        }
-        if c.is_uppercase() && i > 0 && !out.ends_with('-') {
-            let prev = chars[i - 1];
-            let next_lower = chars.get(i + 1).is_some_and(|n| n.is_lowercase());
-            if prev.is_lowercase() || prev.is_ascii_digit() || (prev.is_uppercase() && next_lower) {
-                out.push('-');
-            }
-        }
-        out.extend(c.to_lowercase());
-    }
-    out
 }
 
 /// A single-quoted TypeScript string literal.
@@ -87,14 +47,16 @@ pub fn ts_string(s: &str) -> String {
     out
 }
 
-/// A `/** ... */` block. The opening line is left where the template puts it; later lines get
-/// `indent` spaces. Blank lines become ` *`, and `*/` in the text is escaped so it cannot end the comment.
-pub fn jsdoc(text: &str, indent: usize) -> String {
-    let pad = " ".repeat(indent);
+/// A `/** ... */` block, or `""` for blank text. Blank lines become ` *`, and `*/` is escaped so
+/// it cannot end the comment. Indent it with minijinja's `indent`: `{{ d | jsdoc | indent(6) }}`.
+pub fn jsdoc(text: &str) -> String {
+    let text = text.trim();
+    if text.is_empty() {
+        return String::new();
+    }
     let mut out = String::from("/**\n");
-    for line in text.trim().lines() {
+    for line in text.lines() {
         let line = line.trim_end().replace("*/", "*\\/");
-        out.push_str(&pad);
         out.push_str(" *");
         if !line.is_empty() {
             out.push(' ');
@@ -102,7 +64,6 @@ pub fn jsdoc(text: &str, indent: usize) -> String {
         }
         out.push('\n');
     }
-    out.push_str(&pad);
     out.push_str(" */");
     out
 }
@@ -112,32 +73,6 @@ mod tests {
     use minijinja::context;
 
     use super::*;
-
-    #[test]
-    fn pascal_filter() {
-        assert_eq!(pascal("fx-button"), "FxButton");
-        assert_eq!(pascal("my_change"), "MyChange");
-    }
-
-    #[test]
-    fn camel_filter() {
-        assert_eq!(camel("fx-button"), "fxButton");
-        assert_eq!(camel("MyChange"), "myChange");
-        assert_eq!(camel("myChange"), "myChange");
-        assert_eq!(camel(""), "");
-    }
-
-    #[test]
-    fn kebab_filter() {
-        assert_eq!(kebab("FxButton"), "fx-button");
-        assert_eq!(kebab("myChange"), "my-change");
-        assert_eq!(kebab("HTMLElement"), "html-element");
-        assert_eq!(kebab("fx-button"), "fx-button");
-        assert_eq!(kebab("my_change"), "my-change");
-        assert_eq!(kebab("Fx-Button"), "fx-button");
-        assert_eq!(kebab("item2Label"), "item2-label");
-        assert_eq!(kebab("MYEVENT"), "myevent");
-    }
 
     #[test]
     fn ts_string_filter() {
@@ -150,10 +85,12 @@ mod tests {
     #[test]
     fn jsdoc_filter() {
         assert_eq!(
-            jsdoc("Basic action button.\n\nA clickable button.  \n", 0),
+            jsdoc("Basic action button.\n\nA clickable button.  \n"),
             "/**\n * Basic action button.\n *\n * A clickable button.\n */"
         );
-        assert_eq!(jsdoc("Ends */ here", 2), "/**\n   * Ends *\\/ here\n   */");
+        assert_eq!(jsdoc("Ends */ here"), "/**\n * Ends *\\/ here\n */");
+        assert_eq!(jsdoc(""), "");
+        assert_eq!(jsdoc(" \n  "), "");
     }
 
     #[test]
@@ -161,18 +98,17 @@ mod tests {
         let mut env = env().unwrap();
         env.add_template(
             "t.tsx.j2",
-            "{{ tag | pascal }} {{ tag | camel }} {{ 'FxCard' | kebab }} {{ \"<a & 'b'>\" | ts_string }}\n\
-             {% if true %}\n  {{ doc | jsdoc(2) }}\n{% endif %}\n",
+            "{{ \"<a & 'b'>\" | ts_string }}\n{% if true %}\n  {{ doc | jsdoc | indent(2) }}\n{% endif %}\n",
         )
         .unwrap();
         let out = env
             .get_template("t.tsx.j2")
             .unwrap()
-            .render(context!(tag => "fx-card", doc => "Card.\n\nSlots:"))
+            .render(context!(doc => "Card.\n\nSlots:"))
             .unwrap();
         assert_eq!(
             out,
-            "FxCard fxCard fx-card '<a & \\'b\\'>'\n  /**\n   * Card.\n   *\n   * Slots:\n   */\n"
+            "'<a & \\'b\\'>'\n  /**\n   * Card.\n   *\n   * Slots:\n   */\n"
         );
     }
 

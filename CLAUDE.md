@@ -68,7 +68,7 @@ crates/
   holyfloe-cem/        # serde types for CEM 2.1.0 (typify on schema/patch.py output, checked in, never regenerated in build.rs)
   holyfloe-ir/         # IR structs + normalization passes. Pure, no I/O.
   holyfloe-lit/        # M4 only: oxc-based Lit extractor -> IR. Feature-gated.
-  holyfloe-emit-core/  # minijinja env, shared filters (pascal/camel/kebab, ts_string, jsdoc)
+  holyfloe-emit-core/  # minijinja env, shared filters (ts_string, jsdoc)
   holyfloe-emit-react/
   holyfloe-emit-vue/
   holyfloe-emit-svelte/
