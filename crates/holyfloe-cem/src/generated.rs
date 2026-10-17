@@ -1,6 +1,7 @@
-// Generated once by typify, checked in (D-031). Do not edit by hand.
-// Regenerate from crates/holyfloe-cem: cargo typify --no-builder schema/schema-2.1.0.json -o src/generated.rs && cargo fmt
-// cargo-typify 0.8.0, schema from npm custom-elements-manifest@2.1.0.
+// Generated once by typify, checked in (D-031, D-046). Do not edit by hand.
+// Regenerate from crates/holyfloe-cem:
+//   python3 schema/patch.py && cargo typify --no-builder schema/schema-2.1.0.patched.json -o src/generated.rs && cargo fmt
+// cargo-typify 0.8.0, schema from npm custom-elements-manifest@2.1.0 plus schema/patch.py.
 
 #![allow(clippy::redundant_closure_call)]
 #![allow(clippy::needless_lifetimes)]
@@ -637,17 +638,17 @@ impl ::std::convert::TryFrom<::std::string::String> for CustomElementDeclaration
 #[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum CustomElementDeclarationMembersItem {
-    Field(ClassField),
-    Method(ClassMethod),
+    CustomElementField(CustomElementField),
+    ClassMethod(ClassMethod),
 }
-impl ::std::convert::From<ClassField> for CustomElementDeclarationMembersItem {
-    fn from(value: ClassField) -> Self {
-        Self::Field(value)
+impl ::std::convert::From<CustomElementField> for CustomElementDeclarationMembersItem {
+    fn from(value: CustomElementField) -> Self {
+        Self::CustomElementField(value)
     }
 }
 impl ::std::convert::From<ClassMethod> for CustomElementDeclarationMembersItem {
     fn from(value: ClassMethod) -> Self {
-        Self::Method(value)
+        Self::ClassMethod(value)
     }
 }
 #[doc = "A global custom element defintion, ie the result of a\n`customElements.define()` call.\n\nThis is represented as an export because a definition makes the element\navailable outside of the module it's defined it."]
@@ -722,6 +723,118 @@ impl ::std::convert::TryFrom<&str> for CustomElementExportKind {
     }
 }
 impl ::std::convert::TryFrom<::std::string::String> for CustomElementExportKind {
+    type Error = self::error::ConversionError;
+    fn try_from(
+        value: ::std::string::String,
+    ) -> ::std::result::Result<Self, self::error::ConversionError> {
+        value.parse()
+    }
+}
+#[doc = "Additional metadata for fields on custom elements."]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+pub struct CustomElementField {
+    #[doc = "The corresponding attribute name if there is one."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub attribute: ::std::option::Option<::std::string::String>,
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub default: ::std::option::Option<::std::string::String>,
+    #[doc = "Whether the property is deprecated.\nIf the value is a string, it's the reason for the deprecation."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub deprecated: ::std::option::Option<CustomElementFieldDeprecated>,
+    #[doc = "A markdown description of the field."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub description: ::std::option::Option<::std::string::String>,
+    #[serde(
+        rename = "inheritedFrom",
+        skip_serializing_if = "::std::option::Option::is_none"
+    )]
+    pub inherited_from: ::std::option::Option<Reference>,
+    pub kind: CustomElementFieldKind,
+    pub name: ::std::string::String,
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub privacy: ::std::option::Option<Privacy>,
+    #[doc = "Whether the property is read-only."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub readonly: ::std::option::Option<bool>,
+    #[doc = "If the property reflects to an attribute."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub reflects: ::std::option::Option<bool>,
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub source: ::std::option::Option<SourceReference>,
+    #[serde(
+        rename = "static",
+        skip_serializing_if = "::std::option::Option::is_none"
+    )]
+    pub static_: ::std::option::Option<bool>,
+    #[doc = "A markdown summary suitable for display in a listing."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub summary: ::std::option::Option<::std::string::String>,
+    #[serde(
+        rename = "type",
+        skip_serializing_if = "::std::option::Option::is_none"
+    )]
+    pub type_: ::std::option::Option<Type>,
+}
+#[doc = "Whether the property is deprecated.\nIf the value is a string, it's the reason for the deprecation."]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum CustomElementFieldDeprecated {
+    Boolean(bool),
+    String(::std::string::String),
+}
+impl ::std::fmt::Display for CustomElementFieldDeprecated {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        match self {
+            Self::Boolean(x) => x.fmt(f),
+            Self::String(x) => x.fmt(f),
+        }
+    }
+}
+impl ::std::convert::From<bool> for CustomElementFieldDeprecated {
+    fn from(value: bool) -> Self {
+        Self::Boolean(value)
+    }
+}
+#[doc = "`CustomElementFieldKind`"]
+#[derive(
+    :: serde :: Deserialize,
+    :: serde :: Serialize,
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+)]
+pub enum CustomElementFieldKind {
+    #[serde(rename = "field")]
+    Field,
+}
+impl ::std::fmt::Display for CustomElementFieldKind {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        match *self {
+            Self::Field => f.write_str("field"),
+        }
+    }
+}
+impl ::std::str::FromStr for CustomElementFieldKind {
+    type Err = self::error::ConversionError;
+    fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        match value {
+            "field" => Ok(Self::Field),
+            _ => Err("invalid value".into()),
+        }
+    }
+}
+impl ::std::convert::TryFrom<&str> for CustomElementFieldKind {
+    type Error = self::error::ConversionError;
+    fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        value.parse()
+    }
+}
+impl ::std::convert::TryFrom<::std::string::String> for CustomElementFieldKind {
     type Error = self::error::ConversionError;
     fn try_from(
         value: ::std::string::String,
@@ -870,17 +983,17 @@ impl ::std::convert::TryFrom<::std::string::String> for CustomElementMixinDeclar
 #[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum CustomElementMixinDeclarationMembersItem {
-    Field(ClassField),
-    Method(ClassMethod),
+    CustomElementField(CustomElementField),
+    ClassMethod(ClassMethod),
 }
-impl ::std::convert::From<ClassField> for CustomElementMixinDeclarationMembersItem {
-    fn from(value: ClassField) -> Self {
-        Self::Field(value)
+impl ::std::convert::From<CustomElementField> for CustomElementMixinDeclarationMembersItem {
+    fn from(value: CustomElementField) -> Self {
+        Self::CustomElementField(value)
     }
 }
 impl ::std::convert::From<ClassMethod> for CustomElementMixinDeclarationMembersItem {
     fn from(value: ClassMethod) -> Self {
-        Self::Method(value)
+        Self::ClassMethod(value)
     }
 }
 #[doc = "`CustomElementMixinDeclarationReturn`"]
@@ -1162,12 +1275,22 @@ pub struct JavaScriptModule {
 #[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum JavaScriptModuleDeclarationsItem {
+    CustomElementDeclaration(CustomElementDeclaration),
+    CustomElementMixinDeclaration(CustomElementMixinDeclaration),
     ClassDeclaration(ClassDeclaration),
     FunctionDeclaration(FunctionDeclaration),
     MixinDeclaration(MixinDeclaration),
     VariableDeclaration(VariableDeclaration),
-    CustomElementDeclaration(CustomElementDeclaration),
-    CustomElementMixinDeclaration(CustomElementMixinDeclaration),
+}
+impl ::std::convert::From<CustomElementDeclaration> for JavaScriptModuleDeclarationsItem {
+    fn from(value: CustomElementDeclaration) -> Self {
+        Self::CustomElementDeclaration(value)
+    }
+}
+impl ::std::convert::From<CustomElementMixinDeclaration> for JavaScriptModuleDeclarationsItem {
+    fn from(value: CustomElementMixinDeclaration) -> Self {
+        Self::CustomElementMixinDeclaration(value)
+    }
 }
 impl ::std::convert::From<ClassDeclaration> for JavaScriptModuleDeclarationsItem {
     fn from(value: ClassDeclaration) -> Self {
@@ -1187,16 +1310,6 @@ impl ::std::convert::From<MixinDeclaration> for JavaScriptModuleDeclarationsItem
 impl ::std::convert::From<VariableDeclaration> for JavaScriptModuleDeclarationsItem {
     fn from(value: VariableDeclaration) -> Self {
         Self::VariableDeclaration(value)
-    }
-}
-impl ::std::convert::From<CustomElementDeclaration> for JavaScriptModuleDeclarationsItem {
-    fn from(value: CustomElementDeclaration) -> Self {
-        Self::CustomElementDeclaration(value)
-    }
-}
-impl ::std::convert::From<CustomElementMixinDeclaration> for JavaScriptModuleDeclarationsItem {
-    fn from(value: CustomElementMixinDeclaration) -> Self {
-        Self::CustomElementMixinDeclaration(value)
     }
 }
 #[doc = "Whether the module is deprecated.\nIf the value is a string, it's the reason for the deprecation."]

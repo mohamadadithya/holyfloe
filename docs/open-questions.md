@@ -4,8 +4,6 @@ Each item has an owner step and a command or test that closes it. When closed, m
 
 ## Version facts (close in M0)
 
-- OQ-006: Confirm the CEM schema 2.1.0 JSON file location and that typify can compile it without manual patching. Spike in M0. If typify fails, fall back to hand-written serde structs (about 300 lines).
-
 - OQ-007: TypeScript 7.1 API dates in the brief (RC planned Nov 10, stable planned Nov 24, 2026) came from secondary reporting and are plans, not facts. Irrelevant to M0-M3 because D-013 forbids a checker. Revisit only if D-013 is ever reopened.
 
 ## Behavior claims (close with tests)
