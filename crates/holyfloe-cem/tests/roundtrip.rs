@@ -9,9 +9,11 @@ fn fixture_manifests_round_trip() {
     let mut checked = 0;
     for entry in std::fs::read_dir(&src).unwrap() {
         let path = entry.unwrap().path().join("custom-elements.json");
-        if !path.exists() {
-            continue;
-        }
+        assert!(
+            path.exists(),
+            "{} is missing; run `just gen-fixtures-cem`",
+            path.display()
+        );
         let text = std::fs::read_to_string(&path).unwrap();
         let mut original: serde_json::Value = serde_json::from_str(&text).unwrap();
         drop_empty_arrays(&mut original);

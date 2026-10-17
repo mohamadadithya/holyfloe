@@ -14,8 +14,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-      # rustup picks up rust-toolchain.toml (1.97.1 + clippy, rustfmt).
-      - run: rustup show active-toolchain
+      # Installs the toolchain from rust-toolchain.toml (1.97.1 + clippy, rustfmt).
+      # rustup >= 1.28 no longer auto-installs on `rustup show`.
+      - run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - uses: pnpm/action-setup@v6 # version from package.json "packageManager"
       - uses: actions/setup-node@v7

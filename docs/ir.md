@@ -66,9 +66,9 @@ pub enum ValuePath { Detail, DetailField(String), TargetProp(String) }
 ## Normalization passes (run in this order)
 
 1. **flatten-inheritance.** Merge members, events, slots, parts from superclass and mixins using `inheritedFrom` and dependency manifests. Error on cycles.
-2. **drop-non-public.** Remove private, protected, static, and `@internal`-tagged members.
+2. **drop-non-public.** Remove private, protected, static, and `@internal`-tagged members, plus any `attributes` entry whose `fieldName` points at a removed member (the analyzer lists protected fields there too). The analyzer already strips `@internal`; the check still matters for M4 input.
 3. **name-derive.** Compute `prop_name` for events, component class names, and file names. Respect config `tagFormatter` and `componentNameFormatter`.
-4. **classify-props.** Set `PropKind` by lexing `type.text`:
+4. **classify-props.** Set `PropKind` by lexing `type.text`, after stripping top-level `| undefined` and `| null` (the analyzer writes optional props as `string | undefined`):
    - `boolean` -> Boolean
    - `string`, `number`, string/number literal unions, `bigint` -> Primitive
    - everything else (objects, arrays, functions, `unknown`, `any`, imported types) -> Complex

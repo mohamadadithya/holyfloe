@@ -15,6 +15,7 @@ defs = schema["definitions"]
 #    additionalProperties: false, so it would swallow custom elements and drop tagName etc.
 decls = defs["JavaScriptModule"]["properties"]["declarations"]["items"]
 decls["anyOf"].sort(key=lambda r: "CustomElement" not in r["$ref"])
+assert "CustomElement" in decls["anyOf"][0]["$ref"], "upstream declarations union changed"
 
 # 2. schema.d.ts has CustomElementField (ClassField + attribute + reflects); schema.json lost it.
 field = copy.deepcopy(defs["ClassField"])
@@ -29,8 +30,9 @@ field["properties"]["reflects"] = {
 }
 defs["CustomElementField"] = field
 for name in ("CustomElementDeclaration", "CustomElementMixinDeclaration"):
-    for ref in defs[name]["properties"]["members"]["items"]["anyOf"]:
-        if ref["$ref"] == "#/definitions/ClassField":
-            ref["$ref"] = "#/definitions/CustomElementField"
+    refs = defs[name]["properties"]["members"]["items"]["anyOf"]
+    patched = [r for r in refs if r["$ref"] == "#/definitions/ClassField"]
+    assert len(patched) == 1, f"upstream {name}.members changed"
+    patched[0]["$ref"] = "#/definitions/CustomElementField"
 
 (here / "schema-2.1.0.patched.json").write_text(json.dumps(schema, indent=2) + "\n")

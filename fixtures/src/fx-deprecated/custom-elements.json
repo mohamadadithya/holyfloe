@@ -31,6 +31,27 @@
               "description": "Old name for `tone`.",
               "deprecated": "Use `tone`.",
               "attribute": "kind"
+            },
+            {
+              "kind": "field",
+              "name": "busy",
+              "type": {
+                "text": "boolean"
+              },
+              "privacy": "protected",
+              "default": "false",
+              "description": "Protected state. Must never appear in generated output.",
+              "attribute": "busy"
+            },
+            {
+              "kind": "field",
+              "name": "defaultTone",
+              "type": {
+                "text": "string"
+              },
+              "static": true,
+              "default": "'info'",
+              "description": "Static config. Must never appear in generated output."
             }
           ],
           "attributes": [
@@ -51,6 +72,15 @@
               "description": "Old name for `tone`.",
               "deprecated": "Use `tone`.",
               "fieldName": "kind"
+            },
+            {
+              "name": "busy",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Protected state. Must never appear in generated output.",
+              "fieldName": "busy"
             }
           ],
           "superclass": {

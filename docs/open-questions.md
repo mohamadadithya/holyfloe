@@ -20,6 +20,10 @@ Each item has an owner step and a command or test that closes it. When closed, m
 
 ## Design choices still to make (close in the milestone plan)
 
+- OQ-014 (M1): Module path to import specifier. CEM gives `src/fx-button/fx-button.ts`; expected output imports `@holyfloe/fixtures/fx-button/fx-button.js`, and `fixtures/package.json` `exports` points at `.js` files that do not exist. Decide the mapping (strip source root, `.ts` -> `.js`, match against `exports`) and whether fixtures are built or exported as `.ts`, so e2e bundlers can resolve them.
+- OQ-015 (M1): Analyzer output quirks the IR must absorb, each with a test: `superclass.module` is `/src/x/fx-base.js` while `inheritedFrom.module` is `src/x/fx-base.ts` (normalize both); inherited members are already present with `inheritedFrom` (flatten must merge without duplicating); classes with `customElement: true` but no `tagName` (e.g. `FxBase`) are bases, not components; type text can be wrong (`renderLabel` loses parentheses), so it must never be re-emitted.
+- OQ-016 (M2): `holyfloe-cem` drops fields the schema does not define. A custom analyzer plugin for `@model` (D-026) would lose its data unless it writes into an existing field, or the types gain a catch-all map. Decide with OQ-010.
+
 - OQ-010 (M2): Final `@model` JSDoc syntax and config key. Proposal: `@model <prop> <event>` with optional `detail.<field>`. Decide in the M2 plan, then record in decisions (D-026).
 - OQ-011 (M2): Svelte: expose the element through a bindable `element` prop or a `getElement()` export. Pick one.
 - OQ-012 (M1): Whether React `ref` handling should be chosen by detecting the consumer's React version or by a config flag. Config flag is simpler; confirm in the M1 plan.

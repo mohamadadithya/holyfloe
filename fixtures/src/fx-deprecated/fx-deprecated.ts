@@ -26,6 +26,13 @@ export class FxDeprecated extends LitElement {
   @property({ attribute: 'debug-id' })
   debugId = '';
 
+  /** Protected state. Must never appear in generated output. */
+  @property({ type: Boolean })
+  protected busy = false;
+
+  /** Static config. Must never appear in generated output. */
+  static defaultTone = 'info';
+
   override render() {
     return html`<div role="alert"><slot></slot></div>`;
   }
