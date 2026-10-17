@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-button/fx-button.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A clickable button.",
+          "name": "FxButton",
+          "slots": [
+            {
+              "description": "The button label.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'danger'"
+              },
+              "default": "'primary'",
+              "description": "Visual style of the button.",
+              "attribute": "variant",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Prevents interaction when set.",
+              "attribute": "disabled",
+              "reflects": true
+            },
+            {
+              "kind": "method",
+              "name": "#onClick",
+              "privacy": "private"
+            }
+          ],
+          "events": [
+            {
+              "name": "fx-press",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Fired when the button is activated. Has no detail."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'danger'"
+              },
+              "default": "'primary'",
+              "description": "Visual style of the button.",
+              "fieldName": "variant"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Prevents interaction when set.",
+              "fieldName": "disabled"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "summary": "Basic action button.",
+          "tagName": "fx-button",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxButton",
+          "declaration": {
+            "name": "FxButton",
+            "module": "src/fx-button/fx-button.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-button",
+          "declaration": {
+            "name": "FxButton",
+            "module": "src/fx-button/fx-button.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

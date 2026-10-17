@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-list/fx-list.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Renders a list of items. All props are complex and set as properties.",
+          "name": "FxList",
+          "members": [
+            {
+              "kind": "field",
+              "name": "items",
+              "type": {
+                "text": "ListItem[]"
+              },
+              "default": "[]",
+              "description": "Items to render."
+            },
+            {
+              "kind": "field",
+              "name": "options",
+              "type": {
+                "text": "ListOptions"
+              },
+              "default": "{ dense: false }",
+              "description": "Display options."
+            },
+            {
+              "kind": "field",
+              "name": "renderLabel",
+              "type": {
+                "text": "(item: ListItem) => string | undefined"
+              },
+              "description": "Optional custom label renderer."
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-list",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxList",
+          "declaration": {
+            "name": "FxList",
+            "module": "src/fx-list/fx-list.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-list",
+          "declaration": {
+            "name": "FxList",
+            "module": "src/fx-list/fx-list.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-list/types.ts",
+      "declarations": [],
+      "exports": []
+    }
+  ]
+}

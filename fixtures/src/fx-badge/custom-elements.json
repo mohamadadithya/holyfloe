@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-badge/fx-badge.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A small count badge.",
+          "name": "FxBadge",
+          "slots": [
+            {
+              "description": "Optional label shown next to the count.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "description": "Number shown in the badge. The attribute name differs from the property name.",
+              "attribute": "badge-count",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "tone",
+              "type": {
+                "text": "'neutral' | 'success' | 'warning'"
+              },
+              "default": "'neutral'",
+              "description": "Colour tone, reflected so it can be styled from outside.",
+              "attribute": "tone",
+              "reflects": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "badge-count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "description": "Number shown in the badge. The attribute name differs from the property name.",
+              "fieldName": "count"
+            },
+            {
+              "name": "tone",
+              "type": {
+                "text": "'neutral' | 'success' | 'warning'"
+              },
+              "default": "'neutral'",
+              "description": "Colour tone, reflected so it can be styled from outside.",
+              "fieldName": "tone"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-badge",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxBadge",
+          "declaration": {
+            "name": "FxBadge",
+            "module": "src/fx-badge/fx-badge.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-badge",
+          "declaration": {
+            "name": "FxBadge",
+            "module": "src/fx-badge/fx-badge.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

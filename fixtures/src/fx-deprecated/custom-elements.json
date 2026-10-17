@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-deprecated/fx-deprecated.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Old alert element.",
+          "name": "FxDeprecated",
+          "members": [
+            {
+              "kind": "field",
+              "name": "tone",
+              "type": {
+                "text": "'info' | 'error'"
+              },
+              "default": "'info'",
+              "description": "Alert tone.",
+              "attribute": "tone",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "kind",
+              "type": {
+                "text": "string | undefined"
+              },
+              "description": "Old name for `tone`.",
+              "deprecated": "Use `tone`.",
+              "attribute": "kind"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "tone",
+              "type": {
+                "text": "'info' | 'error'"
+              },
+              "default": "'info'",
+              "description": "Alert tone.",
+              "fieldName": "tone"
+            },
+            {
+              "name": "kind",
+              "type": {
+                "text": "string | undefined"
+              },
+              "description": "Old name for `tone`.",
+              "deprecated": "Use `tone`.",
+              "fieldName": "kind"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "deprecated": "Use fx-card instead.",
+          "tagName": "fx-deprecated",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxDeprecated",
+          "declaration": {
+            "name": "FxDeprecated",
+            "module": "src/fx-deprecated/fx-deprecated.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-deprecated",
+          "declaration": {
+            "name": "FxDeprecated",
+            "module": "src/fx-deprecated/fx-deprecated.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

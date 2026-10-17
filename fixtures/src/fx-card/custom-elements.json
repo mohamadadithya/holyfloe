@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-card/fx-card.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A content card with header and footer slots.",
+          "name": "FxCard",
+          "cssProperties": [
+            {
+              "description": "Inner padding. Defaults to 16px.",
+              "name": "--fx-card-padding"
+            },
+            {
+              "description": "Corner radius. Defaults to 8px.",
+              "name": "--fx-card-radius"
+            }
+          ],
+          "cssParts": [
+            {
+              "description": "The card container.",
+              "name": "base"
+            },
+            {
+              "description": "The header wrapper.",
+              "name": "header"
+            },
+            {
+              "description": "The footer wrapper.",
+              "name": "footer"
+            }
+          ],
+          "slots": [
+            {
+              "description": "Card body.",
+              "name": ""
+            },
+            {
+              "description": "Content for the card header.",
+              "name": "header"
+            },
+            {
+              "description": "Content for the card footer.",
+              "name": "footer"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "elevated",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Adds a drop shadow.",
+              "attribute": "elevated",
+              "reflects": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "elevated",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Adds a drop shadow.",
+              "fieldName": "elevated"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-card",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxCard",
+          "declaration": {
+            "name": "FxCard",
+            "module": "src/fx-card/fx-card.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-card",
+          "declaration": {
+            "name": "FxCard",
+            "module": "src/fx-card/fx-card.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

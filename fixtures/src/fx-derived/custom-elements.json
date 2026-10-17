@@ -1,0 +1,216 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-derived/fx-base.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Base class with shared sizing and loading state. Not registered as an element.",
+          "name": "FxBase",
+          "members": [
+            {
+              "kind": "field",
+              "name": "size",
+              "type": {
+                "text": "'sm' | 'md' | 'lg'"
+              },
+              "default": "'md'",
+              "description": "Size variant shared by subclasses.",
+              "attribute": "size",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Shows a loading state.",
+              "attribute": "loading"
+            }
+          ],
+          "events": [
+            {
+              "name": "fx-ready",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Fired after first render."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "size",
+              "type": {
+                "text": "'sm' | 'md' | 'lg'"
+              },
+              "default": "'md'",
+              "description": "Size variant shared by subclasses.",
+              "fieldName": "size"
+            },
+            {
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Shows a loading state.",
+              "fieldName": "loading"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxBase",
+          "declaration": {
+            "name": "FxBase",
+            "module": "src/fx-derived/fx-base.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-derived/fx-derived.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Element that inherits `size`, `loading` and `fx-ready` from FxBase.",
+          "name": "FxDerived",
+          "slots": [
+            {
+              "description": "Content.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Own property, not inherited.",
+              "attribute": "label"
+            },
+            {
+              "kind": "field",
+              "name": "size",
+              "type": {
+                "text": "'sm' | 'md' | 'lg'"
+              },
+              "default": "'md'",
+              "description": "Size variant shared by subclasses.",
+              "attribute": "size",
+              "reflects": true,
+              "inheritedFrom": {
+                "name": "FxBase",
+                "module": "src/fx-derived/fx-base.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Shows a loading state.",
+              "attribute": "loading",
+              "inheritedFrom": {
+                "name": "FxBase",
+                "module": "src/fx-derived/fx-base.ts"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Own property, not inherited.",
+              "fieldName": "label"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "'sm' | 'md' | 'lg'"
+              },
+              "default": "'md'",
+              "description": "Size variant shared by subclasses.",
+              "fieldName": "size",
+              "inheritedFrom": {
+                "name": "FxBase",
+                "module": "src/fx-derived/fx-base.ts"
+              }
+            },
+            {
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Shows a loading state.",
+              "fieldName": "loading",
+              "inheritedFrom": {
+                "name": "FxBase",
+                "module": "src/fx-derived/fx-base.ts"
+              }
+            }
+          ],
+          "superclass": {
+            "name": "FxBase",
+            "module": "/src/fx-derived/fx-base.js"
+          },
+          "tagName": "fx-derived",
+          "customElement": true,
+          "events": [
+            {
+              "name": "fx-ready",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Fired after first render.",
+              "inheritedFrom": {
+                "name": "FxBase",
+                "module": "src/fx-derived/fx-base.ts"
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxDerived",
+          "declaration": {
+            "name": "FxDerived",
+            "module": "src/fx-derived/fx-derived.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-derived",
+          "declaration": {
+            "name": "FxDerived",
+            "module": "src/fx-derived/fx-derived.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

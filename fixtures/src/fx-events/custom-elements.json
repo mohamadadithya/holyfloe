@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-events/fx-events.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Dispatches events whose names use every common casing.",
+          "name": "FxEvents",
+          "members": [
+            {
+              "kind": "method",
+              "name": "#emitAll",
+              "privacy": "private"
+            }
+          ],
+          "events": [
+            {
+              "name": "my-change",
+              "type": {
+                "text": "CustomEvent<{ value: string }>"
+              },
+              "description": "Kebab-case name."
+            },
+            {
+              "name": "myChange",
+              "type": {
+                "text": "CustomEvent<{ value: number }>"
+              },
+              "description": "camelCase name."
+            },
+            {
+              "name": "MyChange",
+              "type": {
+                "text": "CustomEvent<{ checked: boolean }>"
+              },
+              "description": "PascalCase name."
+            },
+            {
+              "name": "MYEVENT",
+              "type": {
+                "text": "CustomEvent<{ count: number }>"
+              },
+              "description": "Uppercase name."
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-events",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxEvents",
+          "declaration": {
+            "name": "FxEvents",
+            "module": "src/fx-events/fx-events.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-events",
+          "declaration": {
+            "name": "FxEvents",
+            "module": "src/fx-events/fx-events.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

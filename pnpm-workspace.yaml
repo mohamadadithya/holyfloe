@@ -1,0 +1,6 @@
+packages:
+  - fixtures
+
+# Postinstall only matters for the analyzer --dependencies scan, which we do not use.
+allowBuilds:
+  rs-module-lexer: false
