@@ -1,8 +1,3 @@
 {
-  "moduleRewrite": { "src/": "dist/" },
-  "overrides": {
-    "fx-events": {
-      "events": { "myChange": "MyChangeCamel", "MyChange": "MyChangePascal" }
-    }
-  }
+  "moduleRewrite": { "src/": "dist/" }
 }

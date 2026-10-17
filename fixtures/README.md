@@ -19,7 +19,7 @@ fixtures/
 | # | Fixture | Covers | First needed in |
 |---|---|---|---|
 | 1 | `fx-button` | Primitive string union prop (`variant`), boolean `disabled`, default slot, `click`-like custom event with no detail | M1 |
-| 2 | `fx-badge` | Reflected attribute, `attribute` name differs from prop name | M1 |
+| 2 | `fx-badge` | Reflected attribute, `attribute` name differs from prop name, property-only primitive (`attribute: false`), read-only getter that must not become a prop | M1 |
 | 3 | `fx-list` | Complex props: array and object, typed from an imported type in another file | M1 |
 | 4 | `fx-events` | Event naming: kebab (`my-change`), camelCase (`myChange`), PascalCase (`MyChange`), uppercase (`MYEVENT`), all with typed `detail` | M1 |
 | 5 | `fx-card` | Default slot plus named slots (`header`, `footer`), CSS parts, CSS custom properties | M1 |
@@ -30,6 +30,8 @@ fixtures/
 | 10 | `fx-mixin` | Mixin-based component; mixin from a second package in `fixtures/src/_dep/` | M2 |
 | 11 | `fx-deprecated` | `@deprecated` prop and component, `@internal` member that must NOT appear | M1 |
 | 12 | `fx-lazy` | Element defined late (after first render) to test complex-prop re-apply | M2 |
+
+A fixture that needs its own config (fx-events: event-name overrides) has `src/<name>/holyfloe.config.json`; the others use `fixtures/holyfloe.config.json`. Overrides for tags missing from a manifest are an error (`E009`), so they cannot live in the shared file.
 
 ## Expected output rules
 

@@ -17,8 +17,8 @@ fn fixture_manifests_round_trip() {
         let text = std::fs::read_to_string(&path).unwrap();
         let mut original: serde_json::Value = serde_json::from_str(&text).unwrap();
         drop_empty_arrays(&mut original);
-        let parsed: holyfloe_cem::Package =
-            serde_json::from_str(&text).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+        let parsed =
+            holyfloe_cem::parse(&text).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
         let again = serde_json::to_value(&parsed).unwrap();
         assert_eq!(original, again, "{} did not round-trip", path.display());
 

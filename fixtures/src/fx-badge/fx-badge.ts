@@ -16,8 +16,17 @@ export class FxBadge extends LitElement {
   @property({ reflect: true })
   tone: 'neutral' | 'success' | 'warning' = 'neutral';
 
+  /** Accessible label. Property only (`attribute: false`): never rendered as an attribute. */
+  @property({ attribute: false })
+  label = '';
+
+  /** True when the count is shown as 99+. Read-only. */
+  get overflow(): boolean {
+    return this.count > 99;
+  }
+
   override render() {
-    return html`<span>${this.count}</span><slot></slot>`;
+    return html`<span aria-label=${this.label}>${this.overflow ? '99+' : this.count}</span><slot></slot>`;
   }
 }
 

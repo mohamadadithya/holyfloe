@@ -22,6 +22,28 @@ pub(crate) fn normalize(path: &str) -> &str {
         .unwrap_or(path)
 }
 
+/// A module named inside the manifest entry of module `from` (a re-export, a superclass, a
+/// type reference), as a package-root path. `./` and `../` are relative to `from`: the analyzer
+/// keeps re-export specifiers verbatim (Lion: `../components/accordion/src/LionAccordion.js`).
+/// `/x` and `x` are already root-relative.
+pub(crate) fn resolve_ref(from: &str, reference: &str) -> String {
+    if !(reference.starts_with("./") || reference.starts_with("../")) {
+        return strip_root(reference).to_owned();
+    }
+    let mut parts: Vec<&str> = strip_root(from).split('/').collect();
+    parts.pop(); // the file name
+    for segment in reference.split('/') {
+        match segment {
+            "" | "." => {}
+            ".." => {
+                parts.pop();
+            }
+            s => parts.push(s),
+        }
+    }
+    parts.join("/")
+}
+
 /// The published file a source module compiles to: `.ts` -> `.js`, then `moduleRewrite`.
 pub(crate) fn output_path(path: &str, cfg: &Config) -> String {
     let path = strip_root(path);
@@ -165,6 +187,17 @@ mod tests {
             normalize("src/x/fx-base.ts")
         );
         assert_eq!(normalize("./src/a.tsx"), "src/a");
+    }
+
+    #[test]
+    fn references_resolve_relative_to_their_module() {
+        assert_eq!(
+            resolve_ref("exports/accordion.js", "../components/a/A.js"),
+            "components/a/A.js"
+        );
+        assert_eq!(resolve_ref("src/a/b.ts", "./c.js"), "src/a/c.js");
+        assert_eq!(resolve_ref("src/a/b.ts", "/src/x.js"), "src/x.js");
+        assert_eq!(resolve_ref("src/a/b.ts", "src/x.ts"), "src/x.ts");
     }
 
     #[test]

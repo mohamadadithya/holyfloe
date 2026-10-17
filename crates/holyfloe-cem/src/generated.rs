@@ -1040,8 +1040,11 @@ pub struct Event {
     #[serde(skip_serializing_if = "::std::option::Option::is_none")]
     pub summary: ::std::option::Option<::std::string::String>,
     #[doc = "The type of the event object that's fired."]
-    #[serde(rename = "type")]
-    pub type_: Type,
+    #[serde(
+        rename = "type",
+        skip_serializing_if = "::std::option::Option::is_none"
+    )]
+    pub type_: ::std::option::Option<Type>,
 }
 #[doc = "Whether the event is deprecated.\nIf the value is a string, it's the reason for the deprecation."]
 #[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]

@@ -12,7 +12,8 @@ Rust engine that reads Custom Elements Manifest (CEM) data for Lit web component
 
 ```
 custom-elements.json (from @custom-elements-manifest/analyzer --litelement)
-  -> holyfloe-cem   serde types (typify on a patched schema, checked in; D-046)
+  -> holyfloe-cem   serde types (typify on a patched schema, checked in; D-046);
+                    always parse with holyfloe_cem::parse (D-049)
   -> holyfloe-ir    Library/Component IR + 6 passes in fixed order:
                     flatten-inheritance -> drop-non-public -> name-derive
                     -> classify-props -> infer-bindings -> validate

@@ -54,6 +54,34 @@ expression: build_fixture(name)
           "kind": "Primitive",
           "description": "Colour tone, reflected so it can be styled from outside.",
           "deprecated": null
+        },
+        {
+          "name": "label",
+          "attribute": null,
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Accessible label. Property only (`attribute: false`): never rendered as an attribute.",
+          "deprecated": null
+        },
+        {
+          "name": "overflow",
+          "attribute": null,
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": null,
+          "reflects": false,
+          "readonly": true,
+          "kind": "Boolean",
+          "description": "True when the count is shown as 99+. Read-only.",
+          "deprecated": null
         }
       ],
       "events": [],

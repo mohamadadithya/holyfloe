@@ -68,6 +68,30 @@ pub struct TwoWayBinding {
 pub enum ValuePath { Detail, DetailField(String), TargetProp(String) }
 ```
 
+## Input
+
+Parse manifests with `holyfloe_cem::parse`, never `serde_json::from_str`. The declarations enum is untagged, so an element missing one required field would otherwise fall back to a plain `ClassDeclaration` and silently lose its tag. `parse` makes that an error. Other declarations and `js` exports that match no schema variant are dropped: published manifests include bundled dependency code (Lion ships minified Lit classes and Popper exports), and those never produce output. `Event.type` is optional (schema patch 3, D-049).
+
+`build(cem, package_json, config)` first checks the config (`E010`), then discovers classes:
+- A class is a component for each tag it has, from `tagName` or a `custom-element-definition` export. Literal quotes around a tag are stripped (the analyzer keeps `` `lion-input-range` `` verbatim). `customElement: true` without a tag is a base class.
+- One class with two tags gives two components. The analyzer identifies classes by name, so same-named classes in one module look like one class.
+- Module references inside the manifest (re-exports, superclasses, definition exports, type references) starting with `./` or `../` are relative to the module that wrote them. `/x` and `x` are package-root paths. `js` re-exports are followed to the declaring class.
+- Components whose tag matches a config `exclude` glob are dropped after flatten, so they can still be base classes.
+
+## Module resolution
+
+Each component gets two `ModuleRef`s:
+- `module`: the declaring module if `exports` matches it, else the first module that re-exports the class under its own name (barrels such as Lion's `exports/*.js`).
+- `definition`: the module holding the `custom-element-definition` export, else `module`.
+
+A module path becomes a specifier in four steps:
+1. Strip a leading `/` or `./`.
+2. Change `.ts`/`.tsx` to `.js`, `.mts` to `.mjs` and `.cts` to `.cjs`.
+3. Apply the longest matching `moduleRewrite` prefix. Keys and values are normalized the same way.
+4. Match the result against `package.json` `exports`. String targets, `*` patterns and condition objects (`import` > `default`) are supported. Exact keys beat patterns, and longer pattern prefixes beat shorter ones. A candidate counts only if Node's forward lookup of that subpath lands on the same file, so `null` exclusions and shadowing keys are honoured.
+
+No `exports` field means every file is importable as `<pkg>/<path>`. No match at all is `E002`.
+
 ## Normalization passes (run in this order)
 
 1. **flatten-inheritance.** Merge members, events, slots, parts from superclass and mixins using `inheritedFrom` and dependency manifests. Error on cycles.
@@ -104,6 +128,13 @@ Inferred bindings are marked `inferred: true` and can be disabled with config `b
 
 ## Config file (`holyfloe.config.json`)
 
+The IR reads these keys and ignores the rest:
+- `moduleRewrite`: prefix pairs, see Module resolution.
+- `bindings`: `"infer"` (default) or `"explicit-only"`.
+- `exclude`: tag globs, where `*` matches any run of characters.
+- `overrides.<tag>.events.<dom-name>`: the base prop name, without a framework prefix. An unknown tag or event is `E009`, so a config serves one manifest. Fixtures with overrides have their own `fixtures/src/<name>/holyfloe.config.json`.
+- `tagFormatter`, `componentNameFormatter`: any non-null value is `E010` (not supported yet).
+
 ```json
 {
   "cem": "./custom-elements.json",
@@ -124,3 +155,17 @@ Inferred bindings are marked `inferred: true` and can be disabled with config `b
 ## Errors
 
 Use `thiserror`. Every error carries: component tag (if known), CEM module path, and a short fix hint. The CLI prints them as `error[E0xx]: message` with the hint on the next line.
+
+| Code | Where | Meaning |
+|---|---|---|
+| E002 | lower | A module (component, definition, or detail type reference) matches no `exports` entry, and no exported module re-exports the class |
+| E003 | flatten | Inheritance cycle |
+| E004 | validate | Tag defined more than once |
+| E005 | validate | Prop declared more than once |
+| E006 | validate | Several events map to the same base prop name |
+| E007 | validate | Event with an empty name |
+| E008 | lower, validate | Tag is not a valid custom element name (e.g. a variable the analyzer recorded), or a component/event name is not `[A-Za-z0-9_$]` |
+| E009 | name-derive | Event override for a tag or event that does not exist |
+| E010 | config check | Unsupported config key (`tagFormatter`, `componentNameFormatter`) |
+
+Manifest parse errors come from `holyfloe_cem::ParseError`, not `IrError`.

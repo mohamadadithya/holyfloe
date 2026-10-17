@@ -4,7 +4,7 @@
 import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 import type { FxBadge as FxBadgeElement } from '@holyfloe/fixtures/fx-badge/fx-badge.js';
 
-type FxBadgeProps = Partial<Pick<FxBadgeElement, 'count' | 'tone'>>;
+type FxBadgeProps = Partial<Pick<FxBadgeElement, 'count' | 'tone' | 'label'>>;
 
 declare module 'react' {
   namespace JSX {
@@ -15,7 +15,7 @@ declare module 'react' {
        * Slots:
        * - default: Optional label shown next to the count.
        */
-      'fx-badge': Omit<DetailedHTMLProps<HTMLAttributes<FxBadgeElement>, FxBadgeElement>, 'count' | 'tone'> & FxBadgeProps;
+      'fx-badge': Omit<DetailedHTMLProps<HTMLAttributes<FxBadgeElement>, FxBadgeElement>, 'count' | 'tone' | 'label'> & FxBadgeProps;
     }
   }
 }

@@ -5,8 +5,8 @@ import type { FxBadge as FxBadgeElement } from '@holyfloe/fixtures/fx-badge/fx-b
 import { createElement, forwardRef, useImperativeHandle, useRef, type HTMLAttributes } from 'react';
 import { useProperties } from './react-utils.js';
 
-export type FxBadgeProps = Partial<Pick<FxBadgeElement, 'count' | 'tone'>> &
-  Omit<HTMLAttributes<FxBadgeElement>, 'count' | 'tone'>;
+export type FxBadgeProps = Partial<Pick<FxBadgeElement, 'count' | 'tone' | 'label'>> &
+  Omit<HTMLAttributes<FxBadgeElement>, 'count' | 'tone' | 'label'>;
 
 /**
  * A small count badge.
@@ -15,12 +15,12 @@ export type FxBadgeProps = Partial<Pick<FxBadgeElement, 'count' | 'tone'>> &
  * - default: Optional label shown next to the count.
  */
 export const FxBadge = forwardRef<FxBadgeElement, FxBadgeProps>(function FxBadge(
-  { count, tone, ...rest },
+  { count, tone, label, ...rest },
   forwardedRef,
 ) {
   const ref = useRef<FxBadgeElement>(null);
   useImperativeHandle(forwardedRef, () => ref.current as FxBadgeElement);
-  useProperties(ref, 'fx-badge', { count, tone });
+  useProperties(ref, 'fx-badge', { count, tone, label });
   return createElement('fx-badge', {
     ...rest,
     ref,

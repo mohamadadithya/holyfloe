@@ -20,15 +20,17 @@ generated/react/
 
 Component rules:
 1. First line `'use client';` when `react.useClient` is true (default).
-2. Side-effect import that defines the element: `import '<pkg>/<module>';`
-3. `import type { MyButton as MyButtonElement } from '<pkg>/<module>';`
+2. Side-effect import that defines the element: `import '<definition.specifier>';`. This is the module holding the `custom-element-definition` export, which can be a separate `define` file (Lion).
+3. `import type { MyButton as MyButtonElement } from '<module.specifier>';`. This is the declaring module, or an exported module that re-exports the class.
 4. Element props typed from the class: `MyButtonElement['variant']`. Never inline resolved types.
 5. Props by `PropKind`:
    - **Boolean:** pass `true` as an empty attribute, omit when `false`. Set the property on the element in a layout effect after mount so updates work post-upgrade.
    - **Primitive:** pass as attribute in JSX (SSR-correct), and also assign the property in the layout effect when the element is upgraded.
    - Unsetting a Primitive or Boolean prop (value -> `undefined`) removes the attribute, and Lit then sets the property to `null` (Primitive) or `false` (Boolean), not back to its default. This is documented behavior, not reset by the wrapper.
    - **Complex:** never an attribute. Assign as a property in `useLayoutEffect`. Re-apply after `customElements.whenDefined(tag)` resolves.
-6. Events: for each event emit an `on<PascalName>` prop. Attach one stable listener per event with `addEventListener(dom_name, …)` in a layout effect (not `useEffect`: Lit's first update runs before passive effects, so events fired there would be lost). The listener calls the latest handler from a ref, so changing the handler never re-subscribes. Clean up on unmount. Handler type: `(e: TypedEvent<MyButtonElement, Detail>) => void` where `TypedEvent` makes `e.target`/`e.currentTarget` the element class. `Detail` is `T` only when the CEM type is `CustomEvent<T>` (or a `@fires {CustomEvent<T>}` tag); a bare `CustomEvent` or a missing type gives `unknown`, never `null`. The detail type text is the one place CEM type text is re-emitted (there is no class member to index into); if it names other types, they compile only when the CEM lists them in `type.references`, which become `import type` lines.
+   - **No attribute** (`attribute: None`, Lit `attribute: false`): property only, whatever the kind. Never render it as an attribute (fixture `fx-badge` `label`).
+   - **Read-only** (`readonly: true`, a getter without a setter): not a prop at all. Leave it out of `Pick`, destructuring and `useProperties`, because assigning it throws a `TypeError` (fixture `fx-badge` `overflow`).
+6. Events: for each event emit an `on<base_name>` prop (`base_name` already has config overrides applied). Attach one stable listener per event with `addEventListener(dom_name, …)` in a layout effect (not `useEffect`: Lit's first update runs before passive effects, so events fired there would be lost). The listener calls the latest handler from a ref, so changing the handler never re-subscribes. Clean up on unmount. Handler type: `(e: TypedEvent<MyButtonElement, Detail>) => void` where `TypedEvent` makes `e.target`/`e.currentTarget` the element class. `Detail` is `T` only when the CEM type is `CustomEvent<T>` (or a `@fires {CustomEvent<T>}` tag); a bare `CustomEvent` or a missing type gives `unknown`, never `null`. The detail type text is the one place CEM type text is re-emitted (there is no class member to index into); if it names other types, they compile only when the CEM lists them in `type.references`, which become `import type` lines.
 7. Ref: forward to the custom element. For React 19 peer ranges, `ref` may be a normal prop; for 18, use `forwardRef`. Choose by `peerDependencies`, do not emit both.
 8. Children: pass through unchanged. They become the default slot.
 9. Named slots: consumers put `slot="name"` on child elements. Optionally emit `<MyButton.Slot name="icon">` helper (config `react.slotHelpers`, default off).

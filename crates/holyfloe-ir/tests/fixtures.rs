@@ -1,4 +1,5 @@
-//! IR snapshot per M1 fixture, built with the fixture package.json and holyfloe.config.json.
+//! IR snapshot per M1 fixture, built with the fixture package.json and holyfloe.config.json
+//! (`src/<name>/holyfloe.config.json` when the fixture has its own, e.g. fx-events overrides).
 
 use std::fs;
 use std::path::PathBuf;
@@ -25,12 +26,18 @@ fn read(path: PathBuf) -> String {
 
 fn build_fixture(name: &str) -> holyfloe_ir::Library {
     let dir = fixtures_dir();
-    let cem = serde_json::from_str(&read(
+    let cem = holyfloe_cem::parse(&read(
         dir.join("src").join(name).join("custom-elements.json"),
     ))
     .unwrap();
     let pkg: PackageInfo = serde_json::from_str(&read(dir.join("package.json"))).unwrap();
-    let cfg: Config = serde_json::from_str(&read(dir.join("holyfloe.config.json"))).unwrap();
+    let own = dir.join("src").join(name).join("holyfloe.config.json");
+    let cfg_path = if own.exists() {
+        own
+    } else {
+        dir.join("holyfloe.config.json")
+    };
+    let cfg: Config = serde_json::from_str(&read(cfg_path)).unwrap();
     build(&cem, &pkg, &cfg).unwrap()
 }
 

@@ -38,6 +38,24 @@
               "description": "Colour tone, reflected so it can be styled from outside.",
               "attribute": "tone",
               "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Accessible label. Property only (`attribute: false`): never rendered as an attribute."
+            },
+            {
+              "kind": "field",
+              "name": "overflow",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "True when the count is shown as 99+. Read-only.",
+              "readonly": true
             }
           ],
           "attributes": [

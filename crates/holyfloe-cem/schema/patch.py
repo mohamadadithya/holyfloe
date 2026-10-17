@@ -35,4 +35,10 @@ for name in ("CustomElementDeclaration", "CustomElementMixinDeclaration"):
     assert len(patched) == 1, f"upstream {name}.members changed"
     patched[0]["$ref"] = "#/definitions/CustomElementField"
 
+# 3. Event.type is required upstream, but analyzer output for a `@fires` tag with no dispatch
+#    (e.g. Shoelace) omits it. One missing field fails CustomElementDeclaration, and untagged
+#    serde then falls back to ClassDeclaration, silently dropping the element.
+defs["Event"]["required"].remove("type")
+assert defs["Event"]["required"] == ["name"], "upstream Event.required changed"
+
 (here / "schema-2.1.0.patched.json").write_text(json.dumps(schema, indent=2) + "\n")

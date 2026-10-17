@@ -5,14 +5,13 @@
 use std::collections::HashMap;
 
 use crate::IrError;
-use crate::class::Class;
-use crate::module_path::normalize;
+use crate::class::{Class, Key, key};
 
 /// Returns the flattened components; bases without a tag are consumed here.
 pub(crate) fn run(classes: &[Class]) -> Result<Vec<Class>, IrError> {
-    let index: HashMap<(&str, &str), &Class> = classes
+    let index: HashMap<Key, &Class> = classes
         .iter()
-        .map(|c| ((normalize(&c.module), c.name.as_str()), c))
+        .map(|c| (key(&c.module, &c.name), c))
         .collect();
     classes
         .iter()
@@ -21,13 +20,14 @@ pub(crate) fn run(classes: &[Class]) -> Result<Vec<Class>, IrError> {
         .collect()
 }
 
-fn flatten(class: &Class, index: &HashMap<(&str, &str), &Class>) -> Result<Class, IrError> {
+fn flatten(class: &Class, index: &HashMap<Key, &Class>) -> Result<Class, IrError> {
     let mut out = class.clone();
-    let mut chain = vec![key(class)];
+    let mut chain = vec![key(&class.module, &class.name)];
     let mut current = class;
-    while let Some(base) = superclass(current, index) {
-        if chain.contains(&key(base)) {
-            let names: Vec<_> = chain.iter().map(|(_, n)| *n).collect();
+    while let Some(base) = current.superclass.as_ref().and_then(|k| index.get(k)) {
+        let base_key = key(&base.module, &base.name);
+        if chain.contains(&base_key) {
+            let names: Vec<_> = chain.iter().map(|(_, n)| n.as_str()).collect();
             return Err(IrError::new(
                 "E003",
                 format!("inheritance cycle: {} -> {}", names.join(" -> "), base.name),
@@ -36,7 +36,7 @@ fn flatten(class: &Class, index: &HashMap<(&str, &str), &Class>) -> Result<Class
                 "fix the `superclass` entries in the manifest; a class cannot extend itself",
             ));
         }
-        chain.push(key(base));
+        chain.push(base_key);
         merge(&mut out.members, &base.members, |m| &m.name);
         merge(&mut out.events, &base.events, |e| &e.name);
         merge(&mut out.slots, &base.slots, |s| &s.name);
@@ -46,21 +46,6 @@ fn flatten(class: &Class, index: &HashMap<(&str, &str), &Class>) -> Result<Class
         current = base;
     }
     Ok(out)
-}
-
-fn key(c: &Class) -> (&str, &str) {
-    (normalize(&c.module), &c.name)
-}
-
-fn superclass<'a>(c: &Class, index: &HashMap<(&str, &str), &'a Class>) -> Option<&'a Class> {
-    let sup = c.superclass.as_ref()?;
-    // shortcut: superclasses from other packages (LitElement, dependency manifests) are not
-    // merged; cross-package flatten comes with fx-mixin in M2.
-    if sup.package.is_some() {
-        return None;
-    }
-    let module = sup.module.as_deref().unwrap_or(&c.module);
-    index.get(&(normalize(module), sup.name.as_str())).copied()
 }
 
 fn merge<T: Clone>(own: &mut Vec<T>, base: &[T], name: impl Fn(&T) -> &String) {

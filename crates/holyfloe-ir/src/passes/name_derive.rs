@@ -22,10 +22,34 @@ pub(crate) fn check_config(cfg: &Config) -> Result<(), IrError> {
 }
 
 pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
+    if let Some(tag) = cfg
+        .overrides
+        .keys()
+        .find(|tag| !cfg.excludes(tag) && !lib.components.iter().any(|c| &c.tag == *tag))
+    {
+        let known: Vec<_> = lib
+            .components
+            .iter()
+            .map(|c| format!("`{}`", c.tag))
+            .collect();
+        return Err(IrError::new(
+            "E009",
+            format!("override for `{tag}`, which is not a component in this manifest"),
+            Some(tag),
+            None,
+            format!(
+                "fix or remove `overrides.{tag}` in holyfloe.config.json; components are: {}",
+                if known.is_empty() {
+                    "none".to_owned()
+                } else {
+                    known.join(", ")
+                }
+            ),
+        ));
+    }
     for c in &mut lib.components {
         c.name = pascal(&c.tag);
         let overrides = cfg.overrides.get(&c.tag);
-        // Overrides for absent tags are fine: one config can serve several manifests.
         if let Some(dom) = overrides
             .into_iter()
             .flat_map(|o| o.events.keys())
@@ -122,21 +146,35 @@ mod tests {
     #[test]
     fn override_for_missing_event_is_e009() {
         let cfg = Config {
-            overrides: [
-                (
-                    "x-a".to_owned(),
-                    ComponentOverride {
-                        events: [("my-chnage".to_owned(), "X".to_owned())].into(),
-                    },
-                ),
-                ("x-other".to_owned(), ComponentOverride::default()),
-            ]
+            overrides: [(
+                "x-a".to_owned(),
+                ComponentOverride {
+                    events: [("my-chnage".to_owned(), "X".to_owned())].into(),
+                },
+            )]
             .into(),
             ..Config::default()
         };
         let err = build_json_with(cem_one(element("x-a", "XA")), &cfg).unwrap_err();
         assert_eq!(err.code, "E009");
         assert!(err.message.contains("my-chnage"));
+    }
+
+    #[test]
+    fn override_for_missing_tag_is_e009() {
+        let cfg = Config {
+            overrides: [("x-ohter".to_owned(), ComponentOverride::default())].into(),
+            ..Config::default()
+        };
+        let err = build_json_with(cem_one(element("x-a", "XA")), &cfg).unwrap_err();
+        assert_eq!(err.code, "E009");
+        assert!(err.hint.contains("`x-a`"));
+
+        let cfg = Config {
+            exclude: vec!["x-ohter".into()],
+            ..cfg
+        };
+        assert!(build_json_with(cem_one(element("x-a", "XA")), &cfg).is_ok());
     }
 
     #[test]
