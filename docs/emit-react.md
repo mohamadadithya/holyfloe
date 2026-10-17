@@ -4,7 +4,7 @@ Reference output shape: `@wc-toolkit/react-wrappers` 1.2.x (port the shape, writ
 
 ## Modes
 
-Config: `react: { mode: "wrapper" | "types" }`. Default `wrapper`.
+Config: `react: { mode: "wrapper" | "types", useClient: boolean, ref: "forwardRef" | "prop" }`. Defaults `wrapper`, `true`, `forwardRef`. Other `react` keys are ignored.
 
 ### `wrapper` mode (React 18 and 19)
 
@@ -31,7 +31,7 @@ Component rules:
    - **No attribute** (`attribute: None`, Lit `attribute: false`): property only, whatever the kind. Never render it as an attribute (fixture `fx-badge` `label`).
    - **Read-only** (`readonly: true`, a getter without a setter): not a prop at all. Leave it out of `Pick`, destructuring and `useProperties`, because assigning it throws a `TypeError` (fixture `fx-badge` `overflow`).
 6. Events: for each event emit an `on<base_name>` prop (`base_name` already has config overrides applied). Attach one stable listener per event with `addEventListener(dom_name, …)` in a layout effect (not `useEffect`: Lit's first update runs before passive effects, so events fired there would be lost). The listener calls the latest handler from a ref, so changing the handler never re-subscribes. Clean up on unmount. Handler type: `(e: TypedEvent<MyButtonElement, Detail>) => void` where `TypedEvent` makes `e.target`/`e.currentTarget` the element class. `Detail` is `T` only when the CEM type is `CustomEvent<T>` (or a `@fires {CustomEvent<T>}` tag); a bare `CustomEvent` or a missing type gives `unknown`, never `null`. The detail type text is the one place CEM type text is re-emitted (there is no class member to index into); if it names other types, they compile only when the CEM lists them in `type.references`, which become `import type` lines.
-7. Ref: forward to the custom element. For React 19 peer ranges, `ref` may be a normal prop; for 18, use `forwardRef`. Choose by `peerDependencies`, do not emit both.
+7. Ref: forward to the custom element. Config `react.ref`: `"forwardRef"` (default, React 18 and 19) wraps the component in `forwardRef`; `"prop"` (React 19 only) emits a plain function taking `ref?: Ref<El>` as a prop. One style per run, never both.
 8. Children: pass through unchanged. They become the default slot.
 9. Named slots: consumers put `slot="name"` on child elements. Optionally emit `<MyButton.Slot name="icon">` helper (config `react.slotHelpers`, default off).
 10. Style: accept `style` with CSS custom property keys typed from `css_props` (`'--my-color'?: string`).

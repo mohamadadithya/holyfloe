@@ -81,6 +81,16 @@ dependencies = [
 [[package]]
 name = "holyfloe-emit-react"
 version = "0.0.0"
+dependencies = [
+ "holyfloe-cem",
+ "holyfloe-emit-core",
+ "holyfloe-ir",
+ "insta",
+ "minijinja",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "holyfloe-emit-svelte"
