@@ -120,7 +120,7 @@ pub struct CssState {
 pub struct TypeRef {
     /// Verbatim CEM type text, never rewritten.
     pub text: String,
-    /// Filled for event types only: their detail is the one type text emitters re-emit.
+    /// Filled only for event types with a `CustomEvent<T>` detail: the one type text emitters re-emit.
     pub imports: Vec<TypeImport>,
 }
 

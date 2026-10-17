@@ -34,10 +34,12 @@ pub(crate) fn output_path(path: &str, cfg: &Config) -> String {
     .iter()
     .find_map(|(from, to)| path.strip_suffix(from).map(|stem| format!("{stem}{to}")))
     .unwrap_or_else(|| path.to_owned());
+    // Keys and values are normalized like paths, so `./src/` works as well as `src/`.
     let rewrite = cfg
         .module_rewrite
         .iter()
-        .filter(|(from, _)| out.starts_with(from.as_str()))
+        .map(|(from, to)| (strip_root(from), strip_root(to)))
+        .filter(|(from, _)| out.starts_with(from))
         .max_by_key(|(from, _)| from.len());
     if let Some((from, to)) = rewrite {
         out = format!("{to}{}", &out[from.len()..]);
@@ -60,7 +62,8 @@ pub(crate) fn specifier(path: &str, pkg: &PackageInfo, cfg: &Config) -> Result<S
 }
 
 /// The export subpath (`.`, `./x.js`) whose target is `file`. Exact entries beat `*` patterns,
-/// and longer pattern prefixes beat shorter ones.
+/// and longer pattern prefixes beat shorter ones. A candidate only counts if Node, resolving
+/// it forward, lands on `file` again: that honours `null` exclusions and shadowing keys.
 fn subpath(exports: &Value, file: &str) -> Option<String> {
     let entries: Vec<(&str, &Value)> = match exports {
         Value::Object(map) if map.keys().all(|k| k.starts_with('.')) => {
@@ -69,28 +72,56 @@ fn subpath(exports: &Value, file: &str) -> Option<String> {
         // A string or a condition object is shorthand for `{ ".": ... }`.
         other => vec![(".", other)],
     };
-    let mut best: Option<(usize, String)> = None;
-    for (key, value) in entries {
+    let mut candidates = Vec::new();
+    for (key, value) in &entries {
         let Some(target) = target(value).map(strip_root) else {
             continue;
         };
-        let candidate = match (key.split_once('*'), target.split_once('*')) {
-            (None, None) if target == file => (usize::MAX, key.to_owned()),
+        match (key.split_once('*'), target.split_once('*')) {
+            (None, None) if target == file => candidates.push((usize::MAX, key.to_string())),
             (Some((key_pre, key_post)), Some((pre, post)))
                 if file.len() >= pre.len() + post.len()
                     && file.starts_with(pre)
                     && file.ends_with(post) =>
             {
                 let star = &file[pre.len()..file.len() - post.len()];
-                (pre.len(), format!("{key_pre}{star}{key_post}"))
+                candidates.push((pre.len(), format!("{key_pre}{star}{key_post}")));
             }
-            _ => continue,
-        };
-        if best.as_ref().is_none_or(|(rank, _)| candidate.0 > *rank) {
-            best = Some(candidate);
+            _ => {}
         }
     }
-    best.map(|(_, sub)| sub)
+    // Stable sort: on equal rank the first entry in `exports` wins.
+    candidates.sort_by_key(|c| std::cmp::Reverse(c.0));
+    candidates
+        .into_iter()
+        .map(|(_, sub)| sub)
+        .find(|sub| resolve(&entries, sub).as_deref() == Some(file))
+}
+
+/// Node's forward lookup: an exact key, else the pattern key with the longest prefix before
+/// `*`. `None` when the chosen key's target is `null` (excluded) or there is no match.
+fn resolve(entries: &[(&str, &Value)], sub: &str) -> Option<String> {
+    if let Some((_, value)) = entries.iter().find(|(key, _)| *key == sub) {
+        return target(value).map(|t| strip_root(t).to_owned());
+    }
+    let (star, value) = entries
+        .iter()
+        .filter_map(|(key, value)| {
+            let (pre, post) = key.split_once('*')?;
+            let matches =
+                sub.len() >= pre.len() + post.len() && sub.starts_with(pre) && sub.ends_with(post);
+            matches.then(|| {
+                (
+                    pre.len(),
+                    key.len(),
+                    &sub[pre.len()..sub.len() - post.len()],
+                    value,
+                )
+            })
+        })
+        .max_by_key(|(pre_len, key_len, _, _)| (*pre_len, *key_len))
+        .map(|(_, _, star, value)| (star, value))?;
+    target(value).map(|t| strip_root(t).replacen('*', star, 1))
 }
 
 /// Resolve a target, preferring the `import` condition over `default`.
@@ -192,6 +223,37 @@ mod tests {
             specifier("src/c/a.ts", &p, &cfg()),
             Ok("@acme/ui/components/a.js".into())
         );
+    }
+
+    #[test]
+    fn null_exclusions_and_shadowing_keys_are_honoured() {
+        let p = pkg(json!({
+            "./*": "./dist/*",
+            "./internal/*": null,
+            "./button.js": "./dist/legacy-button.js"
+        }));
+        assert_eq!(
+            specifier("src/internal/a.ts", &p, &cfg()),
+            Err("dist/internal/a.js".into())
+        );
+        // `./button.js` is taken by an exact key, so dist/button.js is not importable.
+        assert_eq!(
+            specifier("src/button.ts", &p, &cfg()),
+            Err("dist/button.js".into())
+        );
+        assert_eq!(
+            specifier("src/legacy-button.ts", &p, &cfg()),
+            Ok("@acme/ui/button.js".into())
+        );
+    }
+
+    #[test]
+    fn rewrite_keys_may_start_with_dot_slash() {
+        let cfg = Config {
+            module_rewrite: [("./src/".into(), "./dist/".into())].into(),
+            ..Config::default()
+        };
+        assert_eq!(output_path("src/a.ts", &cfg), "dist/a.js");
     }
 
     #[test]

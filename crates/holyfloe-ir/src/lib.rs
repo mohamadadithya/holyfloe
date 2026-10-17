@@ -19,8 +19,10 @@ pub fn build(
     pkg: &PackageInfo,
     cfg: &Config,
 ) -> Result<Library, IrError> {
-    let classes = class::discover(cem);
+    name_derive::check_config(cfg)?;
+    let classes = class::discover(cem)?;
     let mut classes = flatten_inheritance::run(&classes)?;
+    classes.retain(|c| !c.tag.as_deref().is_some_and(|t| cfg.excludes(t)));
     drop_non_public::run(&mut classes);
     let components = classes
         .into_iter()

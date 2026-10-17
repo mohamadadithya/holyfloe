@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use holyfloe_cem as cem;
 
 use crate::model::*;
+use crate::passes::classify_props;
 use crate::{Config, IrError, PackageInfo, module_path};
 
 /// `true` -> `Some("")`, a reason -> `Some(reason)`. Every CEM `*Deprecated` enum has this shape.
@@ -61,17 +62,27 @@ pub(crate) struct Field {
 /// Every class declaration in the manifest. A class is a component when it has a tag, from
 /// `tagName` or a `custom-element-definition` export. `customElement: true` without a tag
 /// (e.g. `FxBase`) is a base class (OQ-015).
-pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
+pub(crate) fn discover(pkg: &cem::Package) -> Result<Vec<Class>, IrError> {
     // (declaring module, class name) -> (tag, module that defines it)
     let mut tags: HashMap<(&str, &str), (&str, &str)> = HashMap::new();
     for module in &pkg.modules {
         for export in &module.exports {
             if let cem::JavaScriptModuleExportsItem::CustomElementExport(e) = export {
                 let decl_module = e.declaration.module.as_deref().unwrap_or(&module.path);
-                tags.insert(
-                    (module_path::normalize(decl_module), &e.declaration.name),
-                    (&e.name, &module.path),
+                let key = (
+                    module_path::normalize(decl_module),
+                    e.declaration.name.as_str(),
                 );
+                if let Some((other, _)) = tags.insert(key, (&e.name, &module.path))
+                    && other != e.name
+                {
+                    return Err(registered_twice(
+                        &e.declaration.name,
+                        other,
+                        &e.name,
+                        decl_module,
+                    ));
+                }
             }
         }
     }
@@ -90,13 +101,27 @@ pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
             };
             let key = (module_path::normalize(&module.path), class.name.as_str());
             if let Some((tag, definition)) = tags.get(&key) {
-                class.tag.get_or_insert_with(|| (*tag).to_owned());
+                if let Some(own) = class.tag.as_deref().filter(|own| own != tag) {
+                    return Err(registered_twice(&class.name, own, tag, &module.path));
+                }
+                class.tag = Some((*tag).to_owned());
                 class.definition_module = Some((*definition).to_owned());
             }
             classes.push(class);
         }
     }
-    classes
+    Ok(classes)
+}
+
+/// `customElements.define` throws when a constructor is registered under a second tag.
+fn registered_twice(class: &str, a: &str, b: &str, module: &str) -> IrError {
+    IrError::new(
+        "E011",
+        format!("class `{class}` is registered as both `{a}` and `{b}`"),
+        Some(a),
+        Some(module),
+        "register each class under one tag; use a subclass for the second tag",
+    )
 }
 
 fn from_element(d: &cem::CustomElementDeclaration, module: &str) -> Class {
@@ -238,7 +263,12 @@ impl Class {
             .events
             .into_iter()
             .map(|e| {
-                let imports = type_imports(&e.type_, pkg, cfg, &tag)?;
+                // Only a `CustomEvent<T>` detail re-emits type text, so only it needs imports;
+                // resolving the others could fail on modules nothing imports.
+                let imports = match classify_props::detail(&e.type_.text) {
+                    Some(_) => type_imports(&e.type_, pkg, cfg, &tag)?,
+                    None => Vec::new(),
+                };
                 Ok(Event {
                     deprecated: deprecated!(e.deprecated, EventDeprecated),
                     dom_name: e.name,
@@ -351,7 +381,7 @@ fn unexported(file: &str, tag: Option<&str>, module: &str) -> IrError {
 mod tests {
     use serde_json::json;
 
-    use crate::test_util::{cem_one, element};
+    use crate::test_util::{build_json, build_json_with, cem_one, element};
     use crate::{Config, PackageInfo};
 
     #[test]
@@ -367,6 +397,90 @@ mod tests {
         assert_eq!(err.tag.as_deref(), Some("x-a"));
         assert_eq!(err.module.as_deref(), Some("src/x.ts"));
         assert!(err.hint.contains("moduleRewrite"));
+    }
+
+    fn define(tag: &str) -> serde_json::Value {
+        json!({ "kind": "custom-element-definition", "name": tag,
+                "declaration": { "name": "XA", "module": "src/x.ts" } })
+    }
+
+    #[test]
+    fn one_class_under_two_tags_is_e011() {
+        let mut cem = cem_one(element("x-a", "XA"));
+        cem["modules"][0]["exports"] = json!([define("x-b")]);
+        let err = build_json(cem).unwrap_err();
+        assert_eq!(err.code, "E011");
+        assert_eq!(
+            err.message,
+            "class `XA` is registered as both `x-a` and `x-b`"
+        );
+
+        let mut cem = cem_one(element("x-a", "XA"));
+        cem["modules"][0]["exports"] = json!([define("x-a"), define("x-b")]);
+        assert_eq!(build_json(cem).unwrap_err().code, "E011");
+    }
+
+    #[test]
+    fn exclude_drops_matching_tags_but_keeps_them_as_bases() {
+        let base = element("internal-base", "Base");
+        let mut derived = element("x-a", "XA");
+        derived["superclass"] = json!({ "name": "Base" });
+        derived["members"] = json!([]);
+        let mut cem = cem_one(base);
+        cem["modules"][0]["declarations"]
+            .as_array_mut()
+            .unwrap()
+            .push(derived);
+        cem["modules"][0]["declarations"][0]["members"] =
+            json!([{ "kind": "field", "name": "size" }]);
+        let cfg = Config {
+            exclude: vec!["internal-*".into()],
+            ..Config::default()
+        };
+        let lib = build_json_with(cem, &cfg).unwrap();
+        let tags: Vec<_> = lib.components.iter().map(|c| c.tag.as_str()).collect();
+        assert_eq!(tags, ["x-a"]);
+        assert_eq!(lib.components[0].props[0].name, "size");
+    }
+
+    #[test]
+    fn only_detail_types_resolve_imports() {
+        let mut el = element("x-a", "XA");
+        el["events"] = json!([
+            { "name": "a", "type": { "text": "CustomEvent<Detail>",
+                "references": [{ "name": "Detail", "module": "src/types.ts" }] } },
+            { "name": "b", "type": { "text": "BEvent",
+                "references": [{ "name": "BEvent", "module": "src/private.ts" }] } }
+        ]);
+        let cem = serde_json::from_value(cem_one(el)).unwrap();
+        let pkg = PackageInfo {
+            name: "pkg".into(),
+            exports: Some(json!({ "./x.js": "./src/x.js", "./types.js": "./src/types.js" })),
+            ..PackageInfo::default()
+        };
+        // `src/private.ts` is not exported, but nothing imports BEvent, so no E002.
+        let c = crate::build(&cem, &pkg, &Config::default())
+            .unwrap()
+            .components
+            .remove(0);
+        let detail = c.events[0].detail.as_ref().unwrap();
+        assert_eq!(detail.imports[0].specifier, "pkg/types.js");
+        assert!(c.events[1].event_type.as_ref().unwrap().imports.is_empty());
+    }
+
+    #[test]
+    fn config_errors_come_before_manifest_errors() {
+        let cem = serde_json::from_value(cem_one(element("x-a", "XA"))).unwrap();
+        let pkg = PackageInfo {
+            name: "pkg".into(),
+            exports: Some(json!({})),
+            ..PackageInfo::default()
+        };
+        let cfg = Config {
+            tag_formatter: Some(json!("x")),
+            ..Config::default()
+        };
+        assert_eq!(crate::build(&cem, &pkg, &cfg).unwrap_err().code, "E010");
     }
 
     #[test]

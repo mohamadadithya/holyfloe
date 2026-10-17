@@ -55,7 +55,7 @@ pub struct Slot { pub name: String /* "" = default */ }
 
 pub struct TypeRef {
     pub text: String,                  // verbatim, never rewritten
-    pub imports: Vec<TypeImport>,      // { name, specifier }; from CEM type.references, filled for event types only
+    pub imports: Vec<TypeImport>,      // { name, specifier }; from CEM type.references, filled only when the event has a CustomEvent<T> detail
 }
 
 pub struct TwoWayBinding {

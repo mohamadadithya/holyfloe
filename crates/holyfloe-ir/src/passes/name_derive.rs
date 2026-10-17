@@ -2,7 +2,8 @@
 
 use crate::{Config, IrError, Library};
 
-pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
+/// Runs before anything else in `build`, so a config error is never hidden by a manifest one.
+pub(crate) fn check_config(cfg: &Config) -> Result<(), IrError> {
     for (key, value) in [
         ("tagFormatter", &cfg.tag_formatter),
         ("componentNameFormatter", &cfg.component_name_formatter),
@@ -17,6 +18,10 @@ pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
             ));
         }
     }
+    Ok(())
+}
+
+pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
     for c in &mut lib.components {
         c.name = pascal(&c.tag);
         let overrides = cfg.overrides.get(&c.tag);
