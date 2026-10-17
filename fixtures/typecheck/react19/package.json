@@ -1,0 +1,12 @@
+{
+  "name": "@holyfloe/typecheck-react19",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}

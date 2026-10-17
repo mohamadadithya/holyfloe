@@ -42,11 +42,12 @@ gen-cem-types:
 gen-fixtures:
     @echo "not yet: M1" >&2; exit 1
 
-typecheck:
-    @echo "not yet: M1" >&2; exit 1
+typecheck: typecheck-react
 
-typecheck-react:
-    @echo "not yet: M1" >&2; exit 1
+# tsc --strict on generated React output + consumer tests, against @types/react 18 and 19.
+typecheck-react: build-fixtures
+    pnpm -C fixtures/typecheck/react18 typecheck
+    pnpm -C fixtures/typecheck/react19 typecheck
 
 typecheck-vue:
     @echo "not yet: M2" >&2; exit 1

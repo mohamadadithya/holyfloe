@@ -1,0 +1,12 @@
+{
+  "name": "@holyfloe/typecheck-react18",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "@types/react": "18.3.31",
+    "typescript": "7.0.2"
+  }
+}
