@@ -1,7 +1,6 @@
 // Generated once by typify, checked in (D-031, D-046). Do not edit by hand.
-// Regenerate from crates/holyfloe-cem:
-//   python3 schema/patch.py && cargo typify --no-builder schema/schema-2.1.0.patched.json -o src/generated.rs && cargo fmt
-// cargo-typify 0.8.0, schema from npm custom-elements-manifest@2.1.0 plus schema/patch.py.
+// Regenerate with `just gen-cem-types`: schema/patch.py, then cargo-typify 0.8.0
+// on schema-2.1.0.patched.json (upstream: npm custom-elements-manifest@2.1.0).
 
 #![allow(clippy::redundant_closure_call)]
 #![allow(clippy::needless_lifetimes)]

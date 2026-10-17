@@ -1,7 +1,6 @@
 """Patch the upstream CEM 2.1.0 schema so typify output is lossless (D-046).
 
-schema-2.1.0.json is the untouched upstream file. Run from crates/holyfloe-cem:
-    python3 schema/patch.py && cargo typify --no-builder schema/schema-2.1.0.patched.json -o src/generated.rs && cargo fmt
+schema-2.1.0.json is the untouched upstream file. Run via `just gen-cem-types`.
 """
 
 import copy
