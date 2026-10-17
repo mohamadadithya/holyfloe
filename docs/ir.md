@@ -5,33 +5,36 @@ The IR is the only thing emitters read. It is framework-neutral, serde-serializa
 ## Data model
 
 ```rust
+// Source of truth: crates/holyfloe-ir/src/model.rs. Every Component, Prop, Event, Slot,
+// Method, CssPart/CssProp/CssState also carries `description` and `deprecated`
+// (`Some("")` = deprecated without a reason).
+
 pub struct Library {
-    pub package: PackageInfo,          // name, version, entry points from package.json "exports"
+    pub package: PackageInfo,          // name, version, exports (deserialized from package.json)
     pub components: Vec<Component>,
 }
 
 pub struct Component {
-    pub tag: String,                   // CEM: custom-element-definition export / tagName
+    pub tag: String,                   // CEM: tagName, or a custom-element-definition export
+    pub name: String,                  // derived: Pascal(tag), e.g. "FxButton"
     pub class_name: String,            // CEM: declaration.name
-    pub module: ModuleRef,             // CEM: module.path -> import specifier that defines the element
+    pub module: ModuleRef,             // { path: CEM module.path, specifier: "<pkg>/<subpath>" }
     pub summary: Option<String>,
-    pub description: Option<String>,
-    pub deprecated: Option<String>,
     pub props: Vec<Prop>,
     pub events: Vec<Event>,
     pub slots: Vec<Slot>,
     pub methods: Vec<Method>,          // public, non-static
     pub css_parts: Vec<CssPart>,
-    pub css_props: Vec<CssProp>,       // custom properties
+    pub css_props: Vec<CssProp>,       // custom properties (+ syntax, default)
     pub css_states: Vec<CssState>,
-    pub form_associated: bool,         // NOT in CEM
+    pub form_associated: bool,         // NOT in CEM (false until M2)
     pub bindings: Vec<TwoWayBinding>,  // NOT in CEM
 }
 
 pub struct Prop {
     pub name: String,                  // CEM: field.name
     pub attribute: Option<String>,     // CEM: field.attribute
-    pub ty: TypeRef,
+    pub ty: Option<TypeRef>,           // CEM type is optional
     pub default: Option<String>,       // raw JS text
     pub reflects: bool,
     pub readonly: bool,
@@ -42,22 +45,23 @@ pub enum PropKind { Boolean, Primitive, Complex }
 
 pub struct Event {
     pub dom_name: String,              // exact name as dispatched, e.g. "my-change"
-    pub prop_name: String,             // derived, e.g. "onMyChange"
-    pub detail: Option<TypeRef>,
+    pub base_name: String,             // derived, framework-neutral, e.g. "MyChange"; each emitter adds its prefix (React: "on")
+    pub detail: Option<TypeRef>,       // T from CustomEvent<T>, else None (emitted as `unknown`)
     pub event_type: Option<TypeRef>,   // e.g. CustomEvent<...>, or a named Event subclass
 }
 
-pub struct Slot { pub name: String /* "" = default */, pub description: Option<String> }
+pub struct Slot { pub name: String /* "" = default */ }
 
 pub struct TypeRef {
     pub text: String,                  // verbatim, never rewritten
-    pub imports: Vec<TypeImport>,      // from CEM type.references when present
+    pub imports: Vec<TypeImport>,      // { name, specifier }; from CEM type.references, filled for event types only
 }
 
 pub struct TwoWayBinding {
     pub prop: String,
     pub event: String,                 // dom_name of the event that signals a change
     pub value: ValuePath,
+    pub inferred: bool,
 }
 
 pub enum ValuePath { Detail, DetailField(String), TargetProp(String) }
@@ -67,7 +71,7 @@ pub enum ValuePath { Detail, DetailField(String), TargetProp(String) }
 
 1. **flatten-inheritance.** Merge members, events, slots, parts from superclass and mixins using `inheritedFrom` and dependency manifests. Error on cycles.
 2. **drop-non-public.** Remove private, protected, static, and `@internal`-tagged members, plus any `attributes` entry whose `fieldName` points at a removed member (the analyzer lists protected fields there too). The analyzer already strips `@internal`; the check still matters for M4 input.
-3. **name-derive.** Compute `prop_name` for events, component class names, and file names. Respect config `tagFormatter` and `componentNameFormatter`.
+3. **name-derive.** Compute event `base_name` (config `overrides.<tag>.events.<dom-name>` wins) and component names. Respect config `tagFormatter` and `componentNameFormatter`.
 4. **classify-props.** Set `PropKind` by lexing `type.text`, after stripping top-level `| undefined` and `| null` (the analyzer writes optional props as `string | undefined`):
    - `boolean` -> Boolean
    - `string`, `number`, string/number literal unions, `bigint` -> Primitive

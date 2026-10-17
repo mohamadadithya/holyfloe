@@ -1,0 +1,71 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-badge",
+      "name": "FxBadge",
+      "class_name": "FxBadge",
+      "module": {
+        "path": "src/fx-badge/fx-badge.ts",
+        "specifier": "@holyfloe/fixtures/fx-badge/fx-badge.js"
+      },
+      "summary": null,
+      "description": "A small count badge.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "count",
+          "attribute": "badge-count",
+          "ty": {
+            "text": "number",
+            "imports": []
+          },
+          "default": "0",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Number shown in the badge. The attribute name differs from the property name.",
+          "deprecated": null
+        },
+        {
+          "name": "tone",
+          "attribute": "tone",
+          "ty": {
+            "text": "'neutral' | 'success' | 'warning'",
+            "imports": []
+          },
+          "default": "'neutral'",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Colour tone, reflected so it can be styled from outside.",
+          "deprecated": null
+        }
+      ],
+      "events": [],
+      "slots": [
+        {
+          "name": "",
+          "description": "Optional label shown next to the count.",
+          "deprecated": null
+        }
+      ],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

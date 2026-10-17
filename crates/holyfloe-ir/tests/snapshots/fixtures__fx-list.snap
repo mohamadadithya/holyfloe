@@ -1,0 +1,79 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-list",
+      "name": "FxList",
+      "class_name": "FxList",
+      "module": {
+        "path": "src/fx-list/fx-list.ts",
+        "specifier": "@holyfloe/fixtures/fx-list/fx-list.js"
+      },
+      "summary": null,
+      "description": "Renders a list of items. All props are complex and set as properties.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "items",
+          "attribute": null,
+          "ty": {
+            "text": "ListItem[]",
+            "imports": []
+          },
+          "default": "[]",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Complex",
+          "description": "Items to render.",
+          "deprecated": null
+        },
+        {
+          "name": "options",
+          "attribute": null,
+          "ty": {
+            "text": "ListOptions",
+            "imports": []
+          },
+          "default": "{ dense: false }",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Complex",
+          "description": "Display options.",
+          "deprecated": null
+        },
+        {
+          "name": "renderLabel",
+          "attribute": null,
+          "ty": {
+            "text": "(item: ListItem) => string | undefined",
+            "imports": []
+          },
+          "default": null,
+          "reflects": false,
+          "readonly": false,
+          "kind": "Complex",
+          "description": "Optional custom label renderer.",
+          "deprecated": null
+        }
+      ],
+      "events": [],
+      "slots": [],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

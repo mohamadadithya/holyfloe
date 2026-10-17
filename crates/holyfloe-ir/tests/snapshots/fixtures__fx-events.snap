@@ -1,0 +1,93 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-events",
+      "name": "FxEvents",
+      "class_name": "FxEvents",
+      "module": {
+        "path": "src/fx-events/fx-events.ts",
+        "specifier": "@holyfloe/fixtures/fx-events/fx-events.js"
+      },
+      "summary": null,
+      "description": "Dispatches events whose names use every common casing.",
+      "deprecated": null,
+      "props": [],
+      "events": [
+        {
+          "dom_name": "my-change",
+          "base_name": "MyChange",
+          "detail": {
+            "text": "{ value: string }",
+            "imports": []
+          },
+          "event_type": {
+            "text": "CustomEvent<{ value: string }>",
+            "imports": []
+          },
+          "description": "Kebab-case name.",
+          "deprecated": null
+        },
+        {
+          "dom_name": "myChange",
+          "base_name": "MyChangeCamel",
+          "detail": {
+            "text": "{ value: number }",
+            "imports": []
+          },
+          "event_type": {
+            "text": "CustomEvent<{ value: number }>",
+            "imports": []
+          },
+          "description": "camelCase name.",
+          "deprecated": null
+        },
+        {
+          "dom_name": "MyChange",
+          "base_name": "MyChangePascal",
+          "detail": {
+            "text": "{ checked: boolean }",
+            "imports": []
+          },
+          "event_type": {
+            "text": "CustomEvent<{ checked: boolean }>",
+            "imports": []
+          },
+          "description": "PascalCase name.",
+          "deprecated": null
+        },
+        {
+          "dom_name": "MYEVENT",
+          "base_name": "MYEVENT",
+          "detail": {
+            "text": "{ count: number }",
+            "imports": []
+          },
+          "event_type": {
+            "text": "CustomEvent<{ count: number }>",
+            "imports": []
+          },
+          "description": "Uppercase name.",
+          "deprecated": null
+        }
+      ],
+      "slots": [],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

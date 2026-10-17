@@ -1,0 +1,83 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-button",
+      "name": "FxButton",
+      "class_name": "FxButton",
+      "module": {
+        "path": "src/fx-button/fx-button.ts",
+        "specifier": "@holyfloe/fixtures/fx-button/fx-button.js"
+      },
+      "summary": "Basic action button.",
+      "description": "A clickable button.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "variant",
+          "attribute": "variant",
+          "ty": {
+            "text": "'primary' | 'secondary' | 'danger'",
+            "imports": []
+          },
+          "default": "'primary'",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Visual style of the button.",
+          "deprecated": null
+        },
+        {
+          "name": "disabled",
+          "attribute": "disabled",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Prevents interaction when set.",
+          "deprecated": null
+        }
+      ],
+      "events": [
+        {
+          "dom_name": "fx-press",
+          "base_name": "FxPress",
+          "detail": null,
+          "event_type": {
+            "text": "CustomEvent",
+            "imports": []
+          },
+          "description": "Fired when the button is activated. Has no detail.",
+          "deprecated": null
+        }
+      ],
+      "slots": [
+        {
+          "name": "",
+          "description": "The button label.",
+          "deprecated": null
+        }
+      ],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

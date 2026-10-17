@@ -1,0 +1,98 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-card",
+      "name": "FxCard",
+      "class_name": "FxCard",
+      "module": {
+        "path": "src/fx-card/fx-card.ts",
+        "specifier": "@holyfloe/fixtures/fx-card/fx-card.js"
+      },
+      "summary": null,
+      "description": "A content card with header and footer slots.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "elevated",
+          "attribute": "elevated",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Adds a drop shadow.",
+          "deprecated": null
+        }
+      ],
+      "events": [],
+      "slots": [
+        {
+          "name": "",
+          "description": "Card body.",
+          "deprecated": null
+        },
+        {
+          "name": "header",
+          "description": "Content for the card header.",
+          "deprecated": null
+        },
+        {
+          "name": "footer",
+          "description": "Content for the card footer.",
+          "deprecated": null
+        }
+      ],
+      "methods": [],
+      "css_parts": [
+        {
+          "name": "base",
+          "description": "The card container.",
+          "deprecated": null
+        },
+        {
+          "name": "header",
+          "description": "The header wrapper.",
+          "deprecated": null
+        },
+        {
+          "name": "footer",
+          "description": "The footer wrapper.",
+          "deprecated": null
+        }
+      ],
+      "css_props": [
+        {
+          "name": "--fx-card-padding",
+          "syntax": null,
+          "default": null,
+          "description": "Inner padding. Defaults to 16px.",
+          "deprecated": null
+        },
+        {
+          "name": "--fx-card-radius",
+          "syntax": null,
+          "default": null,
+          "description": "Corner radius. Defaults to 8px.",
+          "deprecated": null
+        }
+      ],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

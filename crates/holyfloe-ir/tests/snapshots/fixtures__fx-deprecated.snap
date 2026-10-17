@@ -1,0 +1,65 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-deprecated",
+      "name": "FxDeprecated",
+      "class_name": "FxDeprecated",
+      "module": {
+        "path": "src/fx-deprecated/fx-deprecated.ts",
+        "specifier": "@holyfloe/fixtures/fx-deprecated/fx-deprecated.js"
+      },
+      "summary": null,
+      "description": "Old alert element.",
+      "deprecated": "Use fx-card instead.",
+      "props": [
+        {
+          "name": "tone",
+          "attribute": "tone",
+          "ty": {
+            "text": "'info' | 'error'",
+            "imports": []
+          },
+          "default": "'info'",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Alert tone.",
+          "deprecated": null
+        },
+        {
+          "name": "kind",
+          "attribute": "kind",
+          "ty": {
+            "text": "string | undefined",
+            "imports": []
+          },
+          "default": null,
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Old name for `tone`.",
+          "deprecated": "Use `tone`."
+        }
+      ],
+      "events": [],
+      "slots": [],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

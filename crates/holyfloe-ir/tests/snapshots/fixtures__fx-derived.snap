@@ -1,0 +1,97 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-derived",
+      "name": "FxDerived",
+      "class_name": "FxDerived",
+      "module": {
+        "path": "src/fx-derived/fx-derived.ts",
+        "specifier": "@holyfloe/fixtures/fx-derived/fx-derived.js"
+      },
+      "summary": null,
+      "description": "Element that inherits `size`, `loading` and `fx-ready` from FxBase.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "label",
+          "attribute": "label",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Own property, not inherited.",
+          "deprecated": null
+        },
+        {
+          "name": "size",
+          "attribute": "size",
+          "ty": {
+            "text": "'sm' | 'md' | 'lg'",
+            "imports": []
+          },
+          "default": "'md'",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Size variant shared by subclasses.",
+          "deprecated": null
+        },
+        {
+          "name": "loading",
+          "attribute": "loading",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Shows a loading state.",
+          "deprecated": null
+        }
+      ],
+      "events": [
+        {
+          "dom_name": "fx-ready",
+          "base_name": "FxReady",
+          "detail": null,
+          "event_type": {
+            "text": "CustomEvent",
+            "imports": []
+          },
+          "description": "Fired after first render.",
+          "deprecated": null
+        }
+      ],
+      "slots": [
+        {
+          "name": "",
+          "description": "Content.",
+          "deprecated": null
+        }
+      ],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}
