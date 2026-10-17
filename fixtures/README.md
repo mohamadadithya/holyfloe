@@ -26,7 +26,7 @@ fixtures/
 | 6 | `fx-input` | Form-associated, `value` + `change` two-way binding, `static formAssociated = true` | M2 |
 | 7 | `fx-dialog` | `open` + `open-change` binding via explicit `@model` JSDoc, public methods `show()` / `close()` | M2 |
 | 8 | `fx-select` | Binding where value lives in `detail.value` (`ValuePath::DetailField`) | M2 |
-| 9 | `fx-base` + `fx-derived` | Subclass in the same package, members inherited | M1 |
+| 9 | `fx-base` + `fx-derived` (dir `src/fx-derived/`) | Subclass in the same package, members inherited | M1 |
 | 10 | `fx-mixin` | Mixin-based component; mixin from a second package in `fixtures/src/_dep/` | M2 |
 | 11 | `fx-deprecated` | `@deprecated` prop and component, `@internal` member that must NOT appear | M1 |
 | 12 | `fx-lazy` | Element defined late (after first render) to test complex-prop re-apply | M2 |

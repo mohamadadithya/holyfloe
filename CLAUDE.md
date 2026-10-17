@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: pre-M0.** Only `docs/` and `fixtures/README.md` exist. There is no Cargo workspace, no `justfile`, no fixtures, and the directory is not yet a git repo (run `git init` before the first commit). Everything under "Workspace layout" and "Commands" is the target, not what's on disk.
+**Current state: M0 done (2026-10-17), M1 next.** All crates are stubs except `holyfloe-cem` (working types plus a round-trip test). Fixtures exist for the 7 M1 components; only `fx-button` has expected output (React). `packages/` and `e2e/` don't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose.
 
 ## Pipeline (big picture)
 
 ```
 custom-elements.json (from @custom-elements-manifest/analyzer --litelement)
-  -> holyfloe-cem   serde types (typify, checked in)
+  -> holyfloe-cem   serde types (typify on a patched schema, checked in; D-046)
   -> holyfloe-ir    Library/Component IR + 6 passes in fixed order:
                     flatten-inheritance -> drop-non-public -> name-derive
                     -> classify-props -> infer-bindings -> validate
@@ -64,7 +64,7 @@ Names verified free on 2026-10-17 (D-045). Use these names everywhere; if one be
 
 ```
 crates/
-  holyfloe-cem/        # serde types for CEM 2.1.0 (typify-generated, checked in, never regenerated in build.rs)
+  holyfloe-cem/        # serde types for CEM 2.1.0 (typify on schema/patch.py output, checked in, never regenerated in build.rs)
   holyfloe-ir/         # IR structs + normalization passes. Pure, no I/O.
   holyfloe-lit/        # M4 only: oxc-based Lit extractor -> IR. Feature-gated.
   holyfloe-emit-core/  # minijinja env, shared filters (pascal/camel/kebab, ts-escape, jsdoc)
@@ -93,7 +93,7 @@ e2e/                # react18/ react19/ next-app/ vue3/ nuxt/ svelte5/ sveltekit
 - **Generated TypeScript must type-check** with `strict: true`.
 - **Do not copy wc-toolkit code.** Port output shapes, write original code.
 
-## Commands (created in M0; if missing, create them first)
+## Commands
 
 ```
 cargo build --workspace
@@ -104,15 +104,16 @@ cargo insta review                      # review snapshot changes
 just gen-fixtures                       # regenerate fixtures/out from fixtures/src
 just typecheck                          # tsc / vue-tsc / svelte-check on fixtures/out
 just e2e                                # Playwright matrix in e2e/
-just verify                             # all of the above, in order
+just verify                             # everything that exists today, in order (see justfile)
 ```
 
-Focused variants named in the roadmap exit commands (create them along with the `justfile`):
+Focused variants (the `typecheck-*`, `e2e-*` and `parity` recipes are placeholders until their milestone):
 
 ```
 cargo test -p holyfloe-ir <test_name>   # single test in one crate
 cargo insta test -p holyfloe-emit-react # run one emitter's snapshots, then `cargo insta review`
-just gen-fixtures-cem                   # run the CEM analyzer over fixtures/src (M0)
+just gen-fixtures-cem                   # run the CEM analyzer over fixtures/src; output is committed
+just gen-cem-types                      # re-patch the schema and re-run typify (needs cargo-typify 0.8.0)
 just typecheck-react | typecheck-vue | typecheck-svelte
 just e2e-react | e2e-vue | e2e-svelte
 just parity                             # M4: oxc IR == analyzer IR on every fixture
@@ -140,7 +141,8 @@ serde 1.0.229, serde_json 1.0.154, thiserror 2.0.21   (MIT OR Apache-2.0)
 cargo-dist                         0.33.0 (GitHub release; crates.io has 0.32.0)  MIT OR Apache-2.0
 
 # npm
-@custom-elements-manifest/analyzer 0.11.0    MIT
+@custom-elements-manifest/analyzer 0.11.0    MIT   # bundles TS ~5.4, writes schemaVersion 1.0.0 (D-047)
+lit                                3.3.3     BSD-3-Clause   # fixtures only
 custom-elements-manifest (schema)  2.1.0     BSD-3-Clause
 unplugin                           3.4.0     MIT   node ^20.19 || >=22.12
 @napi-rs/cli                       3.10.8    MIT
@@ -151,6 +153,7 @@ unplugin                           3.4.0     MIT   node ^20.19 || >=22.12
 
 ## Conventions
 
-- Rust 2021+, `rustfmt` defaults, edition and MSRV set by the newest pinned oxc crate.
+- Rust edition 2024, MSRV 1.97 (set by oxc 0.154), toolchain pinned in `rust-toolchain.toml`. `rustfmt` defaults.
+- JS tooling: pnpm 12 workspace (root `package.json` `packageManager`). TypeScript 7 removed `baseUrl`; use `paths` only.
 - Commit per logical step. Message format: `m1: add react prop-kind pass`.
 - Docs are source of truth for behavior. If code and docs disagree, fix the docs in the same commit.
