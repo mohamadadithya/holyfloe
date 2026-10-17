@@ -1,0 +1,9 @@
+[package]
+name = "holyfloe-emit-svelte"
+description = "Svelte 5 runes emitter."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]

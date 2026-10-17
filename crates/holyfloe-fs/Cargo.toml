@@ -1,0 +1,9 @@
+[package]
+name = "holyfloe-fs"
+description = "Output planning, content hashing, write-if-changed."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]

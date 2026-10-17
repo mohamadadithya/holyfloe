@@ -1,0 +1,36 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+
+# Exact pins, see "Pinned versions" in CLAUDE.md. Upgrade only in a dedicated PR.
+[workspace.dependencies]
+holyfloe-cem = { path = "crates/holyfloe-cem" }
+holyfloe-ir = { path = "crates/holyfloe-ir" }
+holyfloe-lit = { path = "crates/holyfloe-lit" }
+holyfloe-emit-core = { path = "crates/holyfloe-emit-core" }
+holyfloe-emit-react = { path = "crates/holyfloe-emit-react" }
+holyfloe-emit-vue = { path = "crates/holyfloe-emit-vue" }
+holyfloe-emit-svelte = { path = "crates/holyfloe-emit-svelte" }
+holyfloe-emit-types = { path = "crates/holyfloe-emit-types" }
+holyfloe-fs = { path = "crates/holyfloe-fs" }
+
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+thiserror = "=2.0.21"
+minijinja = "=3.0.1"
+insta = "=1.49.0"
+clap = { version = "=4.6.7", features = ["derive"] }
+notify = "=8.2.0"
+notify-debouncer-full = "=0.7.0"
+napi = "=3.14.2"
+napi-derive = "=3.6.12"
+oxc_parser = "=0.154.0"
+oxc_ast = "=0.154.0"
+oxc_semantic = "=0.154.0"
+oxc_resolver = "=11.24.3"
