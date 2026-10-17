@@ -10,11 +10,11 @@
     "jsx": "react-jsx",
     "lib": ["es2022", "dom", "dom.iterable"],
     "types": [],
-    // Files live outside this package, so pin resolution of react and the fixtures here.
+    // Files live outside this package, so pin where react resolves. @holyfloe/fixtures is
+    // deliberately not mapped: it resolves through its own package.json exports (OQ-014).
     "paths": {
       "react": ["./node_modules/@types/react"],
-      "react/*": ["./node_modules/@types/react/*"],
-      "@holyfloe/fixtures/*": ["../../dist/*"]
+      "react/*": ["./node_modules/@types/react/*"]
     }
   },
   "include": ["../../expected/react/**/*", "../../consumers/react/**/*", "../../expected/react-types/**/*", "../../consumers/react-types/**/*"]

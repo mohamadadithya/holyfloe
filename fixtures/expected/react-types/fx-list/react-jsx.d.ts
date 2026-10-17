@@ -12,7 +12,7 @@ declare module 'react' {
       /**
        * Renders a list of items. All props are complex and set as properties.
        */
-      'fx-list': DetailedHTMLProps<HTMLAttributes<FxListElement>, FxListElement> & FxListProps;
+      'fx-list': Omit<DetailedHTMLProps<HTMLAttributes<FxListElement>, FxListElement>, 'items' | 'options' | 'renderLabel'> & FxListProps;
     }
   }
 }

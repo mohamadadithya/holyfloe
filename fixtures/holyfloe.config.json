@@ -2,7 +2,7 @@
   "moduleRewrite": { "src/": "dist/" },
   "overrides": {
     "fx-events": {
-      "events": { "myChange": "onMyChangeCamel", "MyChange": "onMyChangePascal" }
+      "events": { "myChange": "MyChangeCamel", "MyChange": "MyChangePascal" }
     }
   }
 }

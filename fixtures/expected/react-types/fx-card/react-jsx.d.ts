@@ -33,7 +33,7 @@ declare module 'react' {
        * - --fx-card-padding: Inner padding. Defaults to 16px.
        * - --fx-card-radius: Corner radius. Defaults to 8px.
        */
-      'fx-card': DetailedHTMLProps<HTMLAttributes<FxCardElement>, FxCardElement> & FxCardProps;
+      'fx-card': Omit<DetailedHTMLProps<HTMLAttributes<FxCardElement>, FxCardElement>, 'elevated' | 'style'> & FxCardProps;
     }
   }
 }

@@ -20,7 +20,7 @@ declare module 'react' {
        * Slots:
        * - default: Content.
        */
-      'fx-derived': DetailedHTMLProps<HTMLAttributes<FxDerivedElement>, FxDerivedElement> & FxDerivedProps;
+      'fx-derived': Omit<DetailedHTMLProps<HTMLAttributes<FxDerivedElement>, FxDerivedElement>, 'label' | 'size' | 'loading' | 'onfx-ready'> & FxDerivedProps;
     }
   }
 }

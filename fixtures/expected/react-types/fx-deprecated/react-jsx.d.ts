@@ -14,7 +14,7 @@ declare module 'react' {
        *
        * @deprecated Use fx-card instead.
        */
-      'fx-deprecated': DetailedHTMLProps<HTMLAttributes<FxDeprecatedElement>, FxDeprecatedElement> & FxDeprecatedProps;
+      'fx-deprecated': Omit<DetailedHTMLProps<HTMLAttributes<FxDeprecatedElement>, FxDeprecatedElement>, 'tone' | 'kind'> & FxDeprecatedProps;
     }
   }
 }

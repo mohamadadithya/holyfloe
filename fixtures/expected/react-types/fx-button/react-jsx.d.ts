@@ -22,7 +22,7 @@ declare module 'react' {
        * Slots:
        * - default: The button label.
        */
-      'fx-button': DetailedHTMLProps<HTMLAttributes<FxButtonElement>, FxButtonElement> & FxButtonProps;
+      'fx-button': Omit<DetailedHTMLProps<HTMLAttributes<FxButtonElement>, FxButtonElement>, 'variant' | 'disabled' | 'onfx-press'> & FxButtonProps;
     }
   }
 }

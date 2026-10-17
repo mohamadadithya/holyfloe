@@ -23,7 +23,7 @@ declare module 'react' {
       /**
        * Dispatches events whose names use every common casing.
        */
-      'fx-events': DetailedHTMLProps<HTMLAttributes<FxEventsElement>, FxEventsElement> & FxEventsProps;
+      'fx-events': Omit<DetailedHTMLProps<HTMLAttributes<FxEventsElement>, FxEventsElement>, 'onmy-change' | 'onmyChange' | 'onMyChange' | 'onMYEVENT'> & FxEventsProps;
     }
   }
 }

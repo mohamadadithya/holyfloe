@@ -15,7 +15,7 @@ declare module 'react' {
        * Slots:
        * - default: Optional label shown next to the count.
        */
-      'fx-badge': DetailedHTMLProps<HTMLAttributes<FxBadgeElement>, FxBadgeElement> & FxBadgeProps;
+      'fx-badge': Omit<DetailedHTMLProps<HTMLAttributes<FxBadgeElement>, FxBadgeElement>, 'count' | 'tone'> & FxBadgeProps;
     }
   }
 }
