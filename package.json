@@ -1,5 +1,6 @@
 {
   "name": "holyfloe-workspace",
   "private": true,
+  "license": "MIT OR Apache-2.0",
   "packageManager": "pnpm@12.9.1"
 }

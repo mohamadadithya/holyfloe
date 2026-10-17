@@ -4,6 +4,7 @@ description = "Serde types for Custom Elements Manifest 2.1.0 (typify-generated,
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+license.workspace = true
 publish.workspace = true
 
 [dependencies]

@@ -6,6 +6,7 @@ members = ["crates/*"]
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.97"
+license = "MIT OR Apache-2.0"
 publish = false
 
 # Exact pins, see "Pinned versions" in CLAUDE.md. Upgrade only in a dedicated PR.
