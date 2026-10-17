@@ -48,3 +48,6 @@ Adding a decision: append a new ID, never renumber.
 - D-040 SETTLED: Milestones run in order M0, M1, M2, M3, M4. Edge-case fixtures are added in the milestone where they first appear.
 - D-041 SETTLED: Fixtures with expected outputs are written before emitters.
 - D-042 SETTLED: Each milestone ends with runnable exit commands (see roadmap). No exit commands, no done.
+- D-043 SETTLED (closes OQ-001): Versions resolved from the registries on 2026-10-17 and pinned in `CLAUDE.md`. Workspace MSRV is 1.97, set by oxc 0.154.
+- D-044 SETTLED (closes OQ-002): Standalone binaries use `cargo-dist` (repo `axodotdev/cargo-dist`, MIT OR Apache-2.0). The crate is still named `cargo-dist`. Latest GitHub release is v0.33.0 (2026-09-11); crates.io has 0.32.0.
+- D-045 SETTLED (closes OQ-013): `holyfloe`, `holyfloe-{cli,ir,cem,napi}` on crates.io and `holyfloe`, `@holyfloe/core`, `@holyfloe/unplugin` on npm returned 404 on 2026-10-17. Creating the npm org `@holyfloe` is a manual step before the first publish.

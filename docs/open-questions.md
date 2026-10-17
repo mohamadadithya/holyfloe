@@ -4,36 +4,6 @@ Each item has an owner step and a command or test that closes it. When closed, m
 
 ## Version facts (close in M0)
 
-- OQ-001: Resolve and pin versions. Sources conflicted or were secondary.
-  ```
-  npm view @custom-elements-manifest/analyzer version license
-  npm view @wc-toolkit/react-wrappers version license
-  npm view @wc-toolkit/vuejs-types version
-  npm view @wc-toolkit/svelte-types version
-  npm view @lit-labs/gen-wrapper-react version      # briefs said 0.3.4 vs 0.3.5
-  npm view unplugin version engines
-  npm view @napi-rs/cli version
-  cargo search typify
-  cargo search minijinja                             # brief said 3.0.0, license unconfirmed
-  cargo search oxc_parser
-  cargo search oxc_resolver                          # brief said 11.24.2 vs 11.24.3
-  cargo search insta
-  cargo search clap
-  cargo search notify
-  cargo search notify-debouncer-full
-  ```
-  Record results in the "Pinned versions" block of `CLAUDE.md`.
-
-- OQ-013: Check that the project names are free before the first publish. Do this in M0, before creating crates.
-  ```
-  cargo search holyfloe                              # look for holyfloe, holyfloe-cli, holyfloe-ir, etc.
-  npm view @holyfloe/core                            # 404 means free; also check the scope can be created
-  npm view holyfloe
-  ```
-  If a name is taken, update the Naming table in `CLAUDE.md` first, then search-and-replace the docs.
-
-- OQ-002: Confirm licenses and tool name for standalone binary distribution. The brief says `cargo-dist` was renamed to `dist` (v0.24.0 era) and reported v0.33.0 (2026-09-10); license unconfirmed. Check the project's README and LICENSE.
-
 - OQ-006: Confirm the CEM schema 2.1.0 JSON file location and that typify can compile it without manual patching. Spike in M0. If typify fails, fall back to hand-written serde structs (about 300 lines).
 
 - OQ-007: TypeScript 7.1 API dates in the brief (RC planned Nov 10, stable planned Nov 24, 2026) came from secondary reporting and are plans, not facts. Irrelevant to M0-M3 because D-013 forbids a checker. Revisit only if D-013 is ever reopened.
