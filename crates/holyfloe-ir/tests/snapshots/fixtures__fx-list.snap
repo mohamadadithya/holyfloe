@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-list/fx-list.ts",
         "specifier": "@holyfloe/fixtures/fx-list/fx-list.js"
       },
+      "export_name": "FxList",
       "definition": {
         "path": "src/fx-list/fx-list.ts",
         "specifier": "@holyfloe/fixtures/fx-list/fx-list.js"

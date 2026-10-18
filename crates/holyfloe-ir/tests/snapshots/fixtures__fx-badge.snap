@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-badge/fx-badge.ts",
         "specifier": "@holyfloe/fixtures/fx-badge/fx-badge.js"
       },
+      "export_name": "FxBadge",
       "definition": {
         "path": "src/fx-badge/fx-badge.ts",
         "specifier": "@holyfloe/fixtures/fx-badge/fx-badge.js"
@@ -67,6 +68,20 @@ expression: build_fixture(name)
           "readonly": false,
           "kind": "Primitive",
           "description": "Accessible label. Property only (`attribute: false`): never rendered as an attribute.",
+          "deprecated": null
+        },
+        {
+          "name": "for",
+          "attribute": "for",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Id of the element this badge describes. `for` is a reserved word, so wrappers bind it to another local name.",
           "deprecated": null
         },
         {

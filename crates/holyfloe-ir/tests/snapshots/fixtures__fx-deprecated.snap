@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-deprecated/fx-deprecated.ts",
         "specifier": "@holyfloe/fixtures/fx-deprecated/fx-deprecated.js"
       },
+      "export_name": "FxDeprecated",
       "definition": {
         "path": "src/fx-deprecated/fx-deprecated.ts",
         "specifier": "@holyfloe/fixtures/fx-deprecated/fx-deprecated.js"

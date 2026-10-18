@@ -20,6 +20,10 @@ export class FxBadge extends LitElement {
   @property({ attribute: false })
   label = '';
 
+  /** Id of the element this badge describes. `for` is a reserved word, so wrappers bind it to another local name. */
+  @property({ reflect: true })
+  for = '';
+
   /** True when the count is shown as 99+. Read-only. */
   get overflow(): boolean {
     return this.count > 99;

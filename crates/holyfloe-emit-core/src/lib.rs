@@ -27,6 +27,9 @@ pub fn env() -> Result<Environment<'static>, Error> {
     env.set_undefined_behavior(UndefinedBehavior::Strict);
     env.add_filter("ts_string", |s: &str| ts_string(s));
     env.add_filter("jsdoc", |s: &str| jsdoc(s));
+    env.add_filter("js_local", |s: &str, taken: Option<Vec<String>>| {
+        js_local(s, taken.as_deref().unwrap_or_default())
+    });
     Ok(env)
 }
 
@@ -45,6 +48,71 @@ pub fn ts_string(s: &str) -> String {
     }
     out.push('\'');
     out
+}
+
+/// Words that cannot name a local in module code: reserved words, strict-mode reserved words,
+/// and `arguments`/`eval`, which strict mode forbids as binding names.
+const RESERVED: [&str; 48] = [
+    "arguments",
+    "await",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "eval",
+    "export",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "instanceof",
+    "interface",
+    "let",
+    "new",
+    "null",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "static",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+];
+
+/// A local variable name for a member: `name`, or `name_` when `name` is a reserved word (Web
+/// Awesome's `for`) or one of `taken`, the locals the template binds itself. Templates write
+/// `{ for: for_ }` when the two differ.
+// shortcut: `name_` is not checked against other members' names; check it if a library ever has both.
+pub fn js_local(name: &str, taken: &[String]) -> String {
+    if RESERVED.contains(&name) || taken.iter().any(|t| t == name) {
+        format!("{name}_")
+    } else {
+        name.to_owned()
+    }
 }
 
 /// A `/** ... */` block, or `""` for blank text. Blank lines become ` *`, and `*/` is escaped so
@@ -94,11 +162,25 @@ mod tests {
     }
 
     #[test]
+    fn js_local_filter() {
+        assert_eq!(js_local("tone", &[]), "tone");
+        assert_eq!(js_local("for", &[]), "for_");
+        assert_eq!(js_local("case", &[]), "case_");
+        assert_eq!(js_local("eval", &[]), "eval_");
+        assert_eq!(js_local("rest", &["ref".into(), "rest".into()]), "rest_");
+        assert_eq!(
+            js_local("type", &[]),
+            "type",
+            "contextual keywords are fine"
+        );
+    }
+
+    #[test]
     fn env_registers_filters() {
         let mut env = env().unwrap();
         env.add_template(
             "t.tsx.j2",
-            "{{ \"<a & 'b'>\" | ts_string }}\n{% if true %}\n  {{ doc | jsdoc | indent(2) }}\n{% endif %}\n",
+            "{{ \"<a & 'b'>\" | ts_string }}{{ 'for' | js_local }}{{ 'ref' | js_local(['ref']) }}\n{% if true %}\n  {{ doc | jsdoc | indent(2) }}\n{% endif %}\n",
         )
         .unwrap();
         let out = env
@@ -108,7 +190,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             out,
-            "'<a & \\'b\\'>'\n  /**\n   * Card.\n   *\n   * Slots:\n   */\n"
+            "'<a & \\'b\\'>'for_ref_\n  /**\n   * Card.\n   *\n   * Slots:\n   */\n"
         );
     }
 

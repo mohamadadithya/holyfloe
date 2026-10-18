@@ -29,6 +29,8 @@ pub(crate) struct Class {
     pub definition_module: Option<String>,
     /// Modules that re-export this class under its own name, in manifest order.
     pub reexports: Vec<String>,
+    /// Names the declaring module exports this class under, e.g. `default`.
+    pub own_exports: Vec<String>,
     /// The class that declares the superclass, re-exports followed. `None` when it is in
     /// another package or not in the manifest.
     pub superclass: Option<Key>,
@@ -120,8 +122,15 @@ pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
     // class -> [(tag, module that defines it)], and class -> modules re-exporting it
     let mut tags: HashMap<Key, Vec<(String, String)>> = HashMap::new();
     let mut reexports: HashMap<Key, Vec<String>> = HashMap::new();
+    let mut own_exports: HashMap<Key, Vec<String>> = HashMap::new();
     for module in &pkg.modules {
         for export in &module.exports {
+            if let cem::JavaScriptModuleExportsItem::JavaScriptExport(e) = export {
+                let class = target(&module.path, &e.declaration);
+                if class.0 == module_path::normalize(&module.path) {
+                    own_exports.entry(class).or_default().push(e.name.clone());
+                }
+            }
             match export {
                 cem::JavaScriptModuleExportsItem::CustomElementExport(e) => {
                     let class = target(&module.path, &e.declaration);
@@ -166,6 +175,7 @@ pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
             class.tag = class.tag.as_deref().map(unquote);
             let own = key(&module.path, &class.name);
             class.reexports = reexports.get(&own).cloned().unwrap_or_default();
+            class.own_exports = own_exports.get(&own).cloned().unwrap_or_default();
             let defs = tags.get(&own).map(Vec::as_slice).unwrap_or_default();
             let mut found: Vec<(String, Option<String>)> = defs
                 .iter()
@@ -241,6 +251,7 @@ fn from_element(d: &cem::CustomElementDeclaration, module: &str) -> Class {
         tag: d.tag_name.clone(),
         definition_module: None,
         reexports: Vec::new(),
+        own_exports: Vec::new(),
         superclass: None,
         summary: d.summary.clone(),
         description: d.description.clone(),
@@ -282,6 +293,7 @@ fn from_class(d: &cem::ClassDeclaration, module: &str) -> Class {
         tag: None,
         definition_module: None,
         reexports: Vec::new(),
+        own_exports: Vec::new(),
         superclass: None,
         summary: d.summary.clone(),
         description: d.description.clone(),
@@ -335,13 +347,26 @@ impl Class {
         };
         // The declaring module if it is exported, else the first module re-exporting the class
         // (barrel layouts such as Lion's `exports/*.js`).
-        let module = match module_ref(self.module.clone()) {
-            Ok(m) => m,
-            Err(err) => self
-                .reexports
-                .into_iter()
-                .find_map(|path| module_ref(path).ok())
-                .ok_or(err)?,
+        // Shoelace and Web Awesome export their classes only as `default`. With no export
+        // listed, assume the class name.
+        let own_export = if self.own_exports.contains(&self.name) {
+            self.name.clone()
+        } else {
+            self.own_exports
+                .first()
+                .cloned()
+                .unwrap_or_else(|| self.name.clone())
+        };
+        let (module, export_name) = match module_ref(self.module.clone()) {
+            Ok(m) => (m, own_export),
+            // Barrels are only recorded when they re-export the class under its own name.
+            Err(err) => (
+                self.reexports
+                    .into_iter()
+                    .find_map(|path| module_ref(path).ok())
+                    .ok_or(err)?,
+                self.name.clone(),
+            ),
         };
         // A separate `define.ts` registers the element; importing the class module would not.
         let definition = match self.definition_module {
@@ -404,6 +429,7 @@ impl Class {
             name: String::new(),
             class_name: self.name,
             module,
+            export_name,
             definition,
             summary: self.summary,
             description: self.description,
@@ -646,6 +672,24 @@ mod tests {
         assert_eq!(c.definition.specifier, "@lion/ui/define/x-a.js");
         // The superclass is found through the `exports/base.js` re-export.
         assert_eq!(c.props[0].name, "size");
+        assert_eq!(c.export_name, "XA");
+    }
+
+    #[test]
+    fn export_name_comes_from_the_declaring_module() {
+        let export_name = |exports: serde_json::Value| {
+            let mut cem = cem_one(element("x-a", "XA"));
+            cem["modules"][0]["exports"] = exports;
+            build_json(cem).unwrap().components[0].export_name.clone()
+        };
+        let js = |name: &str| json!({ "kind": "js", "name": name, "declaration": { "name": "XA", "module": "src/x.ts" } });
+        assert_eq!(export_name(json!([js("default")])), "default", "Shoelace");
+        assert_eq!(
+            export_name(json!([js("default"), js("XA")])),
+            "XA",
+            "own name wins"
+        );
+        assert_eq!(export_name(json!([])), "XA", "nothing listed");
     }
 
     #[test]

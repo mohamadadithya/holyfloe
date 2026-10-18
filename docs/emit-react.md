@@ -21,7 +21,7 @@ generated/react/
 Component rules:
 1. First line `'use client';` when `react.useClient` is true (default).
 2. Side-effect import that defines the element: `import '<definition.specifier>';`. This is the module holding the `custom-element-definition` export, which can be a separate `define` file (Lion).
-3. `import type { MyButton as MyButtonElement } from '<module.specifier>';`. This is the declaring module, or an exported module that re-exports the class.
+3. `import type { <export_name> as MyButtonElement } from '<module.specifier>';`. This is the declaring module, or an exported module that re-exports the class. `export_name` is usually the class name, and `default` for `export default class` (Shoelace, Web Awesome; fixture `fx-card`).
 4. Element props typed from the class: `MyButtonElement['variant']`. Never inline resolved types.
 5. Props by `PropKind`:
    - **Boolean:** pass `true` as an empty attribute, omit when `false`. Set the property on the element in a layout effect after mount so updates work post-upgrade.
@@ -30,6 +30,7 @@ Component rules:
    - **Complex:** never an attribute. Assign as a property in `useLayoutEffect`. Re-apply after `customElements.whenDefined(tag)` resolves.
    - **No attribute** (`attribute: None`, Lit `attribute: false`): property only, whatever the kind. Never render it as an attribute (fixture `fx-badge` `label`).
    - **Read-only** (`readonly: true`, a getter without a setter): not a prop at all. Leave it out of `Pick`, destructuring and `useProperties`, because assigning it throws a `TypeError` (fixture `fx-badge` `overflow`).
+   - **Local names:** props are destructured into locals of the same name, unless the name is a reserved word or a local the wrapper binds itself (`ref`, `rest`, `forwardedRef`, the React and util imports). Those bind `<name>_`: `{ for: for_ }`, then `for: for_` in `useProperties` and `createElement` (fixture `fx-badge` `for`; Web Awesome `for`, `case`).
 6. Events: for each event emit an `on<base_name>` prop (`base_name` already has config overrides applied). Attach one stable listener per event with `addEventListener(dom_name, …)` in a layout effect (not `useEffect`: Lit's first update runs before passive effects, so events fired there would be lost). The listener calls the latest handler from a ref, so changing the handler never re-subscribes. Clean up on unmount. Handler type: `(e: TypedEvent<MyButtonElement, Detail>) => void` where `TypedEvent` makes `e.target`/`e.currentTarget` the element class. `Detail` is `T` only when the CEM type is `CustomEvent<T>` (or a `@fires {CustomEvent<T>}` tag); a bare `CustomEvent` or a missing type gives `unknown`, never `null`. The detail type text is the one place CEM type text is re-emitted (there is no class member to index into); if it names other types, they compile only when the CEM lists them in `type.references`, which become `import type` lines.
 7. Ref: forward to the custom element. Config `react.ref`: `"forwardRef"` (default, React 18 and 19) wraps the component in `forwardRef`; `"prop"` (React 19 only) emits a plain function taking `ref?: Ref<El>` as a prop. One style per run, never both.
 8. Children: pass through unchanged. They become the default slot.

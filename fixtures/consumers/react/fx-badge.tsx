@@ -7,7 +7,7 @@ import { FxBadge } from '../../expected/react/fx-badge/index.js';
 export function Consumer() {
   const ref = useRef<FxBadgeElement>(null);
   return (
-    <FxBadge ref={ref} count={3} tone="success" label="3 unread">
+    <FxBadge ref={ref} count={3} tone="success" label="3 unread" for="inbox">
       new
     </FxBadge>
   );

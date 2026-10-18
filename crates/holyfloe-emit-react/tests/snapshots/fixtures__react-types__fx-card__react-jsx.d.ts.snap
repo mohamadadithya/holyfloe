@@ -6,7 +6,7 @@ expression: f.contents
 // React 19 JSX types. Event props are `on` + the exact DOM event name (`onfx-press`);
 // use wrapper mode for camelCase event props.
 import type { CSSProperties, DetailedHTMLProps, HTMLAttributes } from 'react';
-import type { FxCard as FxCardElement } from '@holyfloe/fixtures/fx-card/fx-card.js';
+import type { default as FxCardElement } from '@holyfloe/fixtures/fx-card/fx-card.js';
 
 type FxCardProps = Partial<Pick<FxCardElement, 'elevated'>> & {
   style?: CSSProperties & {

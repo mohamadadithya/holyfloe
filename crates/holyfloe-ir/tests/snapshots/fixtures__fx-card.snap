@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-card/fx-card.ts",
         "specifier": "@holyfloe/fixtures/fx-card/fx-card.js"
       },
+      "export_name": "default",
       "definition": {
         "path": "src/fx-card/fx-card.ts",
         "specifier": "@holyfloe/fixtures/fx-card/fx-card.js"

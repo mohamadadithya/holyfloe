@@ -19,6 +19,9 @@ pub struct Component {
     pub class_name: String,
     /// Declares the class: `import type { El } from ...`.
     pub module: ModuleRef,
+    /// The name `module` exports the class under: `class_name`, or `default` for
+    /// `export default class` (Shoelace, Web Awesome).
+    pub export_name: String,
     /// Registers the tag: the side-effect import. Same as `module` unless a separate
     /// file holds the `custom-element-definition` export.
     pub definition: ModuleRef,

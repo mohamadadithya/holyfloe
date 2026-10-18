@@ -14,7 +14,7 @@ import { customElement, property } from 'lit/decorators.js';
  * @cssprop --fx-card-radius - Corner radius. Defaults to 8px.
  */
 @customElement('fx-card')
-export class FxCard extends LitElement {
+export default class FxCard extends LitElement {
   static override styles = css`
     [part='base'] {
       padding: var(--fx-card-padding, 16px);

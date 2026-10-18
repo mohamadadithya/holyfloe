@@ -4,7 +4,7 @@
 // use wrapper mode for camelCase event props.
 import type { {{ ["CSSProperties" if components | selectattr("css_props") | list else none, "DetailedHTMLProps", "HTMLAttributes"] | select | join(", ") }} } from 'react';
 {% for c in components %}
-import type { {{ c.class_name }} as {{ c.name }}Element } from {{ c.module.specifier | ts_string }};
+import type { {{ c.export_name }} as {{ c.name }}Element } from {{ c.module.specifier | ts_string }};
 {% endfor %}
 {% for specifier, names in imports | items %}
 import type { {{ names | join(", ") }} } from {{ specifier | ts_string }};

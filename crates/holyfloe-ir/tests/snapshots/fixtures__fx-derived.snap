@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-derived/fx-derived.ts",
         "specifier": "@holyfloe/fixtures/fx-derived/fx-derived.js"
       },
+      "export_name": "FxDerived",
       "definition": {
         "path": "src/fx-derived/fx-derived.ts",
         "specifier": "@holyfloe/fixtures/fx-derived/fx-derived.js"

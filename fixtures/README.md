@@ -19,10 +19,10 @@ fixtures/
 | # | Fixture | Covers | First needed in |
 |---|---|---|---|
 | 1 | `fx-button` | Primitive string union prop (`variant`), boolean `disabled`, default slot, `click`-like custom event with no detail | M1 |
-| 2 | `fx-badge` | Reflected attribute, `attribute` name differs from prop name, property-only primitive (`attribute: false`), read-only getter that must not become a prop | M1 |
+| 2 | `fx-badge` | Reflected attribute, `attribute` name differs from prop name, property-only primitive (`attribute: false`), read-only getter that must not become a prop, reserved-word prop name (`for`) | M1 |
 | 3 | `fx-list` | Complex props: array and object, typed from an imported type in another file | M1 |
 | 4 | `fx-events` | Event naming: kebab (`my-change`), camelCase (`myChange`), PascalCase (`MyChange`), uppercase (`MYEVENT`), all with typed `detail` | M1 |
-| 5 | `fx-card` | Default slot plus named slots (`header`, `footer`), CSS parts, CSS custom properties | M1 |
+| 5 | `fx-card` | Default slot plus named slots (`header`, `footer`), CSS parts, CSS custom properties, class exported only as `default` (Shoelace and Web Awesome style) | M1 |
 | 6 | `fx-input` | Form-associated, `value` + `change` two-way binding, `static formAssociated = true` | M2 |
 | 7 | `fx-dialog` | `open` + `open-change` binding via explicit `@model` JSDoc, public methods `show()` / `close()` | M2 |
 | 8 | `fx-select` | Binding where value lives in `detail.value` (`ValuePath::DetailField`) | M2 |

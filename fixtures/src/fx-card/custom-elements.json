@@ -83,7 +83,7 @@
       "exports": [
         {
           "kind": "js",
-          "name": "FxCard",
+          "name": "default",
           "declaration": {
             "name": "FxCard",
             "module": "src/fx-card/fx-card.ts"

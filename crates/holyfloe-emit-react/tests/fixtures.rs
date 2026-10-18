@@ -134,3 +134,22 @@ fn detail_type_references_become_imports() {
         assert_eq!(out.matches(line).count(), 1, "{mode:?}:\n{out}");
     }
 }
+
+/// fx-badge covers reserved words (`for`); a prop named like a wrapper local must not shadow it.
+#[test]
+fn props_named_like_wrapper_locals_bind_other_names() {
+    let mut lib = build_fixture("fx-badge");
+    let tone = &mut lib.components[0].props[1];
+    assert_eq!(tone.name, "tone");
+    tone.name = "rest".into();
+    tone.attribute = Some("rest".into());
+    let files = emit(&lib, &ReactConfig::default()).unwrap();
+    let out = &files[0].contents;
+    for line in [
+        "  { count, rest: rest_, label, for: for_, ...rest },\n",
+        "  useProperties(ref, 'fx-badge', { count, rest: rest_, label, for: for_ });\n",
+        "    rest: rest_,\n",
+    ] {
+        assert!(out.contains(line), "missing {line:?} in:\n{out}");
+    }
+}

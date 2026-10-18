@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-button/fx-button.ts",
         "specifier": "@holyfloe/fixtures/fx-button/fx-button.js"
       },
+      "export_name": "FxButton",
       "definition": {
         "path": "src/fx-button/fx-button.ts",
         "specifier": "@holyfloe/fixtures/fx-button/fx-button.js"

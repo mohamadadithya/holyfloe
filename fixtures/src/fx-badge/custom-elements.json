@@ -50,6 +50,17 @@
             },
             {
               "kind": "field",
+              "name": "for",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Id of the element this badge describes. `for` is a reserved word, so wrappers bind it to another local name.",
+              "attribute": "for",
+              "reflects": true
+            },
+            {
+              "kind": "field",
               "name": "overflow",
               "type": {
                 "text": "boolean"
@@ -76,6 +87,15 @@
               "default": "'neutral'",
               "description": "Colour tone, reflected so it can be styled from outside.",
               "fieldName": "tone"
+            },
+            {
+              "name": "for",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Id of the element this badge describes. `for` is a reserved word, so wrappers bind it to another local name.",
+              "fieldName": "for"
             }
           ],
           "superclass": {

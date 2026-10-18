@@ -19,6 +19,7 @@ pub struct Component {
     pub name: String,                  // derived: Pascal(tag), e.g. "FxButton"
     pub class_name: String,            // CEM: declaration.name
     pub module: ModuleRef,             // { path: CEM module.path, specifier: "<pkg>/<subpath>" }; declares the class (import type)
+    pub export_name: String,           // name `module` exports the class under: class_name, or "default" (Shoelace, Web Awesome)
     pub definition: ModuleRef,         // registers the tag (side-effect import); the custom-element-definition export's module, else `module`
     pub summary: Option<String>,
     pub props: Vec<Prop>,
@@ -82,6 +83,7 @@ Parse manifests with `holyfloe_cem::parse`, never `serde_json::from_str`. The de
 
 Each component gets two `ModuleRef`s:
 - `module`: the declaring module if `exports` matches it, else the first module that re-exports the class under its own name (barrels such as Lion's `exports/*.js`).
+  - `export_name` is the name `module` exports the class under. For the declaring module it comes from that module's `js` exports: the class name if it is listed, else the first other name (`default` for `export default class`), else the class name. For a barrel it is the class name.
 - `definition`: the module holding the `custom-element-definition` export, else `module`.
 
 A module path becomes a specifier in four steps:

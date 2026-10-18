@@ -19,6 +19,7 @@ expression: build_fixture(name)
         "path": "src/fx-events/fx-events.ts",
         "specifier": "@holyfloe/fixtures/fx-events/fx-events.js"
       },
+      "export_name": "FxEvents",
       "definition": {
         "path": "src/fx-events/fx-events.ts",
         "specifier": "@holyfloe/fixtures/fx-events/fx-events.js"
