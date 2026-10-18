@@ -2,10 +2,12 @@
 //! `fixtures/expected/react{,-types}/<name>/` (the spec).
 
 use std::fs;
-use std::path::{Path, PathBuf};
 
 use holyfloe_emit_react::{EmitError, ReactConfig, ReactMode, RefStyle, emit};
-use holyfloe_ir::{Config, Library, PackageInfo, build};
+
+#[path = "../../holyfloe-ir/tests/common/mod.rs"]
+mod common;
+use common::{build_fixture, fixtures_dir, read};
 
 const FIXTURES: [&str; 7] = [
     "fx-badge",
@@ -16,29 +18,6 @@ const FIXTURES: [&str; 7] = [
     "fx-events",
     "fx-list",
 ];
-
-fn fixtures_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures")
-}
-
-fn read(path: &Path) -> String {
-    fs::read_to_string(path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
-}
-
-fn build_fixture(name: &str) -> Library {
-    let dir = fixtures_dir();
-    let src = dir.join("src").join(name);
-    let cem = holyfloe_cem::parse(&read(&src.join("custom-elements.json"))).unwrap();
-    let pkg: PackageInfo = serde_json::from_str(&read(&dir.join("package.json"))).unwrap();
-    let own = src.join("holyfloe.config.json");
-    let cfg_path = if own.exists() {
-        own
-    } else {
-        dir.join("holyfloe.config.json")
-    };
-    let cfg: Config = serde_json::from_str(&read(&cfg_path)).unwrap();
-    build(&cem, &pkg, &cfg).unwrap()
-}
 
 fn check(mode: ReactMode, expected_dir: &str) {
     let cfg = ReactConfig {

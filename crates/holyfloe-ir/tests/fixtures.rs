@@ -1,44 +1,95 @@
-//! IR snapshot per M1 fixture, built with the fixture package.json and holyfloe.config.json
+//! IR snapshot per fixture, built with the fixture package.json and holyfloe.config.json
 //! (`src/<name>/holyfloe.config.json` when the fixture has its own, e.g. fx-events overrides).
 
-use std::fs;
-use std::path::PathBuf;
+#[path = "common/mod.rs"]
+mod common;
 
-use holyfloe_ir::{Config, PackageInfo, PropKind, build};
+use common::build_fixture;
+use holyfloe_ir::{PropKind, TwoWayBinding, ValuePath};
 
-const FIXTURES: [&str; 7] = [
+const FIXTURES: [&str; 12] = [
     "fx-badge",
     "fx-button",
     "fx-card",
     "fx-deprecated",
     "fx-derived",
+    "fx-dialog",
     "fx-events",
+    "fx-input",
+    "fx-lazy",
     "fx-list",
+    "fx-mixin",
+    "fx-select",
 ];
 
-fn fixtures_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures")
+fn binding(prop: &str, event: &str, value: ValuePath, inferred: bool) -> TwoWayBinding {
+    TwoWayBinding {
+        prop: prop.into(),
+        event: event.into(),
+        value,
+        inferred,
+    }
 }
 
-fn read(path: PathBuf) -> String {
-    fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
+#[test]
+fn m2_bindings() {
+    let input = build_fixture("fx-input").components.remove(0);
+    assert!(
+        input.form_associated,
+        "static formAssociated = true (D-065)"
+    );
+    assert_eq!(
+        input.bindings,
+        [binding(
+            "value",
+            "change",
+            ValuePath::TargetProp("value".into()),
+            true
+        )]
+    );
+    let dialog = build_fixture("fx-dialog").components.remove(0);
+    assert_eq!(
+        dialog.bindings,
+        [binding(
+            "open",
+            "open-change",
+            ValuePath::DetailField("open".into()),
+            false
+        )],
+        "@model replaces the inferred Detail binding"
+    );
+    let select = build_fixture("fx-select").components.remove(0);
+    assert_eq!(
+        select.bindings,
+        [binding(
+            "value",
+            "fx-change",
+            ValuePath::DetailField("value".into()),
+            false
+        )],
+        "config binding; the heuristic does not know fx-change"
+    );
 }
 
-fn build_fixture(name: &str) -> holyfloe_ir::Library {
-    let dir = fixtures_dir();
-    let cem = holyfloe_cem::parse(&read(
-        dir.join("src").join(name).join("custom-elements.json"),
-    ))
-    .unwrap();
-    let pkg: PackageInfo = serde_json::from_str(&read(dir.join("package.json"))).unwrap();
-    let own = dir.join("src").join(name).join("holyfloe.config.json");
-    let cfg_path = if own.exists() {
-        own
-    } else {
-        dir.join("holyfloe.config.json")
-    };
-    let cfg: Config = serde_json::from_str(&read(cfg_path)).unwrap();
-    build(&cem, &pkg, &cfg).unwrap()
+#[test]
+fn fx_mixin_flattens_the_dependency_mixin() {
+    let c = build_fixture("fx-mixin").components.remove(0);
+    let props: Vec<_> = c
+        .props
+        .iter()
+        .map(|p| (p.name.as_str(), p.attribute.as_deref(), p.reflects))
+        .collect();
+    assert_eq!(
+        props,
+        [
+            ("prefix", Some("prefix"), false),
+            ("focused", Some("focused"), true),
+            ("ringColor", Some("ring-color"), false)
+        ]
+    );
+    let methods: Vec<_> = c.methods.iter().map(|m| m.name.as_str()).collect();
+    assert_eq!(methods, ["toggleFocus"]);
+    assert_eq!(c.events[0].dom_name, "focus-change");
 }
 
 #[test]

@@ -22,6 +22,16 @@ pub(crate) fn normalize(path: &str) -> &str {
         .unwrap_or(path)
 }
 
+/// The package an import specifier points into: `@scope/pkg/x.js` -> `@scope/pkg`, `lit` -> `lit`.
+/// The analyzer writes the full specifier as a reference's `package`.
+pub(crate) fn package_name(specifier: &str) -> &str {
+    let segments = if specifier.starts_with('@') { 2 } else { 1 };
+    match specifier.match_indices('/').nth(segments - 1) {
+        Some((i, _)) => &specifier[..i],
+        None => specifier,
+    }
+}
+
 /// A module named inside the manifest entry of module `from` (a re-export, a superclass, a
 /// type reference), as a package-root path. `./` and `../` are relative to `from`: the analyzer
 /// keeps re-export specifiers verbatim (Lion: `../components/accordion/src/LionAccordion.js`).
@@ -177,6 +187,20 @@ mod tests {
             module_rewrite: [("src/".into(), "dist/".into())].into(),
             ..Config::default()
         }
+    }
+
+    #[test]
+    fn package_names() {
+        assert_eq!(
+            package_name("@holyfloe/fixtures-dep/focusable-mixin.js"),
+            "@holyfloe/fixtures-dep"
+        );
+        assert_eq!(
+            package_name("@holyfloe/fixtures-dep"),
+            "@holyfloe/fixtures-dep"
+        );
+        assert_eq!(package_name("lit"), "lit");
+        assert_eq!(package_name("lit/decorators.js"), "lit");
     }
 
     #[test]

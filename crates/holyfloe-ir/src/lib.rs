@@ -7,20 +7,59 @@ mod model;
 mod module_path;
 mod passes;
 
-pub use config::{BindingsMode, ComponentOverride, Config, PackageInfo};
+pub use config::{BindingOverride, BindingsMode, ComponentOverride, Config, PackageInfo};
 pub use error::IrError;
 pub use model::*;
 
 use passes::*;
 
+/// The manifest of another package that a superclass or mixin comes from (D-069).
+#[derive(Clone, Debug)]
+pub struct Dependency {
+    /// Package name, e.g. `@holyfloe/fixtures-dep`.
+    pub name: String,
+    pub cem: holyfloe_cem::Package,
+}
+
+/// Packages that superclasses and mixins in `cem` come from, sorted. The CLI loads the
+/// manifests of those that have one and passes them to `build` as `Dependency`s.
+pub fn referenced_packages(cem: &holyfloe_cem::Package) -> Vec<String> {
+    use holyfloe_cem::JavaScriptModuleDeclarationsItem as Decl;
+    let mut names: Vec<String> = cem
+        .modules
+        .iter()
+        .flat_map(|m| &m.declarations)
+        .flat_map(|d| match d {
+            Decl::CustomElementDeclaration(d) => d.superclass.iter().chain(&d.mixins).collect(),
+            Decl::ClassDeclaration(d) => d.superclass.iter().chain(&d.mixins).collect(),
+            Decl::CustomElementMixinDeclaration(d) => {
+                d.superclass.iter().chain(&d.mixins).collect()
+            }
+            _ => Vec::new(),
+        })
+        .filter_map(|r| r.package.as_deref())
+        .map(|p| module_path::package_name(p).to_owned())
+        .collect();
+    names.sort();
+    names.dedup();
+    names
+}
+
 /// Manifest -> IR, running the six passes of `docs/ir.md` in order.
 pub fn build(
     cem: &holyfloe_cem::Package,
     pkg: &PackageInfo,
+    deps: &[Dependency],
     cfg: &Config,
 ) -> Result<Library, IrError> {
     name_derive::check_config(cfg)?;
-    let classes = class::discover(cem);
+    let mut classes = class::discover(cem);
+    for dep in deps {
+        classes.extend(class::discover(&dep.cem).into_iter().map(|mut c| {
+            c.package = Some(dep.name.clone());
+            c
+        }));
+    }
     let mut classes = flatten_inheritance::run(&classes)?;
     classes.retain(|c| !c.tag.as_deref().is_some_and(|t| cfg.excludes(t)));
     drop_non_public::run(&mut classes);
@@ -34,7 +73,7 @@ pub fn build(
     };
     name_derive::run(&mut lib, cfg)?;
     classify_props::run(&mut lib);
-    infer_bindings::run(&mut lib, cfg);
+    infer_bindings::run(&mut lib, cfg)?;
     validate::run(&lib)?;
     Ok(lib)
 }
@@ -69,7 +108,7 @@ pub(crate) mod test_util {
             name: "pkg".into(),
             ..PackageInfo::default()
         };
-        crate::build(&cem, &pkg, cfg)
+        crate::build(&cem, &pkg, &[], cfg)
     }
 
     pub fn build_json(cem: Value) -> Result<Library, IrError> {
