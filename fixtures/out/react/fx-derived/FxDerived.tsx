@@ -29,6 +29,8 @@ export const FxDerived = forwardRef<FxDerivedElement, FxDerivedProps>(function F
   useProperties(ref, 'fx-derived', { label, size, loading });
   useEventListener(ref, 'fx-ready', onFxReady);
   return createElement('fx-derived', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
     label,

@@ -13,7 +13,7 @@ Layout:
 - `shared/vite.config.ts`: used by both apps. `dedupe` makes React, and `@holyfloe/fixtures` (through its `exports`, so from `fixtures/dist/`), resolve from the app.
 - `react19/src/TypesMode.tsx`: `types` mode, plain tags, React 19 only.
 - `tests/react.spec.ts`: one `describe` per fixture. Any console error or warning fails a test.
-- `next-app/app/page.tsx`: a server component rendering all 7 wrappers. `tests/next.spec.ts` checks the raw server HTML, hydration, and a client event (`app/Clicker.tsx`). The `test` script copies `fixtures/out/react` to `next-app/generated/` first, where a user would generate wrappers. `tsconfig.json` uses `moduleResolution: "nodenext"` because of OQ-017.
+- `next-app/app/page.tsx`: a server component rendering all 7 wrappers. `tests/next.spec.ts` checks the raw server HTML, hydration, and a client event (`app/Clicker.tsx`). The `test` script copies `fixtures/out/react` to `next-app/generated/` first, where a user would generate wrappers. `tsconfig.json` uses `moduleResolution: "nodenext"`, which Turbopack needs for the wrappers' `.js` imports (D-051).
 
 Adding a fixture: render it in `shared/App.tsx` with an `id`, and add a `describe` block that looks it up. Assert properties for every prop. Assert attributes only for reflected or renamed props, because React 19 sets known props as properties and writes no attribute (`docs/emit-react.md` rule 5).
 

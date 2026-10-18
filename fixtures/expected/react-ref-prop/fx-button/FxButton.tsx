@@ -31,6 +31,8 @@ export function FxButton(
   useProperties(ref, 'fx-button', { variant, disabled });
   useEventListener(ref, 'fx-press', onFxPress);
   return createElement('fx-button', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
     variant,

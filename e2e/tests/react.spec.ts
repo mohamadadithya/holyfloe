@@ -43,6 +43,11 @@ test.describe('fx-button', () => {
     await expect(el(page, 'btn').locator('button')).toBeDisabled();
   });
 
+  test('suppressHydrationWarning stays a React prop, never an attribute', async ({ page }) => {
+    await expect(el(page, 'btn')).not.toHaveAttribute('suppresshydrationwarning');
+    await expect(el(page, 'btn')).not.toHaveAttribute('suppressHydrationWarning');
+  });
+
   test('an inline handler sees the latest closure and fires once per event', async ({ page }) => {
     await el(page, 'btn2').locator('button').click();
     await page.click('#rerender');

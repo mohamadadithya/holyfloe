@@ -26,6 +26,8 @@ export const FxBadge = forwardRef<FxBadgeElement, FxBadgeProps>(function FxBadge
   useImperativeHandle(forwardedRef, () => ref.current as FxBadgeElement);
   useProperties(ref, 'fx-badge', { count, tone, label, for: for_ });
   return createElement('fx-badge', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
     'badge-count': count,

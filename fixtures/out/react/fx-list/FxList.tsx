@@ -19,6 +19,8 @@ export const FxList = forwardRef<FxListElement, FxListProps>(function FxList(
   useImperativeHandle(forwardedRef, () => ref.current as FxListElement);
   useProperties(ref, 'fx-list', { items, options, renderLabel });
   return createElement('fx-list', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
   });

@@ -45,6 +45,8 @@ export const FxCard = forwardRef<FxCardElement, FxCardProps>(function FxCard(
   useImperativeHandle(forwardedRef, () => ref.current as FxCardElement);
   useProperties(ref, 'fx-card', { elevated });
   return createElement('fx-card', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
     elevated: elevated ? '' : undefined,

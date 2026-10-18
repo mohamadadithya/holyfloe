@@ -98,6 +98,8 @@ export function {{ c.name }}(
   useEventListener(ref, {{ e.dom_name | ts_string }}, on{{ e.base_name }});
 {% endfor %}
   return createElement({{ c.tag | ts_string }}, {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
 {# Attributes render in SSR HTML. Complex props and props without an attribute are properties only. #}

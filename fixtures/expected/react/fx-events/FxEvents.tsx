@@ -33,6 +33,8 @@ export const FxEvents = forwardRef<FxEventsElement, FxEventsProps>(function FxEv
   useEventListener(ref, 'MyChange', onMyChangePascal);
   useEventListener(ref, 'MYEVENT', onMYEVENT);
   return createElement('fx-events', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
   });

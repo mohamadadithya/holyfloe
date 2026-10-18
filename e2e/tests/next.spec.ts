@@ -13,12 +13,12 @@ test('server HTML: primitive and boolean props are attributes, complex and prope
   expect(startTag(html, 'ssr-list')).toBe('<fx-list id="ssr-list">');
   expect(startTag(html, 'ssr-card')).toBe('<fx-card id="ssr-card" style="--fx-card-padding:3px" elevated="">');
   expect(startTag(html, 'ssr-derived')).toBe('<fx-derived id="ssr-derived" label="L" size="lg">');
+  expect(html).not.toMatch(/suppresshydrationwarning/i);
 });
 
 test('hydrates with no console errors, then sets properties and handles events', async ({ page }) => {
-  // OQ-018: Lit reflects defaults (`variant="primary"`) when the element upgrades, before React
-  // hydrates, so React 19 dev reports an attribute mismatch on #client-btn. Prod does not check.
-  test.fail(test.info().project.name === 'next-dev', 'OQ-018: hydration mismatch from reflected defaults');
+  // #client-btn leaves `variant` unset, so Lit reflects `variant="primary"` before React hydrates;
+  // `next dev` would report that without the wrappers' suppressHydrationWarning (D-052).
   const problems: string[] = [];
   page.on('console', (m) => {
     if (m.type() === 'warning' && m.text().includes('Lit is in dev mode')) return; // `next dev` only

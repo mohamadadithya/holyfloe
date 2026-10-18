@@ -25,6 +25,8 @@ export const FxDeprecated = forwardRef<FxDeprecatedElement, FxDeprecatedProps>(f
   useImperativeHandle(forwardedRef, () => ref.current as FxDeprecatedElement);
   useProperties(ref, 'fx-deprecated', { tone, kind });
   return createElement('fx-deprecated', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
     tone,

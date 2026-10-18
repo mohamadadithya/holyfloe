@@ -17,6 +17,8 @@ export const FxButton = forwardRef<FxButtonElement, FxButtonProps>(function FxBu
   const ref = useRef<FxButtonElement>(null);
   useImperativeHandle(forwardedRef, () => ref.current as FxButtonElement);
   return createElement('fx-button', {
+    // Lit reflects defaults when the element upgrades, before hydration: those attributes are its own.
+    suppressHydrationWarning: true,
     ...rest,
     ref,
   });
