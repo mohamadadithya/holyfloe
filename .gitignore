@@ -2,3 +2,6 @@ target/
 node_modules/
 .envrc
 fixtures/dist/
+e2e/*/dist/
+e2e/test-results/
+e2e/playwright-report/

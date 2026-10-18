@@ -1,0 +1,11 @@
+{
+  "name": "@holyfloe/e2e-react19",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@holyfloe/fixtures": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}

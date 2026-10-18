@@ -1,6 +1,9 @@
 packages:
   - fixtures
   - fixtures/typecheck/*
+  - e2e
+  - e2e/react18
+  - e2e/react19
 
 # Postinstall only matters for the analyzer --dependencies scan, which we do not use.
 allowBuilds:

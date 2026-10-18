@@ -71,11 +71,12 @@ typecheck-vue:
 typecheck-svelte:
     @echo "not yet: M2" >&2; exit 1
 
-e2e:
-    @echo "not yet: M1" >&2; exit 1
+e2e: e2e-react
 
-e2e-react:
-    @echo "not yet: M1" >&2; exit 1
+# Playwright (chromium) on e2e/react18 and e2e/react19, each under vite dev and vite build + preview.
+# Runs on fresh fixtures/out. First time: pnpm -C e2e exec playwright install chromium
+e2e-react: gen-fixtures
+    pnpm -C e2e test
 
 e2e-vue:
     @echo "not yet: M2" >&2; exit 1
