@@ -8,9 +8,10 @@ use minijinja::value::Serde;
 use minijinja::{Environment, Value, context};
 use serde::Deserialize;
 
-/// The `react` key of `holyfloe.config.json`.
+/// The `react` key of `holyfloe.config.json`. Unknown keys are errors, so a typo or a key that
+/// is not supported yet (`slotHelpers`, `attributeMapping`) fails instead of doing nothing.
 #[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ReactConfig {
     pub mode: ReactMode,
     /// Emit `'use client';` first in each wrapper.
@@ -53,6 +54,25 @@ pub enum RefStyle {
 pub enum EmitError {
     #[error("react template: {0}")]
     Template(#[from] minijinja::Error),
+    /// Detail type text is re-emitted verbatim, so an imported name cannot be renamed.
+    #[error(
+        "event detail type `{name}` of `{tag}` {clash}; rename the type in the library, or exclude the event's component"
+    )]
+    DetailImportClash {
+        tag: String,
+        name: String,
+        clash: String,
+    },
+    /// A prop such as an `onChange` callback and the `on<base_name>` prop of an event would be
+    /// the same destructured binding.
+    #[error(
+        "prop `{prop}` of `{tag}` has the same name as the React prop for event `{event}`; rename the event with `overrides.{tag}.events`, or drop the prop with `overrides.{tag}.excludeProps`"
+    )]
+    PropEventClash {
+        tag: String,
+        prop: String,
+        event: String,
+    },
 }
 
 const TEMPLATES: [(&str, &str); 5] = [
@@ -82,9 +102,11 @@ pub fn emit(lib: &Library, cfg: &ReactConfig) -> Result<Vec<OutputFile>, EmitErr
         ReactMode::Wrapper => {
             let mut files = Vec::with_capacity(comps.len() + 2);
             for c in comps {
+                prop_event_clash(c)?;
+                let own = wrapper_names(c);
                 let ctx = context! {
                     c => Serde(c),
-                    imports => Serde(detail_imports(std::slice::from_ref(c))),
+                    imports => Serde(detail_imports(std::slice::from_ref(c), &own)?),
                     use_client => cfg.use_client,
                     forward_ref => cfg.ref_style == RefStyle::ForwardRef,
                 };
@@ -108,7 +130,7 @@ pub fn emit(lib: &Library, cfg: &ReactConfig) -> Result<Vec<OutputFile>, EmitErr
         ReactMode::Types => {
             let ctx = context! {
                 components => Serde(comps),
-                imports => Serde(detail_imports(comps)),
+                imports => Serde(detail_imports(comps, &types_names(comps))?),
             };
             Ok(vec![file(&env, "react-jsx.d.ts", "types.d.ts.j2", ctx)?])
         }
@@ -127,20 +149,97 @@ fn file(
     })
 }
 
-/// Types named by event details, grouped by specifier: the one place CEM type text is re-emitted.
-fn detail_imports(comps: &[Component]) -> BTreeMap<&str, BTreeSet<&str>> {
-    let mut out: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
-    let events = comps
-        .iter()
-        .flat_map(|c| &c.events)
-        .filter(|e| e.detail.is_some());
-    for i in events
-        .filter_map(|e| e.event_type.as_ref())
-        .flat_map(|t| &t.imports)
-    {
-        out.entry(&i.specifier).or_default().insert(&i.name);
+fn prop_event_clash(c: &Component) -> Result<(), EmitError> {
+    let props = c.props.iter().filter(|p| !p.readonly);
+    for p in props {
+        if let Some(e) = c
+            .events
+            .iter()
+            .find(|e| format!("on{}", e.base_name) == p.name)
+        {
+            return Err(EmitError::PropEventClash {
+                tag: c.tag.clone(),
+                prop: p.name.clone(),
+                event: e.dom_name.clone(),
+            });
+        }
     }
-    out
+    Ok(())
+}
+
+/// Names `component.tsx.j2` declares or imports, whether or not this file needs them all.
+/// Keep in sync with the template.
+fn wrapper_names(c: &Component) -> Vec<String> {
+    let mut names: Vec<String> = [
+        "createElement",
+        "forwardRef",
+        "useImperativeHandle",
+        "useRef",
+        "CSSProperties",
+        "HTMLAttributes",
+        "Ref",
+        "useEventListener",
+        "useProperties",
+        "TypedEvent",
+    ]
+    .map(String::from)
+    .into();
+    names.extend(["Element", "Props", "EventProps", "Style"].map(|s| format!("{}{s}", c.name)));
+    names
+}
+
+/// Names `types.d.ts.j2` declares or imports, whether or not this file needs them all.
+/// Keep in sync with the template.
+fn types_names(comps: &[Component]) -> Vec<String> {
+    let mut names: Vec<String> = [
+        "CSSProperties",
+        "DetailedHTMLProps",
+        "HTMLAttributes",
+        "TypedEvent",
+    ]
+    .map(String::from)
+    .into();
+    for c in comps {
+        names.extend(["Element", "Props"].map(|s| format!("{}{s}", c.name)));
+    }
+    names
+}
+
+/// Types named by event details, grouped by specifier: the one place CEM type text is re-emitted.
+/// A name imported from two modules, or one the file already uses (`own`), would not compile.
+fn detail_imports<'a>(
+    comps: &'a [Component],
+    own: &[String],
+) -> Result<BTreeMap<&'a str, BTreeSet<&'a str>>, EmitError> {
+    let mut out: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
+    let mut seen: BTreeMap<&str, &str> = BTreeMap::new();
+    for c in comps {
+        let events = c.events.iter().filter(|e| e.detail.is_some());
+        for i in events
+            .filter_map(|e| e.event_type.as_ref())
+            .flat_map(|t| &t.imports)
+        {
+            let clash = |clash: String| EmitError::DetailImportClash {
+                tag: c.tag.clone(),
+                name: i.name.clone(),
+                clash,
+            };
+            if own.contains(&i.name) {
+                return Err(clash("is reserved by the generated file".into()));
+            }
+            match seen.insert(&i.name, &i.specifier) {
+                Some(prev) if prev != i.specifier => {
+                    return Err(clash(format!(
+                        "is imported from both `{prev}` and `{}`",
+                        i.specifier
+                    )));
+                }
+                _ => {}
+            }
+            out.entry(&i.specifier).or_default().insert(&i.name);
+        }
+    }
+    Ok(out)
 }
 
 /// An object key: bare when it is an identifier, else a string literal (`'badge-count'`).

@@ -4,7 +4,7 @@
 import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 import type { FxEvents as FxEventsElement } from '@holyfloe/fixtures/fx-events/fx-events.js';
 
-type TypedEvent<El extends HTMLElement, Detail> = CustomEvent<Detail> & { target: El; currentTarget: El };
+type TypedEvent<El extends Element, Detail> = CustomEvent<Detail> & { target: El; currentTarget: El };
 
 type FxEventsProps = {
   /** Kebab-case name. */

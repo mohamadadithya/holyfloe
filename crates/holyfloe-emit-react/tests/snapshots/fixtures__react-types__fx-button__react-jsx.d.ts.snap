@@ -8,7 +8,7 @@ expression: f.contents
 import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 import type { FxButton as FxButtonElement } from '@holyfloe/fixtures/fx-button/fx-button.js';
 
-type TypedEvent<El extends HTMLElement, Detail> = CustomEvent<Detail> & { target: El; currentTarget: El };
+type TypedEvent<El extends Element, Detail> = CustomEvent<Detail> & { target: El; currentTarget: El };
 
 type FxButtonProps = Partial<Pick<FxButtonElement, 'variant' | 'disabled'>> & {
   /** Fired when the button is activated. Has no detail. */

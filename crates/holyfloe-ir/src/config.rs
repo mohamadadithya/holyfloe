@@ -82,8 +82,11 @@ pub enum BindingsMode {
 }
 
 #[derive(Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ComponentOverride {
     /// DOM event name -> base prop name (no framework prefix), e.g. `"myChange": "MyChangeCamel"`.
     pub events: BTreeMap<String, String>,
+    /// Props to leave out of every wrapper. The manifest cannot tell a stale JSDoc `@property`
+    /// (Web Awesome `wa-drawer` `modal`) from a real untyped field, and `El['prop']` fails on it.
+    pub exclude_props: Vec<String>,
 }

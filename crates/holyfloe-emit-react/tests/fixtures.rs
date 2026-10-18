@@ -109,6 +109,10 @@ fn config_parses_from_json() {
         serde_json::from_str::<ReactConfig>("{}").unwrap(),
         ReactConfig::default()
     );
+    for unknown in [r#"{ "useclient": false }"#, r#"{ "slotHelpers": true }"#] {
+        let err = serde_json::from_str::<ReactConfig>(unknown).unwrap_err();
+        assert!(err.to_string().contains("unknown field"), "{err}");
+    }
 }
 
 /// No M1 fixture names a type in an event detail, so add references by hand.
@@ -124,6 +128,27 @@ fn detail_type_references_become_imports() {
         });
     }
     let line = "import type { Change, Toggle } from '@holyfloe/fixtures/types.js';\n";
+    let clashing = |name: &str, specifier: &str| {
+        let mut lib = lib.clone();
+        let ty = lib.components[0].events[3].event_type.as_mut().unwrap();
+        ty.imports.push(holyfloe_ir::TypeImport {
+            name: name.into(),
+            specifier: specifier.into(),
+        });
+        lib
+    };
+    for (name, specifier, clash) in [
+        (
+            "Change",
+            "@holyfloe/fixtures/other.js",
+            "imported from both",
+        ),
+        ("Ref", "@holyfloe/fixtures/types.js", "reserved"),
+        ("FxEventsElement", "@holyfloe/fixtures/types.js", "reserved"),
+    ] {
+        let err = emit(&clashing(name, specifier), &ReactConfig::default()).unwrap_err();
+        assert!(err.to_string().contains(clash), "{name}: {err}");
+    }
     for mode in [ReactMode::Wrapper, ReactMode::Types] {
         let cfg = ReactConfig {
             mode,
@@ -152,4 +177,24 @@ fn props_named_like_wrapper_locals_bind_other_names() {
     ] {
         assert!(out.contains(line), "missing {line:?} in:\n{out}");
     }
+}
+
+/// A callback prop named like an event's React prop would be destructured twice.
+#[test]
+fn prop_named_like_an_event_prop_is_an_error() {
+    let mut lib = build_fixture("fx-derived");
+    lib.components[0].props[0].name = "onFxReady".into();
+    let err = emit(&lib, &ReactConfig::default()).unwrap_err();
+    assert!(
+        matches!(&err, holyfloe_emit_react::EmitError::PropEventClash { prop, event, .. } if prop == "onFxReady" && event == "fx-ready"),
+        "{err}"
+    );
+    let types = ReactConfig {
+        mode: ReactMode::Types,
+        ..ReactConfig::default()
+    };
+    assert!(
+        emit(&lib, &types).is_ok(),
+        "types mode does not destructure"
+    );
 }

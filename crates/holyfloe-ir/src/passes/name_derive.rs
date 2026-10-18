@@ -1,4 +1,5 @@
 //! Pass 3: component names and event base names. Emitters add their own prefix (React: `on`).
+//! Also applies the rest of `overrides.<tag>`: `excludeProps` drops props.
 
 use crate::{Config, IrError, Library};
 
@@ -76,6 +77,31 @@ pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
                 ),
             ));
         }
+        let excluded = overrides
+            .map(|o| o.exclude_props.as_slice())
+            .unwrap_or_default();
+        if let Some(name) = excluded
+            .iter()
+            .find(|name| !c.props.iter().any(|p| &p.name == *name))
+        {
+            let known: Vec<_> = c.props.iter().map(|p| format!("`{}`", p.name)).collect();
+            return Err(IrError::new(
+                "E009",
+                format!("excluded prop `{name}` matches no prop of `{}`", c.tag),
+                Some(&c.tag),
+                Some(&c.module.path),
+                format!(
+                    "fix `overrides.{}.excludeProps` in holyfloe.config.json; props are: {}",
+                    c.tag,
+                    if known.is_empty() {
+                        "none".to_owned()
+                    } else {
+                        known.join(", ")
+                    }
+                ),
+            ));
+        }
+        c.props.retain(|p| !excluded.contains(&p.name));
         for e in &mut c.events {
             e.base_name = overrides
                 .and_then(|o| o.events.get(&e.dom_name))
@@ -131,6 +157,7 @@ mod tests {
                 "x-a".to_owned(),
                 ComponentOverride {
                     events: [("myChange".to_owned(), "MyChangeCamel".to_owned())].into(),
+                    ..ComponentOverride::default()
                 },
             )]
             .into(),
@@ -150,6 +177,7 @@ mod tests {
                 "x-a".to_owned(),
                 ComponentOverride {
                     events: [("my-chnage".to_owned(), "X".to_owned())].into(),
+                    ..ComponentOverride::default()
                 },
             )]
             .into(),
@@ -175,6 +203,33 @@ mod tests {
             ..cfg
         };
         assert!(build_json_with(cem_one(element("x-a", "XA")), &cfg).is_ok());
+    }
+
+    #[test]
+    fn exclude_props_drops_props_and_rejects_unknown_names() {
+        let mut el = element("x-a", "XA");
+        el["members"] = json!([
+            { "kind": "field", "name": "open", "type": { "text": "boolean" } },
+            { "kind": "field", "name": "modal" }
+        ]);
+        let cfg: Config = serde_json::from_value(
+            json!({ "overrides": { "x-a": { "excludeProps": ["modal"] } } }),
+        )
+        .unwrap();
+        let lib = build_json_with(cem_one(el.clone()), &cfg).unwrap();
+        let props: Vec<_> = lib.components[0]
+            .props
+            .iter()
+            .map(|p| p.name.as_str())
+            .collect();
+        assert_eq!(props, ["open"]);
+
+        let cfg: Config =
+            serde_json::from_value(json!({ "overrides": { "x-a": { "excludeProps": ["modl"] } } }))
+                .unwrap();
+        let err = build_json_with(cem_one(el), &cfg).unwrap_err();
+        assert_eq!(err.code, "E009");
+        assert!(err.hint.contains("`open`, `modal`"), "{}", err.hint);
     }
 
     #[test]

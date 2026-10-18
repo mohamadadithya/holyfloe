@@ -98,7 +98,7 @@ No `exports` field means every file is importable as `<pkg>/<path>`. No match at
 
 1. **flatten-inheritance.** Merge members, events, slots, parts from superclass and mixins using `inheritedFrom` and dependency manifests. Error on cycles.
 2. **drop-non-public.** Remove private, protected, static, and `@internal`-tagged members, plus any `attributes` entry whose `fieldName` points at a removed member (the analyzer lists protected fields there too). The analyzer already strips `@internal`; the check still matters for M4 input.
-3. **name-derive.** Compute event `base_name` (config `overrides.<tag>.events.<dom-name>` wins) and component names. Respect config `tagFormatter` and `componentNameFormatter`.
+3. **name-derive.** Compute event `base_name` (config `overrides.<tag>.events.<dom-name>` wins) and component names, and drop the props listed in `overrides.<tag>.excludeProps`. Respect config `tagFormatter` and `componentNameFormatter`.
 4. **classify-props.** Set `PropKind` by lexing `type.text`, after stripping top-level `| undefined` and `| null` (the analyzer writes optional props as `string | undefined`):
    - `boolean` -> Boolean
    - `string`, `number`, string/number literal unions, `bigint` -> Primitive
@@ -106,7 +106,7 @@ No `exports` field means every file is importable as `<pkg>/<path>`. No match at
 
    `PropKind` comes from the type only. A Boolean or Primitive prop with `attribute: None` (Lit `attribute: false`) has no attribute to render: emitters set it as a property only.
 5. **infer-bindings.** Apply the heuristic below, then overlay explicit `@model` JSDoc and config. Explicit always wins.
-6. **validate.** Duplicate tags, duplicate prop names, events with empty names, event base names that clash, and component or event names that are not identifiers (`[A-Za-z0-9_$]`) are errors with source locations. An event override for a present tag that names no event of it is an error; overrides for absent tags are ignored, so one config can serve several manifests.
+6. **validate.** Duplicate tags, duplicate prop names, events with empty names, event base names that clash, and component or event names that are not identifiers (`[A-Za-z0-9_$]`) are errors with source locations. Override errors (unknown tag, event or excluded prop, `E009`) are raised earlier, in name-derive; an override for a tag removed by `exclude` is allowed.
 
 ## Binding inference heuristic
 
@@ -134,6 +134,7 @@ The IR reads these keys and ignores the rest:
 - `moduleRewrite`: prefix pairs, see Module resolution.
 - `bindings`: `"infer"` (default) or `"explicit-only"`.
 - `exclude`: tag globs, where `*` matches any run of characters.
+- `overrides.<tag>.excludeProps`: prop names to leave out of every wrapper. The manifest cannot tell a stale JSDoc `@property` (Web Awesome `wa-drawer` `modal`, absent from the class, so `El['modal']` fails) from a real untyped field, so this is explicit; it also hides public internals such as Web Awesome's `didSSR`. A name that matches no prop is `E009`.
 - `overrides.<tag>.events.<dom-name>`: the base prop name, without a framework prefix. An unknown tag or event is `E009`, so a config serves one manifest. Fixtures with overrides have their own `fixtures/src/<name>/holyfloe.config.json`.
 - `tagFormatter`, `componentNameFormatter`: any non-null value is `E010` (not supported yet).
 
@@ -167,7 +168,7 @@ Use `thiserror`. Every error carries: component tag (if known), CEM module path,
 | E006 | validate | Several events map to the same base prop name |
 | E007 | validate | Event with an empty name |
 | E008 | lower, validate | Tag is not a valid custom element name (e.g. a variable the analyzer recorded), or a component/event name is not `[A-Za-z0-9_$]` |
-| E009 | name-derive | Event override for a tag or event that does not exist |
+| E009 | name-derive | Override for a tag, event or excluded prop that does not exist |
 | E010 | config check | Unsupported config key (`tagFormatter`, `componentNameFormatter`) |
 
 Manifest parse errors come from `holyfloe_cem::ParseError`, not `IrError`.

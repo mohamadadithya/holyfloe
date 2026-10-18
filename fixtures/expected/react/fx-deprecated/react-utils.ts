@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
  * An event observed on the custom element. `currentTarget` is always the element.
  * `target` is too, unless a slotted child dispatched an event with the same name.
  */
-export type TypedEvent<El extends HTMLElement, Detail> = CustomEvent<Detail> & {
+export type TypedEvent<El extends Element, Detail> = CustomEvent<Detail> & {
   target: El;
   currentTarget: El;
 };
@@ -17,7 +17,7 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
  * Assigns props as element properties before paint, and again once `tag` is
  * defined, so values set before the element upgrades are not lost.
  */
-export function useProperties<El extends HTMLElement>(
+export function useProperties<El extends Element>(
   ref: RefObject<El | null>,
   tag: string,
   props: { [K in keyof El]?: El[K] },
@@ -45,7 +45,7 @@ export function useProperties<El extends HTMLElement>(
  * Lit's first update are not missed. The listener is stable and always calls
  * the latest handler, so inline handlers do not re-subscribe on every render.
  */
-export function useEventListener<El extends HTMLElement, E extends Event>(
+export function useEventListener<El extends Element, E extends Event>(
   ref: RefObject<El | null>,
   type: string,
   handler: ((event: E) => void) | undefined,

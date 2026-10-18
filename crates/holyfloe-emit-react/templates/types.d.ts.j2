@@ -11,7 +11,7 @@ import type { {{ names | join(", ") }} } from {{ specifier | ts_string }};
 {% endfor %}
 {% if components | selectattr("events") | list %}
 
-type TypedEvent<El extends HTMLElement, Detail> = CustomEvent<Detail> & { target: El; currentTarget: El };
+type TypedEvent<El extends Element, Detail> = CustomEvent<Detail> & { target: El; currentTarget: El };
 {% endif %}
 {% for c in components %}
 {% set el = c.name ~ "Element" %}
