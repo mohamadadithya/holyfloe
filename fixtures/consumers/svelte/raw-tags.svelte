@@ -1,4 +1,7 @@
-<!-- Must compile: raw tags typed by every svelte-elements.d.ts. -->
+<!-- Must compile: raw tags typed by every svelte-elements.d.ts. The script block matters:
+     svelte-check type-checks markup only in TypeScript components. -->
+<script lang="ts"></script>
+
 <fx-button variant="primary" disabled onfx-press={(e) => e.currentTarget.disabled}>raw</fx-button>
 <fx-badge badge-count={1} tone="warning" label="one" for="x"></fx-badge>
 <fx-card elevated={false}><h2 slot="header">Raw</h2></fx-card>

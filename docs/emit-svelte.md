@@ -1,6 +1,6 @@
 # Svelte 5 emitter spec
 
-Reference for type shapes: `@wc-toolkit/svelte-types` (its README still shows `on:` event syntax; update to Svelte 5 attribute events). Port shapes, write original code.
+Reference for type shapes: `@wc-toolkit/svelte-types`, but not its augmentation target: 1.0.3 augments the legacy `svelteHTML.IntrinsicElements`, which Svelte 5's svelte-check ignores (D-080). Augment `SvelteHTMLElements` in `svelte/elements`. Port shapes, write original code.
 
 ## Output
 
