@@ -25,6 +25,7 @@ declare module 'svelte/elements' {
      * - --fx-card-padding: Inner padding. Defaults to 16px.
      * - --fx-card-radius: Corner radius. Defaults to 8px.
      */
-    'fx-card': Omit<HTMLAttributes<FxCardElement>, 'elevated'> & Partial<Pick<FxCardElement, 'elevated'>>;
+    'fx-card': Omit<HTMLAttributes<FxCardElement>, 'elevated'> &
+      Partial<Pick<FxCardElement, 'elevated'>>;
   }
 }

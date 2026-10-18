@@ -45,7 +45,7 @@ gen-cem-types:
 # fixtures/holyfloe.config.json. fx-button also goes out with `react.ref: "prop"` (React 19 only)
 # into react-ref-prop/.
 gen-fixtures: build-fixtures
-    rm -rf fixtures/out/react fixtures/out/react-types fixtures/out/react-ref-prop fixtures/out/vue
+    rm -rf fixtures/out/react fixtures/out/react-types fixtures/out/react-ref-prop fixtures/out/vue fixtures/out/svelte
     stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT; \
     for dir in fixtures/src/[!_]*/; do \
         name=$(basename "$dir"); \
@@ -57,7 +57,7 @@ gen-fixtures: build-fixtures
                 --frameworks react --config "$cfg" --react-mode "$mode" > /dev/null; \
             mkdir -p "fixtures/out/$sub"; mv "$stage/react" "fixtures/out/$sub/$name"; \
         done; \
-        for fw in vue; do \
+        for fw in vue svelte; do \
             cargo run -q -p holyfloe-cli -- generate --cem "$dir/custom-elements.json" --out "$stage" \
                 --frameworks "$fw" --config "$cfg" > /dev/null; \
             mkdir -p "fixtures/out/$fw"; mv "$stage/$fw" "fixtures/out/$fw/$name"; \
@@ -70,8 +70,9 @@ gen-fixtures: build-fixtures
     diff -r fixtures/expected/react-types fixtures/out/react-types
     diff -r fixtures/expected/react-ref-prop fixtures/out/react-ref-prop
     diff -r fixtures/expected/vue fixtures/out/vue
+    diff -r fixtures/expected/svelte fixtures/out/svelte
 
-typecheck: typecheck-react
+typecheck: typecheck-react typecheck-vue typecheck-svelte
 
 # tsc --strict on fresh fixtures/out + consumer tests: wrapper mode on @types/react 18 and 19,
 # types mode and `react.ref: "prop"` on 19 only.
@@ -83,10 +84,11 @@ typecheck-react: gen-fixtures
 typecheck-vue: gen-fixtures
     pnpm -C fixtures/typecheck/vue typecheck
 
-typecheck-svelte:
-    @echo "not yet: M2" >&2; exit 1
+# svelte-check --fail-on-warnings (TypeScript 6, D-071) on fresh fixtures/out/svelte + consumer tests.
+typecheck-svelte: gen-fixtures
+    pnpm -C fixtures/typecheck/svelte typecheck
 
-e2e: e2e-react
+e2e: e2e-react e2e-vue e2e-svelte
 
 # Playwright (chromium): e2e/react18 and e2e/react19 under vite dev and build + preview, and
 # e2e/next-app under next dev and build + start.
@@ -98,13 +100,14 @@ e2e-react: gen-fixtures
 e2e-vue: gen-fixtures
     pnpm -C e2e test:vue
 
-e2e-svelte:
-    @echo "not yet: M2" >&2; exit 1
+# Playwright (chromium): e2e/svelte5 under vite dev and build + preview, on fresh fixtures/out/svelte.
+e2e-svelte: gen-fixtures
+    pnpm -C e2e test:svelte
 
 parity:
     @echo "not yet: M4" >&2; exit 1
 
 # Everything that exists today, in order. Extend as milestones land.
 # Committed analyzer output and generated wrappers must match what the tools produce now.
-verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react e2e-react
+verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte
     git diff --exit-code -- fixtures/src fixtures/out

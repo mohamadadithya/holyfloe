@@ -38,8 +38,8 @@
   });
 </script>
 
-<!-- `onchangecapture`: Svelte delegates `onchange` to the root, which only sees events that
-     bubble. A capture listener on the host fires either way. -->
+<!-- `on<name>capture` listeners: Svelte delegates some event names (`change`, `click`, ...) to the
+     root, which only sees events that bubble. A capture listener on the host fires either way. -->
 <fx-input
   bind:this={element}
   {...rest}
