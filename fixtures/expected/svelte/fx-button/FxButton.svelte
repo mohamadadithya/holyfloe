@@ -12,7 +12,7 @@
     element?: FxButtonElement;
     /** The button label. */
     children?: Snippet;
-  } & Omit<HTMLAttributes<FxButtonElement>, 'variant' | 'disabled' | 'onFxPress' | 'element' | 'children'>;
+  } & Omit<HTMLAttributes<FxButtonElement>, 'variant' | 'disabled' | 'onFxPress' | 'onfx-press' | 'element' | 'children'>;
 </script>
 
 <!--
@@ -20,16 +20,20 @@
   Basic action button.
 
   A clickable button.
+
+  Slots:
+  - default: The button label.
 -->
 <script lang="ts">
   import '@holyfloe/fixtures/fx-button/fx-button.js';
 
   let { variant, disabled, onFxPress, element = $bindable(), children, ...rest }: FxButtonProps = $props();
 
-  // Booleans are also set as properties: as an attribute, `false` can only be "absent", which
-  // leaves the property `undefined` instead of `false`.
+  // Set as properties: Complex and attribute-less props have no attribute form, and a Boolean
+  // attribute can only be present or absent (absent would leave `undefined`, not `false`).
   $effect(() => {
-    if (element && disabled !== undefined) element.disabled = disabled;
+    if (!element) return;
+    if (disabled !== undefined) element.disabled = disabled;
   });
 </script>
 

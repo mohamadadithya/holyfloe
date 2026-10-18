@@ -8,7 +8,14 @@ import type { TypedEvent } from './vue-utils.js';
 
 declare module 'vue' {
   interface GlobalComponents {
-    /** Basic action button. */
+    /**
+     * Basic action button.
+     *
+     * A clickable button.
+     *
+     * Slots:
+     * - default: The button label.
+     */
     'fx-button': DefineComponent<
       Partial<Pick<FxButtonElement, 'variant' | 'disabled'>> & {
         /** Fired when the button is activated. Has no detail. */

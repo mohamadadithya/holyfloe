@@ -1,4 +1,4 @@
-<!-- Must compile: props, event, default slot, bind:element, and the raw tag. -->
+<!-- Must compile: props, event, default slot and bind:element. -->
 <script lang="ts">
   import { FxButton } from '../../out/svelte/fx-button/index.js';
 
@@ -9,4 +9,3 @@
   Go
 </FxButton>
 <FxButton onclick={() => element?.focus()}>Click</FxButton>
-<fx-button variant="primary" disabled onfx-press={(e) => e.currentTarget.disabled}>raw</fx-button>

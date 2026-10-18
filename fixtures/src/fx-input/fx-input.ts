@@ -45,8 +45,10 @@ export class FxInput extends LitElement {
   }
 
   #onChange() {
-    // The native `change` is not composed, so the host re-dispatches it.
-    this.dispatchEvent(new Event('change', { bubbles: true }));
+    // The native `change` is not composed, so the host re-dispatches it. Not bubbling (the
+    // `new Event` default) on purpose: Svelte delegates `onchange` to the root, so wrappers
+    // must still see it (D-075).
+    this.dispatchEvent(new Event('change'));
   }
 }
 

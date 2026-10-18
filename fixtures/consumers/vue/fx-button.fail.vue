@@ -10,6 +10,4 @@ import { FxButton } from '../../out/vue/fx-button/index.js';
   <FxButton :disabled="'yes'" />
   <!-- @vue-expect-error the event target is the element; variant is a string -->
   <FxButton @fx-press="(e) => e.currentTarget.variant.toFixed()" />
-  <!-- @vue-expect-error raw tag: variant is a union of strings -->
-  <fx-button variant="huge" />
 </template>

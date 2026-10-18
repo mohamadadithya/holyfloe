@@ -15,7 +15,9 @@ import { defined, type TypedEvent } from './vue-utils.js';
 export const FxButton = defineComponent({
   name: 'FxButton',
   props: {
+    /** Visual style of the button. */
     variant: { type: null as unknown as PropType<FxButtonElement['variant']> },
+    /** Prevents interaction when set. */
     disabled: { type: Boolean as PropType<FxButtonElement['disabled']>, default: undefined },
   },
   emits: {

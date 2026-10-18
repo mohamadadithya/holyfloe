@@ -26,13 +26,13 @@ generated/vue/
    - any other prop `p` -> prop `p` + `update:p` emit (used as `v-model:p`).
    - Read the new value using `binding.value` (`ValuePath`): `Detail`, `DetailField(name)` or `TargetProp(name)`.
    - Do not mutate props. Emit only; the parent owns state.
-6. Slots: default slot -> element children. Named Vue slot `x` -> wrapper child with `slot="x"` attribute on a `display: contents` element. Scoped slots are typed as `() => VNode[]` only (D-027).
+6. Slots: default slot -> element children, for every component, documented or not (as React passes children). Named Vue slot `x` -> wrapper child with `slot="x"` attribute on a `display: contents` element. Scoped slots are typed as `() => VNode[]` only (D-027).
 7. The element and its methods are public instance members, so they are typed for consumers: `setup()` returns `element` (a `shallowRef`, set by `ref: 'element'` in `render()`) and one forwarding function per public method (`show(...args)`). `expose()` is not used, because exposed members are untyped.
 
 ## Types
 
 - Per-component `DefineComponent` type exported from each file.
-- `global-components.d.ts`: `declare module 'vue' { interface GlobalComponents { 'my-button': ... } }` for raw-tag usage.
+- `global-components.d.ts`: `declare module 'vue' { interface GlobalComponents { 'my-button': ... } }` for raw-tag usage. Props are typed by property name; a renamed attribute (`badge-count`) is not, because Vue templates camelize names for components (limitation, like React types mode). In a file that imports a wrapper, `<my-button>` resolves to the wrapper, not the raw tag.
 - Document for consumers: `compilerOptions.isCustomElement: (tag) => tag.includes('-')` is needed only when using raw tags, not the wrappers.
 
 ## SSR (Nuxt)

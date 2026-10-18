@@ -10,5 +10,4 @@ const onPress = (e: Event) => void button.value?.element?.focus();
 <template>
   <FxButton ref="button" variant="danger" :disabled="false" @fx-press="(e) => e.currentTarget.variant.toUpperCase()">Go</FxButton>
   <FxButton @fx-press="onPress">Click</FxButton>
-  <fx-button variant="primary" disabled @fx-press="(e) => e.currentTarget.disabled">raw</fx-button>
 </template>
