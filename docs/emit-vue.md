@@ -46,6 +46,7 @@ generated/vue/
 - Consumer `.vue` file using `v-model` compiles and type-checks; wrong payload type fails.
 - Playwright vue3 and nuxt apps: props, events, v-model round trip, named slots.
 
-## Unverified (see open-questions.md)
+## Raw tags without the wrapper (D-076, e2e `vue3?raw`)
 
-- OQ-003: whether raw `v-model` on a custom element works without the wrapper. Design assumes it does not give typed behavior. Verify with an e2e test in M2 before documenting.
+- Raw `v-model` compiles to Vue's text-input directive (`input` event + `el.value`). It follows typing on `fx-input` only because that element fires a composed `input` and updates `value` first; it cannot express `checked`, `detail` paths or custom events, and vue-tsc rejects it (it types v-model as a `modelValue` prop). Document the wrapper's `v-model`.
+- Raw Complex props on an element defined after render are lost: Vue sets a property only when `key in el`, so the array becomes the attribute `items="p,q"`. The wrapper's `'.items'` keeps it.

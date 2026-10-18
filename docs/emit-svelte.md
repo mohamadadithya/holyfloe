@@ -47,6 +47,7 @@ generated/svelte/
 - Named slot renders in the right shadow slot (e2e asserts `assignedNodes()`).
 - Playwright svelte5 and sveltekit apps: props, events, bind, slots.
 
-## Unverified (see open-questions.md)
+## Raw tags without the wrapper (D-077, e2e `svelte5?raw`)
 
-- OQ-004: exact property-vs-attribute heuristic Svelte 5 uses for lazily defined elements. The e2e suite is the source of truth, not older community write-ups.
+- Before the element is defined, Svelte sets objects and arrays as properties (they survive the upgrade) and everything else, functions included, as attributes (a function is lost). After definition it uses the element's setters. There is no `prop:`/`attr:` syntax: svelte-check reads `prop:items` as an attribute with an illegal colon (a warning).
+- `bind:value` on a custom element is a compile error in Svelte 5.57.2, so raw two-way binding is impossible; the wrappers' `$bindable` props are the way.

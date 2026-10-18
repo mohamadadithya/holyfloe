@@ -4,7 +4,11 @@
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "scripts": {
-    "test": "rm -rf next-app/generated && cp -R ../fixtures/out/react next-app/generated && playwright test"
+    "test": "pnpm run prepare-next && playwright test",
+    "test:react": "pnpm run prepare-next && HOLYFLOE_E2E=react playwright test",
+    "test:vue": "HOLYFLOE_E2E=vue playwright test",
+    "test:svelte": "HOLYFLOE_E2E=svelte playwright test",
+    "prepare-next": "rm -rf next-app/generated && cp -R ../fixtures/out/react next-app/generated"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

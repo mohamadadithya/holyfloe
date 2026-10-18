@@ -84,7 +84,7 @@ e2e: e2e-react
 # e2e/next-app under next dev and build + start.
 # Runs on fresh fixtures/out. First time: pnpm -C e2e exec playwright install chromium
 e2e-react: gen-fixtures
-    pnpm -C e2e test
+    pnpm -C e2e test:react
 
 e2e-vue:
     @echo "not yet: M2" >&2; exit 1

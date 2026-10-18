@@ -8,8 +8,4 @@ Each item has an owner step and a command or test that closes it. When closed, m
 
 ## Behavior claims (close with tests)
 
-- OQ-003 (M2): Vue's native `v-model` on a custom element does not give typed or reliable two-way binding without a wrapper. This was an inference; the Vue docs do not cover it. Close with an e2e test using a raw `<fx-input v-model="x">`.
-
-- OQ-004 (M2): Svelte 5 property-vs-attribute behavior for lazily defined elements, and the absence of `prop:`/`attr:` syntax. Evidence is mostly issues and community posts. Close with an e2e test and svelte-check. The e2e result overrides any prose.
-
 - OQ-009 (M2): `@wc-toolkit/svelte-types` README still shows `on:` syntax. Confirm what its output looks like on Svelte 5 and whether a newer release fixes it before porting.
