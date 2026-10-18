@@ -26,6 +26,7 @@ Component rules:
 5. Props by `PropKind`:
    - **Boolean:** pass `true` as an empty attribute, omit when `false`. Set the property on the element in a layout effect after mount so updates work post-upgrade.
    - **Primitive:** pass as attribute in JSX (SSR-correct), and also assign the property in the layout effect when the element is upgraded.
+   - On the React 19 client, React itself assigns any prop the element already has (`'kind' in el`) as a property instead of writing the attribute. So after a client render, a non-reflected Primitive (`fx-deprecated` `kind`, `fx-derived` `label`) has the right property but no attribute, while React 18 writes both. Reflected props show the attribute on both, because Lit reflects them. Renamed attributes (`'badge-count'`) are not element properties, so React 19 writes them as attributes too. Verified in Chromium on 2026-10-18; SSR HTML is checked in step 8.
    - Unsetting a Primitive or Boolean prop (value -> `undefined`) removes the attribute, and Lit then sets the property to `null` (Primitive) or `false` (Boolean), not back to its default. This is documented behavior, not reset by the wrapper.
    - **Complex:** never an attribute. Assign as a property in `useLayoutEffect`. Re-apply after `customElements.whenDefined(tag)` resolves.
    - **No attribute** (`attribute: None`, Lit `attribute: false`): property only, whatever the kind. Never render it as an attribute (fixture `fx-badge` `label`).
