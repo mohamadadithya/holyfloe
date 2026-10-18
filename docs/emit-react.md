@@ -62,6 +62,8 @@ Event props must match React 19 convention: `on` + exact DOM event name, so even
 
 Base props: `Omit<DetailedHTMLProps<HTMLAttributes<El>, El>, OwnKeys> & Props`, where `OwnKeys` are all prop, event and `style` keys the component declares (same rule as wrapper mode: the emitter cannot know which built-in attributes clash, so it omits all of its own).
 
+Limitation: an element defined after React renders it loses Complex props in types mode. React 19 sets a prop as a property only if the element already has it, so before the upgrade `items={['p','q']}` becomes the attribute `items="p,q"`, and after the upgrade `items` is the default `[]` (D-073, e2e `fx-lazy`). Wrapper mode re-applies Complex props after `whenDefined` and is not affected.
+
 Limitation: React 19 renders attributes from prop names, so a prop whose attribute is renamed (`count` -> `badge-count`) is rendered on the server as `count="3"`, which Lit ignores until hydration sets the property. Use wrapper mode when renamed attributes must be correct in SSR HTML.
 
 ## SSR

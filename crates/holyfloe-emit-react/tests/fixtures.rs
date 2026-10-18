@@ -1,4 +1,4 @@
-//! Per M1 fixture x mode: an insta snapshot, plus byte equality with the hand-written
+//! Per fixture x mode: an insta snapshot, plus byte equality with the hand-written
 //! `fixtures/expected/react{,-types}/<name>/` (the spec).
 
 use std::fs;
@@ -9,14 +9,19 @@ use holyfloe_emit_react::{EmitError, ReactConfig, ReactMode, RefStyle, emit};
 mod common;
 use common::{build_fixture, fixtures_dir, read};
 
-const FIXTURES: [&str; 7] = [
+const FIXTURES: [&str; 12] = [
     "fx-badge",
     "fx-button",
     "fx-card",
     "fx-deprecated",
     "fx-derived",
+    "fx-dialog",
     "fx-events",
+    "fx-input",
+    "fx-lazy",
     "fx-list",
+    "fx-mixin",
+    "fx-select",
 ];
 
 fn check(mode: ReactMode, expected_dir: &str) {

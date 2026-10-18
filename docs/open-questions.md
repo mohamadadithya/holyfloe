@@ -12,6 +12,4 @@ Each item has an owner step and a command or test that closes it. When closed, m
 
 - OQ-004 (M2): Svelte 5 property-vs-attribute behavior for lazily defined elements, and the absence of `prop:`/`attr:` syntax. Evidence is mostly issues and community posts. Close with an e2e test and svelte-check. The e2e result overrides any prose.
 
-- OQ-008 (M2, moved from M1 by D-061): React 19 behavior for properties on elements that are not upgraded at render time. The documented heuristic is "set as property if the property exists on the instance, else attribute". Close with a lazy-define e2e (fixture `fx-lazy`).
-
 - OQ-009 (M2): `@wc-toolkit/svelte-types` README still shows `on:` syntax. Confirm what its output looks like on Svelte 5 and whether a newer release fixes it before porting.

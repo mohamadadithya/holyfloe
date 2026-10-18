@@ -46,7 +46,7 @@ gen-cem-types:
 gen-fixtures: build-fixtures
     rm -rf fixtures/out/react fixtures/out/react-types fixtures/out/react-ref-prop
     stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT; \
-    for dir in fixtures/src/*/; do \
+    for dir in fixtures/src/[!_]*/; do \
         name=$(basename "$dir"); \
         cfg=fixtures/holyfloe.config.json; \
         if [ -f "$dir/holyfloe.config.json" ]; then cfg="$dir/holyfloe.config.json"; fi; \
