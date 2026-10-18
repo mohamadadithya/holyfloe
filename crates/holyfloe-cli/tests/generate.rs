@@ -111,3 +111,34 @@ fn emit_error_prints_code_and_hint() {
     );
     fs::remove_dir_all(&dir).unwrap();
 }
+
+/// A nameless `dist/package.json` (`{"type": "module"}`) is a build marker, not the package.
+#[test]
+fn skips_nameless_package_json() {
+    let dir = temp_out("nameless");
+    fs::create_dir_all(dir.join("dist")).unwrap();
+    fs::write(
+        dir.join("package.json"),
+        r#"{ "name": "pkg", "exports": { "./*": "./dist/*" } }"#,
+    )
+    .unwrap();
+    fs::write(dir.join("dist/package.json"), r#"{ "type": "module" }"#).unwrap();
+    let cem = r#"{ "schemaVersion": "1.0.0", "modules": [{ "kind": "javascript-module", "path": "dist/x.js",
+        "declarations": [{ "kind": "class", "name": "XEl", "tagName": "x-el", "customElement": true }] }] }"#;
+    fs::write(dir.join("dist/custom-elements.json"), cem).unwrap();
+    let run = Command::new(env!("CARGO_BIN_EXE_holyfloe"))
+        .args(["generate", "--frameworks", "react", "--cem"])
+        .arg(dir.join("dist/custom-elements.json"))
+        .arg("--out")
+        .arg(dir.join("out"))
+        .output()
+        .unwrap();
+    assert!(
+        run.status.success(),
+        "{}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    let el = fs::read_to_string(dir.join("out/react/XEl.tsx")).unwrap();
+    assert!(el.contains("import 'pkg/x.js';"), "{el}");
+    fs::remove_dir_all(&dir).unwrap();
+}

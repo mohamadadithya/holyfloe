@@ -1,5 +1,6 @@
 //! Output planning, content hashing, write-if-changed.
 
+use std::collections::HashSet;
 use std::fs;
 use std::io::{self, ErrorKind};
 use std::path::{Component, Path, PathBuf};
@@ -15,25 +16,41 @@ pub struct Report {
 
 /// Writes each file under `root`, skipping files whose bytes already match so their mtime is
 /// kept (watchers and bundlers see no change). Every path is checked before anything is written:
-/// absolute paths and `..` segments are `InvalidInput`, because emitters do not validate them.
+/// absolute paths, `..` segments and two files on one path (ignoring case, as macOS and Windows
+/// do) are `InvalidInput`, because emitters do not validate them. Errors name the failing file.
+// shortcut: not atomic (truncate, then write), so a watcher can read a partial file; write a
+// temp file and rename it if M3 watch mode hits that.
 pub fn write_if_changed(root: &Path, files: &[OutputFile]) -> io::Result<Report> {
     let targets = files
         .iter()
         .map(|f| target(root, &f.path))
         .collect::<io::Result<Vec<_>>>()?;
+    let mut seen = HashSet::new();
+    let same = |(_, t): &(&OutputFile, &PathBuf)| !seen.insert(t.to_string_lossy().to_lowercase());
+    if let Some((f, _)) = files.iter().zip(&targets).find(same) {
+        return Err(invalid(format!(
+            "two output files share the path `{}`",
+            f.path
+        )));
+    }
     let mut report = Report::default();
     for (f, path) in files.iter().zip(targets) {
         if fs::read(&path).is_ok_and(|old| old == f.contents.as_bytes()) {
             report.unchanged.push(f.path.clone());
             continue;
         }
+        let at = |e: io::Error| io::Error::new(e.kind(), format!("{}: {e}", path.display()));
         if let Some(dir) = path.parent() {
-            fs::create_dir_all(dir)?;
+            fs::create_dir_all(dir).map_err(at)?;
         }
-        fs::write(&path, &f.contents)?;
+        fs::write(&path, &f.contents).map_err(at)?;
         report.written.push(f.path.clone());
     }
     Ok(report)
+}
+
+fn invalid(msg: String) -> io::Error {
+    io::Error::new(ErrorKind::InvalidInput, msg)
 }
 
 fn target(root: &Path, rel: &str) -> io::Result<PathBuf> {
@@ -43,18 +60,14 @@ fn target(root: &Path, rel: &str) -> io::Result<PathBuf> {
             Component::Normal(p) => path.push(p),
             Component::CurDir => {}
             _ => {
-                return Err(io::Error::new(
-                    ErrorKind::InvalidInput,
-                    format!("output path `{rel}` must be relative, without `..`"),
-                ));
+                return Err(invalid(format!(
+                    "output path `{rel}` must be relative, without `..`"
+                )));
             }
         }
     }
     if path == root {
-        return Err(io::Error::new(
-            ErrorKind::InvalidInput,
-            format!("output path `{rel}` is empty"),
-        ));
+        return Err(invalid(format!("output path `{rel}` is empty")));
     }
     Ok(path)
 }
@@ -86,7 +99,7 @@ mod tests {
         assert_eq!(r.written, ["react/A.tsx", "react/index.ts"]);
         assert_eq!(fs::read_to_string(root.join("react/A.tsx")).unwrap(), "a");
 
-        let old = SystemTime::now() - Duration::from_secs(3600);
+        let old = SystemTime::UNIX_EPOCH + Duration::from_secs(1_700_000_000); // whole seconds: every fs keeps them
         let a = fs::File::options()
             .write(true)
             .open(root.join("react/A.tsx"))
@@ -114,10 +127,27 @@ mod tests {
     #[test]
     fn rejects_escaping_paths_before_writing() {
         let root = temp_root("reject");
-        for bad in ["../x.ts", "react/../../x.ts", "/tmp/x.ts", "", "."] {
+        for bad in [
+            "../x.ts",
+            "react/../../x.ts",
+            "/tmp/x.ts",
+            "",
+            ".",
+            "OK.ts",
+            "./ok.ts",
+        ] {
             let err = write_if_changed(&root, &[file("ok.ts", "ok"), file(bad, "x")]).unwrap_err();
             assert_eq!(err.kind(), ErrorKind::InvalidInput, "{bad:?}");
         }
         assert!(!root.exists(), "nothing is written when any path is bad");
+    }
+
+    #[test]
+    fn io_errors_name_the_file() {
+        let root = temp_root("io");
+        fs::create_dir_all(root.join("react/A.tsx")).unwrap();
+        let err = write_if_changed(&root, &[file("react/A.tsx", "a")]).unwrap_err();
+        assert!(err.to_string().contains("react/A.tsx: "), "{err}");
+        fs::remove_dir_all(&root).unwrap();
     }
 }

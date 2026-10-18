@@ -68,9 +68,7 @@ fn main() -> ExitCode {
 fn generate(args: &Generate) -> Result<(), String> {
     let cem = holyfloe_cem::parse(&read(&args.cem)?)
         .map_err(|e| format!("error: {}: {e}", args.cem.display()))?;
-    let pkg_path = nearest_package_json(&args.cem)?;
-    let pkg: PackageInfo = serde_json::from_str(&read(&pkg_path)?)
-        .map_err(|e| format!("error: {}: {e}", pkg_path.display()))?;
+    let pkg = nearest_package(&args.cem)?;
     let raw: serde_json::Value = match &args.config {
         Some(path) => serde_json::from_str(&read(path)?)
             .map_err(|e| format!("error: {}: {e}", path.display()))?,
@@ -105,8 +103,8 @@ fn generate(args: &Generate) -> Result<(), String> {
         for f in &mut files {
             f.path = format!("react/{}", f.path);
         }
-        let report = holyfloe_fs::write_if_changed(&args.out, &files)
-            .map_err(|e| format!("error: {}: {e}", args.out.display()))?;
+        let report =
+            holyfloe_fs::write_if_changed(&args.out, &files).map_err(|e| format!("error: {e}"))?;
         println!(
             "react: {} written, {} unchanged in {}",
             report.written.len(),
@@ -134,16 +132,22 @@ fn read(path: &Path) -> Result<String, String> {
     fs::read_to_string(path).map_err(|e| format!("error: {}: {e}", path.display()))
 }
 
-fn nearest_package_json(cem: &Path) -> Result<PathBuf, String> {
+/// The nearest `package.json` above the manifest that has a `name`. Nameless ones are skipped:
+/// they are build markers such as `dist/esm/package.json` = `{"type": "module"}` (tshy).
+fn nearest_package(cem: &Path) -> Result<PackageInfo, String> {
     let abs = std::path::absolute(cem).map_err(|e| format!("error: {}: {e}", cem.display()))?;
-    abs.ancestors()
-        .skip(1)
-        .map(|dir| dir.join("package.json"))
-        .find(|p| p.is_file())
-        .ok_or_else(|| {
-            format!(
-                "error: no package.json found above {}\n  hint: the manifest must live inside the package it describes",
-                cem.display()
-            )
-        })
+    for path in abs.ancestors().skip(1).map(|dir| dir.join("package.json")) {
+        if !path.is_file() {
+            continue;
+        }
+        let parse_err = |e: serde_json::Error| format!("error: {}: {e}", path.display());
+        let value: serde_json::Value = serde_json::from_str(&read(&path)?).map_err(parse_err)?;
+        if value.get("name").is_some() {
+            return serde_json::from_value(value).map_err(parse_err);
+        }
+    }
+    Err(format!(
+        "error: no package.json with a `name` found above {}\n  hint: the manifest must live inside the package it describes",
+        cem.display()
+    ))
 }

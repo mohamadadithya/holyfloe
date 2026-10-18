@@ -106,7 +106,7 @@ No `exports` field means every file is importable as `<pkg>/<path>`. No match at
 
    `PropKind` comes from the type only. A Boolean or Primitive prop with `attribute: None` (Lit `attribute: false`) has no attribute to render: emitters set it as a property only.
 5. **infer-bindings.** Apply the heuristic below, then overlay explicit `@model` JSDoc and config. Explicit always wins.
-6. **validate.** Duplicate tags, duplicate prop names, events with empty names, event base names that clash, and component or event names that are not identifiers (`[A-Za-z0-9_$]`) are errors with source locations. Override errors (unknown tag, event or excluded prop, `E009`) are raised earlier, in name-derive; an override for a tag removed by `exclude` is allowed.
+6. **validate.** Duplicate tags, component names that differ only in case or not at all (emitters name files after them), events with empty names, event base names that clash, and component or event names that are not identifiers (`[A-Za-z0-9_$]`) are errors with source locations. Override errors (unknown tag, event or excluded prop, `E009`) are raised earlier, in name-derive; an override for a tag removed by `exclude` is allowed.
 
 ## Binding inference heuristic
 
@@ -157,7 +157,7 @@ The IR reads these keys and ignores the rest:
 
 ## Errors
 
-Use `thiserror`. Every error carries: component tag (if known), CEM module path, and a short fix hint. The CLI prints them as `error[E0xx]: message (module)` with `  hint: ...` on the next line, and exits 1. The module is left out when the message already names it. Emitter errors a user can fix share the table (`EmitError::code()`/`hint()`); template errors are holyfloe bugs and print as `error: ...` with no code. E001 and E011 are unused; never reuse a retired code.
+Use `thiserror`. Every error carries: component tag (if known), CEM module path, and a short fix hint. The CLI prints them as `error[E0xx]: message (module)` with `  hint: ...` on the next line, and exits 1. The module is left out when the message already names it. Emitter errors a user can fix share the table (`EmitError::code()`/`hint()`); template errors are holyfloe bugs and print as `error: ...` with no code. E001 was never used and E011 is retired (used, then removed, in M1 step 2); never reuse a retired code.
 
 | Code | Where | Meaning |
 |---|---|---|
@@ -172,5 +172,6 @@ Use `thiserror`. Every error carries: component tag (if known), CEM module path,
 | E010 | config check | Unsupported config key (`tagFormatter`, `componentNameFormatter`) |
 | E012 | emit-react | An event detail type name is imported from two modules, or is a name the generated file already uses (`EmitError::DetailImportClash`) |
 | E013 | emit-react, wrapper mode | A prop has the same name as an event's `on<base_name>` prop (`EmitError::PropEventClash`) |
+| E014 | validate | Two tags give the same component name, ignoring case (`fx-button` and `fx--button`, or `x-ab` and `xa-b`) |
 
 Manifest parse errors come from `holyfloe_cem::ParseError`, not `IrError`.

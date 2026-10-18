@@ -1,11 +1,14 @@
 //! Pass 6: reject what no emitter can render.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::{Component, IrError, Library};
 
 pub(crate) fn run(lib: &Library) -> Result<(), IrError> {
     let mut tags = HashSet::new();
+    // Lowercased, because emitters name files after components and macOS and Windows
+    // file systems ignore case: `x-ab` (`XAb`) and `xa-b` (`XaB`) would share a file.
+    let mut names: HashMap<String, &Component> = HashMap::new();
     for c in &lib.components {
         let err = |code, msg: String, hint: String| {
             IrError::new(code, msg, Some(&c.tag), Some(&c.module.path), hint)
@@ -37,6 +40,16 @@ pub(crate) fn run(lib: &Library) -> Result<(), IrError> {
                 "E008",
                 format!("tag `{}` gives `{}`, which is not a valid identifier", c.tag, c.name),
                 "use a tag of letters, digits and `-`; component name overrides are not supported yet".to_owned(),
+            ));
+        }
+        if let Some(prev) = names.insert(c.name.to_lowercase(), c) {
+            return Err(err(
+                "E014",
+                format!(
+                    "tag `{}` gives the component name `{}`, which clashes with `{}` from tag `{}`",
+                    c.tag, c.name, prev.name, prev.tag
+                ),
+                "leave one tag out with `exclude` in holyfloe.config.json; component name overrides are not supported yet".to_owned(),
             ));
         }
         if let Some(e) = c.events.iter().find(|e| !is_identifier(&e.base_name)) {
@@ -147,6 +160,25 @@ mod tests {
                 "declarations": [element("x-a", "A"), element("x-a", "B")] }]
         });
         assert_eq!(build_json(cem).unwrap_err().code, "E004");
+    }
+
+    #[test]
+    fn component_name_clash_is_e014() {
+        let clash = |a: &str, b: &str| {
+            build_json(json!({
+                "schemaVersion": "1.0.0",
+                "modules": [{ "kind": "javascript-module", "path": "src/a.ts",
+                    "declarations": [element(a, "A"), element(b, "B")] }]
+            }))
+        };
+        let err = clash("fx-button", "fx--button").unwrap_err();
+        assert_eq!(err.code, "E014");
+        assert_eq!(
+            err.message,
+            "tag `fx--button` gives the component name `FxButton`, which clashes with `FxButton` from tag `fx-button`"
+        );
+        assert_eq!(clash("x-ab", "xa-b").unwrap_err().code, "E014", "case only");
+        assert!(clash("x-ab", "x-abc").is_ok());
     }
 
     #[test]
