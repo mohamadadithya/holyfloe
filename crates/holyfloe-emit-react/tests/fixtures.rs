@@ -4,7 +4,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use holyfloe_emit_react::{ReactConfig, ReactMode, RefStyle, emit};
+use holyfloe_emit_react::{EmitError, ReactConfig, ReactMode, RefStyle, emit};
 use holyfloe_ir::{Config, Library, PackageInfo, build};
 
 const FIXTURES: [&str; 7] = [
@@ -197,4 +197,186 @@ fn prop_named_like_an_event_prop_is_an_error() {
         emit(&lib, &types).is_ok(),
         "types mode does not destructure"
     );
+}
+
+/// A probe event with a `CustomEvent<T>` detail, so detail imports are considered.
+fn probe_event(imports: Vec<holyfloe_ir::TypeImport>) -> holyfloe_ir::Event {
+    holyfloe_ir::Event {
+        dom_name: "zz-probe".into(),
+        base_name: "ZzProbe".into(),
+        detail: Some(holyfloe_ir::TypeRef {
+            text: "Probe".into(),
+            imports: Vec::new(),
+        }),
+        event_type: Some(holyfloe_ir::TypeRef {
+            text: "CustomEvent<Probe>".into(),
+            imports,
+        }),
+        description: None,
+        deprecated: None,
+    }
+}
+
+/// Every identifier a generated file imports or declares as a type: `import { a, type B }`,
+/// `import type { X as Y }` (binds `Y`), `export type T =`, `type T<...> =`.
+fn bound_names(src: &str) -> Vec<String> {
+    let ident = |s: &str| {
+        s.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '$'))
+            .next()
+            .unwrap_or_default()
+            .to_owned()
+    };
+    let mut names = Vec::new();
+    for line in src.lines().map(str::trim_start) {
+        if let Some(rest) = line.strip_prefix("import ")
+            && let (Some(open), Some(close)) = (rest.find('{'), rest.find('}'))
+        {
+            for part in rest[open + 1..close].split(',') {
+                let part = part.trim().trim_start_matches("type ");
+                names.push(ident(part.rsplit(" as ").next().unwrap_or(part).trim()));
+            }
+        } else if let Some(rest) = line
+            .strip_prefix("export type ")
+            .or_else(|| line.strip_prefix("type "))
+        {
+            names.push(ident(rest));
+        }
+    }
+    names.retain(|n| !n.is_empty());
+    names
+}
+
+/// The reserved-name lists in `lib.rs` are kept by hand; this fails when a template starts
+/// binding a name they miss. A type-only import may share a name with the component `const`
+/// (TS allows it), so component names are not checked.
+#[test]
+fn reserved_names_cover_every_name_the_templates_bind() {
+    let modes = [
+        (ReactMode::Wrapper, RefStyle::ForwardRef),
+        (ReactMode::Wrapper, RefStyle::Prop),
+        (ReactMode::Types, RefStyle::ForwardRef),
+    ];
+    for name in FIXTURES {
+        let mut lib = build_fixture(name);
+        lib.components[0].events.push(probe_event(Vec::new()));
+        for (mode, ref_style) in modes {
+            let cfg = ReactConfig {
+                mode,
+                ref_style,
+                ..ReactConfig::default()
+            };
+            let files = emit(&lib, &cfg).unwrap();
+            let bound = bound_names(&files[0].contents);
+            assert!(bound.len() >= 4, "{name}: parsed too little: {bound:?}");
+            for taken in &bound {
+                let mut lib = lib.clone();
+                let events = &mut lib.components[0].events;
+                *events.last_mut().unwrap() = probe_event(vec![holyfloe_ir::TypeImport {
+                    name: taken.clone(),
+                    specifier: "@holyfloe/fixtures/types.js".into(),
+                }]);
+                let err = emit(&lib, &cfg).err();
+                assert!(
+                    matches!(err, Some(EmitError::DetailImportClash { .. })),
+                    "{name} {mode:?} {ref_style:?}: `{taken}` is bound by the template but not reserved"
+                );
+            }
+        }
+    }
+}
+
+/// Several components: one `index.ts` and one `react-jsx.d.ts` list them all, `TypedEvent`
+/// once. Every fixture has one component, so expected/ never covers this.
+#[test]
+fn several_components_share_index_and_types_file() {
+    let mut lib = build_fixture("fx-button");
+    for name in ["fx-card", "fx-events"] {
+        lib.components.extend(build_fixture(name).components);
+    }
+    let files = emit(&lib, &ReactConfig::default()).unwrap();
+    let paths: Vec<_> = files.iter().map(|f| f.path.as_str()).collect();
+    assert_eq!(
+        paths,
+        [
+            "FxButton.tsx",
+            "FxCard.tsx",
+            "FxEvents.tsx",
+            "index.ts",
+            "react-utils.ts"
+        ]
+    );
+    insta::assert_snapshot!("multi__index.ts", files[3].contents);
+    let types = ReactConfig {
+        mode: ReactMode::Types,
+        ..ReactConfig::default()
+    };
+    let files = emit(&lib, &types).unwrap();
+    let d_ts = &files[0].contents;
+    assert_eq!(d_ts.matches("type TypedEvent<").count(), 1);
+    insta::assert_snapshot!("multi__react-jsx.d.ts", d_ts);
+}
+
+/// No props, events, slots, parts, CSS properties or docs: the template's empty branches.
+#[test]
+fn bare_component() {
+    let mut lib = build_fixture("fx-button");
+    let c = &mut lib.components[0];
+    c.props.clear();
+    c.events.clear();
+    c.slots.clear();
+    (c.summary, c.description) = (None, None);
+    for mode in [ReactMode::Wrapper, ReactMode::Types] {
+        let cfg = ReactConfig {
+            mode,
+            ..ReactConfig::default()
+        };
+        let files = emit(&lib, &cfg).unwrap();
+        insta::assert_snapshot!(format!("bare__{mode:?}"), files[0].contents);
+    }
+}
+
+/// Doc comment edge cases no fixture has.
+#[test]
+fn doc_edge_cases() {
+    let mut lib = build_fixture("fx-derived");
+    let c = &mut lib.components[0];
+    c.deprecated = Some(String::new());
+    c.slots[0].description = None;
+    c.description = Some("Ends */ here.".into());
+    let e = &mut c.events[0];
+    e.description = Some("Line one.\nLine two.".into());
+    e.deprecated = Some("Use `fx-done`.".into());
+    c.events.push(holyfloe_ir::Event {
+        description: Some("Has */ inside.".into()),
+        deprecated: Some(String::new()),
+        dom_name: "fx-other".into(),
+        base_name: "FxOther".into(),
+        ..c.events[0].clone()
+    });
+    let files = emit(&lib, &ReactConfig::default()).unwrap();
+    let out = &files[0].contents;
+    for expected in [
+        " * Ends *\\/ here.\n",
+        " * - default\n",
+        " * @deprecated\n */\n",
+        "  /**\n   * Line one.\n   * Line two.\n   *\n   * @deprecated Use `fx-done`.\n   */\n  onFxReady?:",
+        "  /**\n   * Has *\\/ inside.\n   *\n   * @deprecated\n   */\n  onFxOther?:",
+    ] {
+        assert!(out.contains(expected), "missing {expected:?} in:\n{out}");
+    }
+}
+
+#[test]
+fn use_client_false_drops_the_directive() {
+    let cfg = ReactConfig {
+        use_client: false,
+        ..ReactConfig::default()
+    };
+    let files = emit(&build_fixture("fx-button"), &cfg).unwrap();
+    assert!(
+        files[0]
+            .contents
+            .starts_with("// Generated by holyfloe. Do not edit.\n")
+    );
+    assert!(!files[0].contents.contains("use client"));
 }
