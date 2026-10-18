@@ -161,7 +161,10 @@ mod tests {
             "kind": "mixin", "name": name,
             "members": [{ "kind": "field", "name": member, "type": { "text": "boolean" },
                           "attribute": member, "reflects": true }],
-            "events": [{ "name": event, "type": { "text": "CustomEvent" } }]
+            "events": [{ "name": event, "type": {
+                "text": "CustomEvent<Detail>",
+                "references": [{ "name": "Detail", "module": "src/detail.ts" }]
+            } }]
         })
     }
 
@@ -210,6 +213,14 @@ mod tests {
         assert_eq!(props, [("own", false), ("focused", true), ("local", true)]);
         let events: Vec<_> = c.events.iter().map(|e| e.dom_name.as_str()).collect();
         assert_eq!(events, ["focus-change", "local-change"]);
+        // A dependency's type reference is imported from that package, not resolved here.
+        let imports = |i: usize| {
+            c.events[i].event_type.as_ref().unwrap().imports[0]
+                .specifier
+                .clone()
+        };
+        assert_eq!(imports(0), "@dep/pkg");
+        assert_eq!(imports(1), "pkg/src/detail.js");
         // Without the dependency manifest its members are missing, not an error.
         let lib = crate::build(&cem, &pkg, &[], &crate::Config::default()).unwrap();
         assert_eq!(lib.components[0].props.len(), 2);

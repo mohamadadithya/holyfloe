@@ -1,0 +1,19 @@
+{
+  // svelte-check on generated Svelte output (fixtures/out/svelte) and consumer tests.
+  // TypeScript 6: svelte-check needs the classic compiler API (D-071).
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": [],
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "svelte": ["./node_modules/svelte"],
+      "svelte/*": ["./node_modules/svelte/*"]
+    }
+  },
+  "include": ["../../out/svelte/**/*", "../../consumers/svelte/**/*"]
+}

@@ -44,7 +44,12 @@ pub(crate) fn run(lib: &mut Library, cfg: &Config) -> Result<(), IrError> {
 
 fn infer(c: &Component) -> Vec<TwoWayBinding> {
     let mut out = Vec::new();
-    for p in c.props.iter().filter(|p| PROPS.contains(&p.name.as_str())) {
+    // Read-only props are not wrapper props, so they cannot be bound.
+    for p in c
+        .props
+        .iter()
+        .filter(|p| PROPS.contains(&p.name.as_str()) && !p.readonly)
+    {
         // Prop-specific events first, then the generic ones.
         let candidates = [
             format!("{}-change", p.name),
@@ -134,6 +139,14 @@ fn check(c: &Component, bindings: &[TwoWayBinding], source: &str) -> Result<(), 
             }
             Some(_) => {}
         }
+        if let ValuePath::TargetProp(t) = &b.value
+            && !c.props.iter().any(|p| p.name == *t)
+        {
+            return Err(err(
+                format!("{source} reads `target.{t}`, which is not a prop"),
+                "read a prop of the element, or use `detail` / `detail.<field>`".to_owned(),
+            ));
+        }
         if !c.events.iter().any(|e| e.dom_name == b.event) {
             let events: Vec<_> = c.events.iter().map(|e| e.dom_name.as_str()).collect();
             return Err(err(
@@ -216,6 +229,11 @@ mod tests {
             one("selected", "selectedChange", ValuePath::Detail)
         );
         assert_eq!(bindings(&["label"], &["change"], false, &cfg), []);
+        // A getter-only `value` is not a wrapper prop, so it is never bound.
+        let mut el = element("x-r", "XR");
+        el["members"] = json!([{ "kind": "field", "name": "value", "type": { "text": "string" }, "readonly": true }]);
+        el["events"] = json!([{ "name": "change", "type": { "text": "Event" } }]);
+        assert_eq!(build_json(cem_one(el)).unwrap().components[0].bindings, []);
         assert_eq!(bindings(&["value"], &["fx-press"], false, &cfg), []);
     }
 
@@ -301,6 +319,7 @@ mod tests {
             json!([{ "prop": "size", "event": "open-change" }]),
             json!([{ "prop": "open", "event": "nope" }]),
             json!([{ "prop": "open", "event": "open-change", "value": "detail." }]),
+            json!([{ "prop": "open", "event": "open-change", "value": "target.nope" }]),
             json!([{ "prop": "open", "event": "open-change" }, { "prop": "open", "event": "toggle" }]),
         ];
         for models in cases {

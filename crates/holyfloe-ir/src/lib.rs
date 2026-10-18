@@ -57,6 +57,19 @@ pub fn build(
     for dep in deps {
         classes.extend(class::discover(&dep.cem).into_iter().map(|mut c| {
             c.package = Some(dep.name.clone());
+            // Type references are module paths in the dependency, not in this package.
+            // shortcut: imported from the dependency's root, like other `package` references;
+            // upgrade to resolve the module through its `exports` when a library needs it.
+            for r in c
+                .events
+                .iter_mut()
+                .filter_map(|e| e.type_.as_mut())
+                .flat_map(|t| &mut t.references)
+            {
+                if r.package.is_none() && r.module.take().is_some() {
+                    r.package = Some(dep.name.clone());
+                }
+            }
             c
         }));
     }

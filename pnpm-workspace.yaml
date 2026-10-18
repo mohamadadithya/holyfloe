@@ -6,6 +6,8 @@ packages:
   - e2e/react18
   - e2e/react19
   - e2e/next-app
+  - e2e/vue3
+  - e2e/svelte5
 
 # Postinstall only matters for the analyzer --dependencies scan, which we do not use.
 allowBuilds:

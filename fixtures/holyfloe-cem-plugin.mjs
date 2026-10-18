@@ -12,6 +12,9 @@ export default function holyfloeModels() {
         .filter((tag) => tag.tagName.text === 'model')
         .map((tag) => {
           const [prop, event, value] = (ts.getTextOfJSDocComment(tag.comment) ?? '').trim().split(/\s+/);
+          if (!prop || !event) {
+            throw new Error(`${moduleDoc.path}: ${node.name.text}: write \`@model <prop> <event> [<path>]\``);
+          }
           return value ? { prop, event, value } : { prop, event };
         });
       if (models.length) found.set(`${moduleDoc.path}#${node.name.text}`, models);

@@ -18,11 +18,12 @@ generated/svelte/
 2. Props via `let { variant, items, children, ...rest } = $props();`.
 3. Binding to the element: `bind:this={el}`.
 4. Props by `PropKind`:
-   - Primitive and Boolean: pass in markup as attributes (`<my-button {variant} ...>`).
-   - Complex: set in `$effect(() => { if (el) el.items = items; })`. Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455), so this is the supported route.
-   - Re-apply after `customElements.whenDefined(tag)`.
+   - Primitive: in markup (`{variant}`); renamed attributes use the attribute name. Svelte skips an attribute that starts `undefined`, so the element keeps its default.
+   - Boolean: in markup as `x={x || undefined}` (SSR and pre-upgrade: an attribute can only be present or absent), and also set as a property in `$effect`, so `false` reaches the element as `false`, not `undefined` (review e2e 2026-10-18).
+   - Complex, and props without an attribute: set in the same `$effect`, skipping `undefined` (`if (element && items !== undefined) element.items = items`). Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455).
+   - No `whenDefined` re-apply: Lit keeps properties set before the upgrade (to be proven by fx-lazy).
 5. Events: callback props are `on<base_name>` (`onMyChange`, `onFxPress`), the same names as React and Vue (D-066). A mixed rule (exact DOM name when it is an identifier) would give `onmyChange` next to `onMyChange`.
-   - Attach with `on(el, dom_name, handler)` from `svelte/events` inside `$effect`, returning the cleanup.
+   - Attach with an event attribute on the host, `onmy-change={(e) => onMyChange?.(e)}`. Svelte attaches it when it creates the element, so events fired in Lit's first update are not lost (a `$effect` would run later).
    - Raw tags differ: Svelte 5 event attributes are case-sensitive and exact (`onclick` listens to `click`), so `svelte-elements.d.ts` types `onmy-change`.
 6. Two-way binding: for each `TwoWayBinding` emit `let { value = $bindable() } = $props();` and a listener that writes `value = <read via ValuePath>`. Consumers get `bind:value`.
 7. Slots to snippets:
