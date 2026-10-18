@@ -4,7 +4,7 @@
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "scripts": {
-    "test": "playwright test"
+    "test": "rm -rf next-app/generated && cp -R ../fixtures/out/react next-app/generated && playwright test"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

@@ -1,0 +1,17 @@
+{
+  "name": "@holyfloe/e2e-next-app",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@holyfloe/fixtures": "workspace:*",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}

@@ -79,7 +79,8 @@ typecheck-svelte:
 
 e2e: e2e-react
 
-# Playwright (chromium) on e2e/react18 and e2e/react19, each under vite dev and vite build + preview.
+# Playwright (chromium): e2e/react18 and e2e/react19 under vite dev and build + preview, and
+# e2e/next-app under next dev and build + start.
 # Runs on fresh fixtures/out. First time: pnpm -C e2e exec playwright install chromium
 e2e-react: gen-fixtures
     pnpm -C e2e test

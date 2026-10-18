@@ -5,3 +5,7 @@ fixtures/dist/
 e2e/*/dist/
 e2e/test-results/
 e2e/playwright-report/
+e2e/next-app/generated/
+e2e/next-app/.next/
+e2e/next-app/next-env.d.ts
+e2e/next-app/AGENTS.md
