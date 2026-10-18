@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: M0 done (2026-10-17), M1 next.** All crates are stubs except `holyfloe-cem` (working types plus a round-trip test). Fixtures exist for the 7 M1 components; only `fx-button` has expected output (React). `packages/` and `e2e/` don't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose.
+**Current state: M1 done (2026-10-18), M2 next.** `holyfloe-cem`, `holyfloe-ir`, `holyfloe-emit-core`, `holyfloe-emit-react`, `holyfloe-fs` and `holyfloe-cli` (`holyfloe generate`) work. The 7 M1 fixtures have expected React output (`wrapper`, `types`, and `react.ref: "prop"` for fx-button), type-checked on React 18/19 and run in Playwright on React 18/19 (Vite) and Next 16. The Vue, Svelte, types, lit and napi crates are stubs; `packages/` doesn't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose. First run on a machine: `pnpm install`, then `pnpm -C e2e exec playwright install chromium`.
 
 ## Pipeline (big picture)
 
@@ -147,6 +147,14 @@ lit                                3.3.3     BSD-3-Clause   # fixtures only
 custom-elements-manifest (schema)  2.1.0     BSD-3-Clause
 unplugin                           3.4.0     MIT   node ^20.19 || >=22.12
 @napi-rs/cli                       3.10.8    MIT
+typescript                         7.0.2     Apache-2.0     # fixtures build + typecheck, next-app
+react, react-dom                   18.3.1 / 19.3.1   MIT   # e2e/react18, e2e/react19 (+ next-app)
+@types/react                       18.3.31 / 19.3.0  MIT   # fixtures/typecheck/react18, react19
+vite                               8.3.4     MIT            # e2e
+@vitejs/plugin-react               6.1.2     MIT            # e2e
+@playwright/test                   1.64.1    Apache-2.0     # e2e, chromium only
+next                               16.4.2    MIT            # e2e/next-app
+@types/node                        26.6.5    MIT            # e2e/next-app
 # reference only (D-003/D-004, do not depend on):
 @wc-toolkit/react-wrappers 1.2.11, @wc-toolkit/vuejs-types 1.0.3, @wc-toolkit/svelte-types 1.0.3 (MIT)
 @lit-labs/gen-wrapper-react 0.3.5 (BSD-3-Clause)

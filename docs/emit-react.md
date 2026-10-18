@@ -27,7 +27,7 @@ Component rules:
 5. Props by `PropKind`:
    - **Boolean:** pass `true` as an empty attribute, omit when `false`. Set the property on the element in a layout effect after mount so updates work post-upgrade.
    - **Primitive:** pass as attribute in JSX (SSR-correct), and also assign the property in the layout effect when the element is upgraded.
-   - On the React 19 client, React itself assigns any prop the element already has (`'kind' in el`) as a property instead of writing the attribute. So after a client render, a non-reflected Primitive (`fx-deprecated` `kind`, `fx-derived` `label`) has the right property but no attribute, while React 18 writes both. Reflected props show the attribute on both, because Lit reflects them. Renamed attributes (`'badge-count'`) are not element properties, so React 19 writes them as attributes too. Verified in Chromium on 2026-10-18; SSR HTML is checked in step 8.
+   - On the React 19 client, React itself assigns any prop the element already has (`'kind' in el`) as a property instead of writing the attribute. So after a client render, a non-reflected Primitive (`fx-deprecated` `kind`, `fx-derived` `label`) has the right property but no attribute, while React 18 writes both. Reflected props show the attribute on both, because Lit reflects them. Renamed attributes (`'badge-count'`) are not element properties, so React 19 writes them as attributes too. Verified in Chromium on 2026-10-18. Server HTML from wrapper mode has the attribute for every set Primitive and Boolean prop, non-reflected ones included (`fx-derived` `label="L"`, e2e `next-app`).
    - Unsetting a Primitive or Boolean prop (value -> `undefined`) removes the attribute, and Lit then sets the property to `null` (Primitive) or `false` (Boolean), not back to its default. This is documented behavior, not reset by the wrapper.
    - **Complex:** never an attribute. Assign as a property in `useLayoutEffect`. Re-apply after `customElements.whenDefined(tag)` resolves.
    - **No attribute** (`attribute: None`, Lit `attribute: false`): property only, whatever the kind. Never render it as an attribute (fixture `fx-badge` `label`).
@@ -67,8 +67,9 @@ Limitation: React 19 renders attributes from prop names, so a prop whose attribu
 ## SSR
 
 - Default: no Lit SSR integration. Wrappers render attributes for Primitive and Boolean props only.
-- `ssr: "lit"` (opt-in, experimental): document `@lit-labs/ssr-react` and `@lit-labs/nextjs`. Deep Lit SSR does not work inside React Server Components; keep `'use client'`.
-- Do not claim Next.js App Router deep SSR works. See `docs/open-questions.md` OQ-005.
+- Next 16 App Router (D-056, e2e `next-app`): server component pages can render the wrappers. The server HTML has Primitive and Boolean attributes, then the wrappers hydrate and set properties and listeners. Needs tsconfig `nodenext` (D-051).
+- `ssr: "lit"` (opt-in, experimental, not supported yet, D-061): document `@lit-labs/ssr-react` and `@lit-labs/nextjs`. Deep Lit SSR does not work inside React Server Components; keep `'use client'`.
+- Do not claim Next.js App Router deep SSR (shadow DOM in the server HTML) works; it is not tested.
 
 ## Acceptance (per fixture)
 

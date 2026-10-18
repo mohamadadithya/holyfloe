@@ -74,7 +74,7 @@ pub(crate) struct Field {
 
 /// Every class declaration in the manifest. A class is a component when it has a tag, from
 /// `tagName` or a `custom-element-definition` export. `customElement: true` without a tag
-/// (e.g. `FxBase`) is a base class (OQ-015).
+/// (e.g. `FxBase`) is a base class (D-055).
 pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
     let mut declared = HashSet::new();
     // (module, exported name) -> the (module, name) it re-exports
@@ -412,7 +412,7 @@ impl Class {
                         },
                         text: ty.text,
                     }),
-                    // A `@fires` tag without a dispatch has no type (OQ-015).
+                    // A `@fires` tag without a dispatch has no type (D-055).
                     None => None,
                 };
                 Ok(Event {

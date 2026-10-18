@@ -36,7 +36,7 @@ Exit commands
 cargo test --workspace                  # includes insta snapshots for every fixture x react
 just gen-fixtures                       # regenerates fixtures/out/react; git diff must be empty
 just typecheck-react                    # tsc --strict against @types/react 18 and 19
-just e2e-react                          # Playwright react18 + react19: props, events, ref, children
+just e2e-react                          # Playwright react18 + react19 (vite dev and prod) + next-app: props, events, ref, children, SSR HTML
 ```
 
 ## M2: Vue 3 and Svelte 5 (about 3 weeks)

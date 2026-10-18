@@ -1,6 +1,6 @@
 //! Pass 1: merge superclass members, events, slots, parts and CSS from the same package.
 //! The analyzer already inlines inherited members (with `inheritedFrom`), so only missing
-//! names are added and own entries win (OQ-015).
+//! names are added and own entries win (D-055).
 
 use std::collections::HashMap;
 
@@ -66,7 +66,7 @@ mod tests {
     #[test]
     fn inherited_members_are_not_duplicated() {
         // The analyzer inlines `size` with `inheritedFrom`, and the superclass module is
-        // spelled `/src/base.js` while the base lives at `src/base.ts` (OQ-015).
+        // spelled `/src/base.js` while the base lives at `src/base.ts` (D-055).
         let base = json!({
             "kind": "class", "name": "Base", "customElement": true,
             "superclass": { "name": "LitElement", "package": "lit" },
@@ -91,7 +91,7 @@ mod tests {
             ]
         }))
         .unwrap();
-        // FxBase-style class without a tag is a base, not a component (OQ-015).
+        // FxBase-style class without a tag is a base, not a component (D-055).
         assert_eq!(lib.components.len(), 1);
         let c = &lib.components[0];
         let props: Vec<_> = c

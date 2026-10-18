@@ -131,19 +131,22 @@ Inferred bindings are marked `inferred: true` and can be disabled with config `b
 ## Config file (`holyfloe.config.json`)
 
 The IR reads these keys and ignores the rest:
-- `moduleRewrite`: prefix pairs, see Module resolution.
+- `moduleRewrite`: prefix pairs, see Module resolution (D-053). Fixtures use `{"src/": "dist/"}`. Shoelace 2 and Web Awesome 3 write manifest paths relative to `dist/` and need `{"": "dist/"}`.
 - `bindings`: `"infer"` (default) or `"explicit-only"`.
 - `exclude`: tag globs, where `*` matches any run of characters.
-- `overrides.<tag>.excludeProps`: prop names to leave out of every wrapper. The manifest cannot tell a stale JSDoc `@property` (Web Awesome `wa-drawer` `modal`, absent from the class, so `El['modal']` fails) from a real untyped field, so this is explicit; it also hides public internals such as Web Awesome's `didSSR`. A name that matches no prop is `E009`.
-- `overrides.<tag>.events.<dom-name>`: the base prop name, without a framework prefix. An unknown tag or event is `E009`, so a config serves one manifest. Fixtures with overrides have their own `fixtures/src/<name>/holyfloe.config.json`.
+- `overrides.<tag>.excludeProps`: prop names to leave out of every wrapper. The manifest cannot tell a stale JSDoc `@property` (Web Awesome `wa-drawer` `modal`, absent from the class, so `El['modal']` fails) from a real untyped field, so this is explicit; it also hides public internals such as Web Awesome's `didSSR` (D-059). Web Awesome needs `"wa-drawer": { "excludeProps": ["modal"] }`. A name that matches no prop is `E009`.
+- `overrides.<tag>.events.<dom-name>`: the base prop name, without a framework prefix (`"myChange": "MyChangeCamel"` gives React `onMyChangeCamel`). This is how `E006` clashes are fixed (D-057). An unknown tag or event is `E009`, so a config serves one manifest. Fixtures with overrides have their own `fixtures/src/<name>/holyfloe.config.json`.
 - `tagFormatter`, `componentNameFormatter`: any non-null value is `E010` (not supported yet).
+
+The `react` key belongs to `holyfloe-emit-react` (`mode`, `useClient`, `ref`; see `emit-react.md`), which rejects unknown keys (D-060). The example also shows keys for later milestones (`cem`, `outDir`, `frameworks`, `ssr`, `overrides.<tag>.bindings`); M1 ignores them, and the CLI takes `--cem` and `--out` as flags.
 
 ```json
 {
   "cem": "./custom-elements.json",
   "outDir": "./generated",
   "frameworks": ["react", "vue", "svelte"],
-  "react": { "mode": "wrapper", "useClient": true },
+  "moduleRewrite": { "src/": "dist/" },
+  "react": { "mode": "wrapper", "useClient": true, "ref": "forwardRef" },
   "ssr": "none",
   "bindings": "infer",
   "tagFormatter": null,

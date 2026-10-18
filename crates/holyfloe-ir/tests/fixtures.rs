@@ -82,7 +82,7 @@ fn fx_deprecated_drops_non_public() {
 fn fx_list_type_text_is_verbatim() {
     let c = build_fixture("fx-list").components.remove(0);
     let render = c.props.iter().find(|p| p.name == "renderLabel").unwrap();
-    // Lossy analyzer text (OQ-015) is kept as-is; emitters index `El['renderLabel']` instead.
+    // Lossy analyzer text (D-055) is kept as-is; emitters index `El['renderLabel']` instead.
     assert_eq!(
         render.ty.as_ref().unwrap().text,
         "(item: ListItem) => string | undefined"

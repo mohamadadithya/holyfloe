@@ -181,7 +181,7 @@ mod tests {
 
     #[test]
     fn normalize_absorbs_analyzer_spellings() {
-        // OQ-015: superclass.module vs inheritedFrom.module.
+        // D-055: superclass.module vs inheritedFrom.module.
         assert_eq!(
             normalize("/src/x/fx-base.js"),
             normalize("src/x/fx-base.ts")

@@ -1,5 +1,5 @@
 //! Pass 4: `PropKind` from the prop type text, and event detail from `CustomEvent<T>`.
-//! Type text is only lexed, never rewritten or re-emitted (it can be wrong, OQ-015).
+//! Type text is only lexed, never rewritten or re-emitted (it can be wrong, D-055).
 
 use crate::{Library, PropKind, TypeRef};
 
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn lossy_function_type_is_complex() {
-        // OQ-015: the analyzer drops the parentheses around `(item) => string | undefined`.
+        // D-055: the analyzer drops the parentheses around `(item) => string | undefined`.
         assert_eq!(classify("(item: ListItem) => string | undefined"), Complex);
     }
 
