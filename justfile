@@ -39,8 +39,24 @@ gen-cem-types:
             cat src/generated.rs; } > src/generated.rs.tmp && mv src/generated.rs.tmp src/generated.rs
     cargo fmt -p holyfloe-cem
 
-gen-fixtures:
-    @echo "not yet: M1" >&2; exit 1
+# Generate every fixture x React mode into fixtures/out (committed), then diff against expected/.
+# A fixture uses src/<name>/holyfloe.config.json when it has one, else fixtures/holyfloe.config.json.
+gen-fixtures: build-fixtures
+    rm -rf fixtures/out/react fixtures/out/react-types
+    stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT; \
+    for dir in fixtures/src/*/; do \
+        name=$(basename "$dir"); \
+        cfg=fixtures/holyfloe.config.json; \
+        if [ -f "$dir/holyfloe.config.json" ]; then cfg="$dir/holyfloe.config.json"; fi; \
+        for mode in wrapper types; do \
+            sub=react; if [ "$mode" = types ]; then sub=react-types; fi; \
+            cargo run -q -p holyfloe-cli -- generate --cem "$dir/custom-elements.json" --out "$stage" \
+                --frameworks react --config "$cfg" --react-mode "$mode" > /dev/null; \
+            mkdir -p "fixtures/out/$sub"; mv "$stage/react" "fixtures/out/$sub/$name"; \
+        done; \
+    done
+    diff -r fixtures/expected/react fixtures/out/react
+    diff -r fixtures/expected/react-types fixtures/out/react-types
 
 typecheck: typecheck-react
 

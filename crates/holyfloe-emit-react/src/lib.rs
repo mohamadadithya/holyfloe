@@ -55,9 +55,7 @@ pub enum EmitError {
     #[error("react template: {0}")]
     Template(#[from] minijinja::Error),
     /// Detail type text is re-emitted verbatim, so an imported name cannot be renamed.
-    #[error(
-        "event detail type `{name}` of `{tag}` {clash}; rename the type in the library, or exclude the event's component"
-    )]
+    #[error("event detail type `{name}` of `{tag}` {clash}")]
     DetailImportClash {
         tag: String,
         name: String,
@@ -65,14 +63,36 @@ pub enum EmitError {
     },
     /// A prop such as an `onChange` callback and the `on<base_name>` prop of an event would be
     /// the same destructured binding.
-    #[error(
-        "prop `{prop}` of `{tag}` has the same name as the React prop for event `{event}`; rename the event with `overrides.{tag}.events`, or drop the prop with `overrides.{tag}.excludeProps`"
-    )]
+    #[error("prop `{prop}` of `{tag}` has the same name as the React prop for event `{event}`")]
     PropEventClash {
         tag: String,
         prop: String,
         event: String,
     },
+}
+
+impl EmitError {
+    /// The `E0xx` code the CLI prints, continuing the `IrError` table in `docs/ir.md`.
+    /// `None` for template errors, which are holyfloe bugs rather than input a user can fix.
+    pub fn code(&self) -> Option<&'static str> {
+        match self {
+            Self::Template(_) => None,
+            Self::DetailImportClash { .. } => Some("E012"),
+            Self::PropEventClash { .. } => Some("E013"),
+        }
+    }
+
+    pub fn hint(&self) -> Option<String> {
+        match self {
+            Self::Template(_) => None,
+            Self::DetailImportClash { .. } => {
+                Some("rename the type in the library, or exclude the event's component".to_owned())
+            }
+            Self::PropEventClash { tag, .. } => Some(format!(
+                "rename the event with `overrides.{tag}.events`, or drop the prop with `overrides.{tag}.excludeProps`"
+            )),
+        }
+    }
 }
 
 const TEMPLATES: [(&str, &str); 5] = [

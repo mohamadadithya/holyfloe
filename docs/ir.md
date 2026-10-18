@@ -157,7 +157,7 @@ The IR reads these keys and ignores the rest:
 
 ## Errors
 
-Use `thiserror`. Every error carries: component tag (if known), CEM module path, and a short fix hint. The CLI prints them as `error[E0xx]: message` with the hint on the next line.
+Use `thiserror`. Every error carries: component tag (if known), CEM module path, and a short fix hint. The CLI prints them as `error[E0xx]: message (module)` with `  hint: ...` on the next line, and exits 1. The module is left out when the message already names it. Emitter errors a user can fix share the table (`EmitError::code()`/`hint()`); template errors are holyfloe bugs and print as `error: ...` with no code. E001 and E011 are unused; never reuse a retired code.
 
 | Code | Where | Meaning |
 |---|---|---|
@@ -170,5 +170,7 @@ Use `thiserror`. Every error carries: component tag (if known), CEM module path,
 | E008 | lower, validate | Tag is not a valid custom element name (e.g. a variable the analyzer recorded), or a component/event name is not `[A-Za-z0-9_$]` |
 | E009 | name-derive | Override for a tag, event or excluded prop that does not exist |
 | E010 | config check | Unsupported config key (`tagFormatter`, `componentNameFormatter`) |
+| E012 | emit-react | An event detail type name is imported from two modules, or is a name the generated file already uses (`EmitError::DetailImportClash`) |
+| E013 | emit-react, wrapper mode | A prop has the same name as an event's `on<base_name>` prop (`EmitError::PropEventClash`) |
 
 Manifest parse errors come from `holyfloe_cem::ParseError`, not `IrError`.

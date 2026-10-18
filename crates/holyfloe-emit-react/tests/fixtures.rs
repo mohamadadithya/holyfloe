@@ -189,6 +189,7 @@ fn prop_named_like_an_event_prop_is_an_error() {
         matches!(&err, holyfloe_emit_react::EmitError::PropEventClash { prop, event, .. } if prop == "onFxReady" && event == "fx-ready"),
         "{err}"
     );
+    assert_eq!(err.code(), Some("E013"));
     let types = ReactConfig {
         mode: ReactMode::Types,
         ..ReactConfig::default()
@@ -280,6 +281,7 @@ fn reserved_names_cover_every_name_the_templates_bind() {
                     matches!(err, Some(EmitError::DetailImportClash { .. })),
                     "{name} {mode:?} {ref_style:?}: `{taken}` is bound by the template but not reserved"
                 );
+                assert_eq!(err.and_then(|e| e.code()), Some("E012"));
             }
         }
     }
