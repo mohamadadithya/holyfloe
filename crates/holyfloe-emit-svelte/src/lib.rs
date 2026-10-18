@@ -1,7 +1,7 @@
 //! Svelte 5 runes emitter. See `docs/emit-svelte.md`.
 
 pub use holyfloe_emit_core::EmitError;
-use holyfloe_emit_core::{OutputFile, check_names, detail_imports};
+use holyfloe_emit_core::{OutputFile, camel_ident, check_names, detail_imports};
 use holyfloe_ir::{Component, Library};
 use minijinja::value::Serde;
 use minijinja::{Environment, Value, context};
@@ -61,9 +61,11 @@ pub fn emit(lib: &Library) -> Result<Vec<OutputFile>, EmitError> {
     let comps = &lib.components;
     let mut files = Vec::with_capacity(comps.len() + 3);
     for c in comps {
-        check_names(c, &generated_names(c))?;
+        let snippets = snippet_props(c);
+        check_names(c, &generated_names(c, &snippets))?;
         let ctx = context! {
             c => Serde(c),
+            snippets => snippets.iter().map(|(slot, prop)| context! { slot => slot, prop => prop }).collect::<Vec<_>>(),
             imports => Serde(detail_imports(std::slice::from_ref(c), &component_names(c))?),
         };
         files.push(file(
@@ -112,8 +114,34 @@ fn capture(dom: &str) -> bool {
     DELEGATED.contains(&dom) || dom.ends_with("capture")
 }
 
+/// (slot name, snippet prop) for each named slot. The prop is the slot name as an identifier
+/// (`help-text` -> `helpText`), with `Snippet` appended when that is already a prop or another
+/// name the wrapper declares: Shoelace has a `label` prop and a `label` slot (D-081).
+fn snippet_props(c: &Component) -> Vec<(String, String)> {
+    let mut used: Vec<String> = c
+        .props
+        .iter()
+        .filter(|p| !p.readonly)
+        .map(|p| p.name.clone())
+        .collect();
+    used.extend(["element", "children", "rest"].map(String::from));
+    used.extend(c.events.iter().map(|e| format!("on{}", e.base_name)));
+    let mut out = Vec::new();
+    for s in c.slots.iter().filter(|s| !s.name.is_empty()) {
+        let base = camel_ident(&s.name, &[]);
+        let prop = if base.ends_with('_') || used.contains(&base) {
+            format!("{}Snippet", base.trim_end_matches('_'))
+        } else {
+            base
+        };
+        used.push(prop.clone());
+        out.push((s.name.clone(), prop));
+    }
+    out
+}
+
 /// Props the wrapper declares next to the element's own (E013).
-fn generated_names(c: &Component) -> Vec<(String, String)> {
+fn generated_names(c: &Component, snippets: &[(String, String)]) -> Vec<(String, String)> {
     let mut names = vec![
         ("element".to_owned(), "the wrapper's `element`".to_owned()),
         (
@@ -125,8 +153,8 @@ fn generated_names(c: &Component) -> Vec<(String, String)> {
         let what = format!("the Svelte callback prop for event `{}`", e.dom_name);
         names.push((format!("on{}", e.base_name), what));
     }
-    for s in c.slots.iter().filter(|s| !s.name.is_empty()) {
-        names.push((s.name.clone(), format!("the snippet for slot `{}`", s.name)));
+    for (slot, prop) in snippets {
+        names.push((prop.clone(), format!("the snippet for slot `{slot}`")));
     }
     names
 }

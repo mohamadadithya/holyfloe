@@ -26,7 +26,7 @@ generated/vue/
    - any other prop `p` -> prop `p` + `update:p` emit (used as `v-model:p`).
    - Read the new value using `binding.value` (`ValuePath`): `Detail`, `DetailField(name)` or `TargetProp(name)`.
    - Do not mutate props. Emit only; the parent owns state.
-6. Slots: default slot -> element children, for every component, documented or not (as React passes children). Named Vue slot `x` -> wrapper child with `slot="x"` attribute on a `display: contents` element. Scoped slots are typed as `() => VNode[]` only (D-027).
+6. Slots: default slot -> element children, for every component, documented or not (as React passes children). `render()` destructures named slots into identifier locals (`{ 'help-text': helpText } = this.$slots`, D-081); the slot names themselves are unchanged (`#help-text`). Named Vue slot `x` -> wrapper child with `slot="x"` attribute on a `display: contents` element. Scoped slots are typed as `() => VNode[]` only (D-027).
 7. The element and its methods are public instance members, so they are typed for consumers: `setup()` returns `element` (a `shallowRef`, set by `ref: 'element'` in `render()`) and one forwarding function per public method (`show(...args)`). `expose()` is not used, because exposed members are untyped.
 
 ## Types

@@ -22,14 +22,16 @@
 -->
 <script lang="ts">
   import '@holyfloe/fixtures/fx-select/fx-select.js';
+  import { defined } from './svelte-utils.js';
 
   let { value = $bindable(), options, onFxChange, element = $bindable(), children, ...rest }: FxSelectProps = $props();
 
-  // Set as properties: Complex and attribute-less props have no attribute form, and a Boolean
-  // attribute can only be present or absent (absent would leave `undefined`, not `false`).
+  // Set as properties, skipping `undefined`: Complex and attribute-less props have no attribute
+  // form, and a Boolean attribute can only be present or absent (absent would leave `undefined`,
+  // not `false`). `Object.assign` because a getter and its setter may differ in type (Web Awesome
+  // `form` reads as `HTMLFormElement | null` and is set with a form id).
   $effect(() => {
-    if (!element) return;
-    if (options !== undefined) element.options = options;
+    if (element) Object.assign(element, defined({ options }));
   });
 </script>
 

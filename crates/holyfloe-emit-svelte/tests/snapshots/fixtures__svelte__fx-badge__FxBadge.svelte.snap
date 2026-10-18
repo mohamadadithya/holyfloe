@@ -25,14 +25,16 @@ expression: f.contents
 -->
 <script lang="ts">
   import '@holyfloe/fixtures/fx-badge/fx-badge.js';
+  import { defined } from './svelte-utils.js';
 
   let { count, tone, label, for: for_, element = $bindable(), children, ...rest }: FxBadgeProps = $props();
 
-  // Set as properties: Complex and attribute-less props have no attribute form, and a Boolean
-  // attribute can only be present or absent (absent would leave `undefined`, not `false`).
+  // Set as properties, skipping `undefined`: Complex and attribute-less props have no attribute
+  // form, and a Boolean attribute can only be present or absent (absent would leave `undefined`,
+  // not `false`). `Object.assign` because a getter and its setter may differ in type (Web Awesome
+  // `form` reads as `HTMLFormElement | null` and is set with a form id).
   $effect(() => {
-    if (!element) return;
-    if (label !== undefined) element.label = label;
+    if (element) Object.assign(element, defined({ label }));
   });
 </script>
 

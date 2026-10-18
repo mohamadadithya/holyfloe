@@ -1,7 +1,7 @@
 //! Vue 3 `defineComponent` wrapper emitter. See `docs/emit-vue.md`.
 
 pub use holyfloe_emit_core::EmitError;
-use holyfloe_emit_core::{OutputFile, check_names, detail_imports};
+use holyfloe_emit_core::{OutputFile, camel_ident, check_names, detail_imports};
 use holyfloe_ir::{Component, Event, Library};
 use minijinja::value::Serde;
 use minijinja::{Environment, Value, context};
@@ -46,6 +46,7 @@ pub fn emit(lib: &Library) -> Result<Vec<OutputFile>, EmitError> {
             imports => Serde(detail_imports(std::slice::from_ref(c), &component_names(c))?),
             late => Serde(&late),
             late_names => late.iter().map(|e| e.dom_name.clone()).collect::<Vec<_>>(),
+            slots => slot_locals(c),
         };
         files.push(file(
             &env,
@@ -80,6 +81,17 @@ fn file(
         path: path.to_owned(),
         contents: env.get_template(template)?.render(ctx)?,
     })
+}
+
+/// Named slots and the locals `render()` destructures them into: `help-text` -> `helpText`
+/// (`{ 'help-text': helpText } = this.$slots`). `body` holds the default slot.
+fn slot_locals(c: &Component) -> Vec<Value> {
+    let taken = ["body", "h", "defined"].map(String::from);
+    c.slots
+        .iter()
+        .filter(|s| !s.name.is_empty())
+        .map(|s| context! { slot => Serde(s), local => camel_ident(&s.name, &taken) })
+        .collect()
 }
 
 /// Names the wrapper puts on the component instance next to the props (E013).

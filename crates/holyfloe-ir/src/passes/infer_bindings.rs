@@ -50,29 +50,29 @@ fn infer(c: &Component) -> Vec<TwoWayBinding> {
         .iter()
         .filter(|p| PROPS.contains(&p.name.as_str()) && !p.readonly)
     {
-        // Prop-specific events first, then the generic ones.
-        let candidates = [
-            format!("{}-change", p.name),
-            format!("{}Change", p.name),
-            "change".to_owned(),
-            "input".to_owned(),
-        ];
-        let Some(event) = candidates
-            .into_iter()
-            .find(|n| c.events.iter().any(|e| e.dom_name == *n))
-        else {
-            continue;
+        // A prop-specific event first. The generic `change`/`input` only signal `value` and
+        // `checked`: Web Awesome's wa-select fires `change` for its value, not its `open` (D-082).
+        let specific = [format!("{}-change", p.name), format!("{}Change", p.name)];
+        let generic: &[&str] = match p.name.as_str() {
+            "value" | "checked" => &["change", "input"],
+            _ => &[],
         };
-        let value = match (p.name.as_str(), event.as_str()) {
-            ("value", "input" | "change") if c.form_associated => {
-                ValuePath::TargetProp("value".to_owned())
-            }
-            ("checked", "change") => ValuePath::TargetProp("checked".to_owned()),
-            _ => ValuePath::Detail,
+        let event = specific
+            .iter()
+            .map(String::as_str)
+            .chain(generic.iter().copied())
+            .find_map(|n| c.events.iter().find(|e| e.dom_name == n));
+        let Some(event) = event else { continue };
+        // The detail carries the value only when it is typed and the event is the prop's own;
+        // otherwise read the prop back from the element.
+        let value = if event.detail.is_some() && specific.contains(&event.dom_name) {
+            ValuePath::Detail
+        } else {
+            ValuePath::TargetProp(p.name.clone())
         };
         out.push(TwoWayBinding {
             prop: p.name.clone(),
-            event,
+            event: event.dom_name.clone(),
             value,
             inferred: true,
         });
@@ -208,33 +208,52 @@ mod tests {
     #[test]
     fn heuristic() {
         let cfg = Config::default();
+        let target = |p: &str| ValuePath::TargetProp(p.into());
         assert_eq!(
             bindings(&["value"], &["input"], true, &cfg),
-            one("value", "input", ValuePath::TargetProp("value".into()))
+            one("value", "input", target("value"))
         );
         assert_eq!(
             bindings(&["value"], &["change"], false, &cfg),
-            one("value", "change", ValuePath::Detail)
+            one("value", "change", target("value"))
         );
         assert_eq!(
             bindings(&["checked"], &["change"], false, &cfg),
-            one("checked", "change", ValuePath::TargetProp("checked".into()))
+            one("checked", "change", target("checked"))
         );
+        // Prop-specific events win; untyped detail reads the prop back.
         assert_eq!(
             bindings(&["open"], &["change", "open-change"], false, &cfg),
-            one("open", "open-change", ValuePath::Detail)
+            one("open", "open-change", target("open"))
         );
         assert_eq!(
             bindings(&["selected"], &["selectedChange"], false, &cfg),
-            one("selected", "selectedChange", ValuePath::Detail)
+            one("selected", "selectedChange", target("selected"))
+        );
+        // wa-select: `change` signals the value, never `open` (D-082).
+        assert_eq!(
+            bindings(&["value", "open"], &["change"], false, &cfg),
+            one("value", "change", target("value"))
         );
         assert_eq!(bindings(&["label"], &["change"], false, &cfg), []);
+        assert_eq!(bindings(&["value"], &["fx-press"], false, &cfg), []);
         // A getter-only `value` is not a wrapper prop, so it is never bound.
         let mut el = element("x-r", "XR");
         el["members"] = json!([{ "kind": "field", "name": "value", "type": { "text": "string" }, "readonly": true }]);
         el["events"] = json!([{ "name": "change", "type": { "text": "Event" } }]);
         assert_eq!(build_json(cem_one(el)).unwrap().components[0].bindings, []);
-        assert_eq!(bindings(&["value"], &["fx-press"], false, &cfg), []);
+    }
+
+    #[test]
+    fn typed_prop_specific_detail_is_the_value() {
+        let mut el = element("x-t", "XT");
+        el["members"] = json!([{ "kind": "field", "name": "open", "type": { "text": "boolean" } }]);
+        el["events"] =
+            json!([{ "name": "open-change", "type": { "text": "CustomEvent<boolean>" } }]);
+        assert_eq!(
+            build_json(cem_one(el)).unwrap().components[0].bindings,
+            one("open", "open-change", ValuePath::Detail)
+        );
     }
 
     #[test]

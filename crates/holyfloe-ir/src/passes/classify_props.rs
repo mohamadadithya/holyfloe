@@ -10,6 +10,18 @@ pub(crate) fn run(lib: &mut Library) {
                 p.ty.as_ref()
                     .map_or(PropKind::Complex, |t| classify(&t.text));
         }
+        // An attribute named like another prop is set as a property only. Frameworks set a
+        // property when the element has one by that name, so Web Awesome's `defaultValue`
+        // (attribute `value`) would overwrite the `value` property instead (D-083).
+        let names: Vec<String> = c.props.iter().map(|p| p.name.clone()).collect();
+        for p in &mut c.props {
+            if p.attribute
+                .as_ref()
+                .is_some_and(|a| *a != p.name && names.contains(a))
+            {
+                p.attribute = None;
+            }
+        }
         for e in &mut c.events {
             e.detail = e.event_type.as_ref().and_then(|t| {
                 detail(&t.text).map(|text| TypeRef {
@@ -147,5 +159,30 @@ mod tests {
         assert_eq!(detail("CustomEvent"), None);
         assert_eq!(detail("MyEvent"), None);
         assert_eq!(detail("CustomEvent<A> | CustomEvent<B>"), None);
+    }
+
+    #[test]
+    fn attribute_named_like_another_prop_is_property_only() {
+        use serde_json::json;
+        let mut el = crate::test_util::element("x-a", "XA");
+        el["members"] = json!([
+            { "kind": "field", "name": "value", "type": { "text": "string" } },
+            { "kind": "field", "name": "defaultValue", "type": { "text": "string" }, "attribute": "value" },
+            { "kind": "field", "name": "helpText", "type": { "text": "string" }, "attribute": "help-text" }
+        ]);
+        let c = crate::test_util::build_one(el);
+        let attrs: Vec<_> = c
+            .props
+            .iter()
+            .map(|p| (p.name.as_str(), p.attribute.as_deref()))
+            .collect();
+        assert_eq!(
+            attrs,
+            [
+                ("value", None),
+                ("defaultValue", None),
+                ("helpText", Some("help-text"))
+            ]
+        );
     }
 }

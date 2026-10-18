@@ -228,6 +228,30 @@ pub fn js_local(name: &str, taken: &[String]) -> String {
     }
 }
 
+/// An identifier for a name that may not be one, such as a slot name: characters outside
+/// `[A-Za-z0-9_$]` separate camelCase words (`help-text` -> `helpText`), and a leading digit gets
+/// `_`. Then `js_local` rules apply (`for` -> `for_`).
+pub fn camel_ident(name: &str, taken: &[String]) -> String {
+    let mut out = String::with_capacity(name.len());
+    let mut upper = false;
+    for c in name.chars() {
+        if c.is_ascii_alphanumeric() || c == '_' || c == '$' {
+            out.push(if upper && !out.is_empty() {
+                c.to_ascii_uppercase()
+            } else {
+                c
+            });
+            upper = false;
+        } else {
+            upper = true;
+        }
+    }
+    if out.is_empty() || out.starts_with(|c: char| c.is_ascii_digit()) {
+        out.insert(0, '_');
+    }
+    js_local(&out, taken)
+}
+
 /// A `/** ... */` block, or `""` for blank text. Blank lines become ` *`, and `*/` is escaped so
 /// it cannot end the comment. Indent it with minijinja's `indent`: `{{ d | jsdoc | indent(6) }}`.
 pub fn jsdoc(text: &str) -> String {
@@ -283,6 +307,17 @@ mod tests {
         assert_eq!(ts_key("--fx-card-padding"), "'--fx-card-padding'");
         assert_eq!(ts_key("1a"), "'1a'");
         assert_eq!(ts_key(""), "''");
+    }
+
+    #[test]
+    fn camel_idents() {
+        assert_eq!(camel_ident("header", &[]), "header");
+        assert_eq!(camel_ident("help-text", &[]), "helpText");
+        assert_eq!(camel_ident("play-icon", &["body".into()]), "playIcon");
+        assert_eq!(camel_ident("for", &[]), "for_");
+        assert_eq!(camel_ident("body", &["body".into()]), "body_");
+        assert_eq!(camel_ident("2x", &[]), "_2x");
+        assert_eq!(camel_ident("-", &[]), "_");
     }
 
     #[test]

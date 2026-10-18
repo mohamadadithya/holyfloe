@@ -20,7 +20,9 @@ generated/svelte/
 4. Props by `PropKind`:
    - Primitive: in markup (`{variant}`); renamed attributes use the attribute name. Svelte skips an attribute that starts `undefined`, so the element keeps its default.
    - Boolean: in markup as `x={x || undefined}` (SSR and pre-upgrade: an attribute can only be present or absent), and also set as a property in `$effect`, so `false` reaches the element as `false`, not `undefined` (review e2e 2026-10-18).
-   - Complex, and props without an attribute: set in the same `$effect`, skipping `undefined` (`if (element && items !== undefined) element.items = items`). Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455).
+   - Complex, and props without an attribute: set in the same `$effect`. The effect is `if (element) Object.assign(element, defined({ ... }))`: `defined()` (in `svelte-utils.ts`) skips `undefined`, and `Object.assign` because a getter and its setter can differ in type (Web Awesome `form`), which a typed `element.form = form` rejects (D-084). Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455).
+   - Locals: props named like reserved words, the wrapper's own locals, or runes (`effect`, `state`, `derived`, `props`, `bindable`, `inspect`, `host`) bind `<name>_`; a local `effect` would turn `$effect` into a store subscription (Web Awesome `wa-skeleton`).
+   - A wrapper that renders an `autofocus`, `tabindex` or `accesskey` attribute (the library's own prop) gets `<!-- svelte-ignore a11y_... -->` for exactly those codes.
    - No `whenDefined` re-apply: Lit keeps properties set before the upgrade (to be proven by fx-lazy).
 5. Events: callback props are `on<base_name>` (`onMyChange`, `onFxPress`), the same names as React and Vue (D-066). A mixed rule (exact DOM name when it is an identifier) would give `onmyChange` next to `onMyChange`.
    - Attach with an event attribute on the host, `onmy-change={(e) => onMyChange?.(e)}`. Svelte attaches it when it creates the element, so events fired in Lit's first update are not lost (a `$effect` would run later).
@@ -30,7 +32,7 @@ generated/svelte/
 6. Two-way binding: for each `TwoWayBinding` emit `let { value = $bindable() } = $props();` and a listener that writes `value = <read via ValuePath>`. Consumers get `bind:value`.
 7. Slots to snippets:
    - Default: `{@render children?.()}` inside the element, for every component, documented or not (React passes children through too; dropping them silently would surprise).
-   - Named slot `foo`: snippet prop `foo`, rendered as `<span slot="foo" style="display: contents">{@render foo?.()}</span>`. A snippet cannot carry a `slot` attribute itself, hence the wrapper. Snapshot-test this; it is the subtlest part (D-025).
+   - Named slot `foo`: snippet prop named after the slot as an identifier (`help-text` -> `helpText`), with `Snippet` appended when that is already a prop or another wrapper name (Shoelace's `label` slot next to its `label` prop -> `labelSnippet`, D-081). Rendered as `<span slot="foo" style="display: contents">{@render foo?.()}</span>`. A snippet cannot carry a `slot` attribute itself, hence the wrapper. Snapshot-test this; it is the subtlest part (D-025).
 8. Spread remaining props: `{...rest}` onto the element for global attributes (`class`, `id`, `aria-*`).
 9. Expose the element through a bindable `element` prop: `let { element = $bindable() } = $props()` and `bind:this={element}`; consumers write `bind:element={el}` (D-064).
 

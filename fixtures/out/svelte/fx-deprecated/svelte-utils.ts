@@ -9,3 +9,9 @@ export type TypedEvent<El extends Element, Detail> = CustomEvent<Detail> & {
   currentTarget: El;
 };
 
+/**
+ * Drops `undefined` entries, so an unset prop keeps the element's own default.
+ */
+export function defined(props: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(props).filter(([, value]) => value !== undefined));
+}

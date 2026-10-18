@@ -55,7 +55,6 @@ fn generated_name_clashes_are_e013() {
     for (fixture, prop, what) in [
         ("fx-badge", "element", "`element`"),
         ("fx-badge", "children", "`children`"),
-        ("fx-card", "header", "slot `header`"),
         ("fx-button", "onFxPress", "event `fx-press`"),
     ] {
         let mut lib = build_fixture(fixture);
@@ -105,4 +104,31 @@ fn detail_type_references_become_imports() {
     let ty = lib.components[0].events[0].event_type.as_mut().unwrap();
     ty.imports[0].name = "Snippet".into();
     assert_eq!(emit(&lib).unwrap_err().code(), Some("E012"));
+}
+
+/// Shoelace shape: a `help-text` slot next to a `helpText` prop, a `label` slot next to a
+/// `label` prop. Snippet props are identifiers, suffixed with `Snippet` on a clash (D-081).
+#[test]
+fn slot_names_become_identifiers_and_avoid_props() {
+    let mut lib = build_fixture("fx-card");
+    let c = &mut lib.components[0];
+    c.slots[1].name = "help-text".into();
+    c.slots[2].name = "label".into();
+    for name in ["helpText", "label"] {
+        let mut p = c.props[0].clone();
+        p.name = name.into();
+        p.attribute = None;
+        c.props.push(p);
+    }
+    let files = emit(&lib).unwrap();
+    let card = &files
+        .iter()
+        .find(|f| f.path == "FxCard.svelte")
+        .unwrap()
+        .contents;
+    assert!(card.contains("    helpTextSnippet?: Snippet;"), "{card}");
+    assert!(card.contains("    labelSnippet?: Snippet;"));
+    assert!(card.contains("{#if helpTextSnippet}<span slot=\"help-text\" style=\"display: contents\">{@render helpTextSnippet()}</span>{/if}"));
+    assert!(card.contains("{#if labelSnippet}<span slot=\"label\""));
+    insta::assert_snapshot!("renamed_slots__FxCard.svelte", card);
 }

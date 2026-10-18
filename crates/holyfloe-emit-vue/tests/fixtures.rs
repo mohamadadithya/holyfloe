@@ -108,3 +108,23 @@ fn detail_type_references_become_imports() {
     ty.imports[0].name = "TypedEvent".into();
     assert_eq!(emit(&lib).unwrap_err().code(), Some("E012"));
 }
+
+/// Shoelace shape: slot names that are not identifiers get camelCase locals (D-081).
+#[test]
+fn hyphenated_slot_names_get_identifier_locals() {
+    let mut lib = build_fixture("fx-card");
+    lib.components[0].slots[1].name = "help-text".into();
+    let files = emit(&lib).unwrap();
+    let card = &files
+        .iter()
+        .find(|f| f.path == "FxCard.ts")
+        .unwrap()
+        .contents;
+    assert!(
+        card.contains("    const { default: body, 'help-text': helpText, footer } = this.$slots;"),
+        "{card}"
+    );
+    assert!(card.contains("        helpText && h('span', { slot: 'help-text', style: 'display: contents' }, helpText()),"));
+    assert!(card.contains("    'help-text'?: () => VNode[];"));
+    insta::assert_snapshot!("renamed_slots__FxCard.ts", card);
+}

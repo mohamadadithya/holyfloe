@@ -2,8 +2,8 @@
 {% set el = c.name ~ "Element" %}
 {# Read-only props are not props: assigning a getter-only property throws. #}
 {% set props = c.props | rejectattr("readonly") | list %}
-{% set named_slots = c.slots | selectattr("name") | list %}
-{% set ns = namespace(models=[]) %}
+{% set named_slots = slots %}
+{% set ns = namespace(models=[], destructure=[]) %}
 {% for b in c.bindings %}
 {% set ns.models = ns.models + ["Two-way binding: " ~ (("`v-model` (`" ~ b.prop ~ "`, updated from `" ~ b.event ~ "`).") if b.prop == "value" else ("`v-model:" ~ b.prop ~ "` (updated from `" ~ b.event ~ "`)."))] %}
 {% endfor %}
@@ -86,11 +86,11 @@ export const {{ c.name }} = defineComponent({
   slots: Object as SlotsType<{
     default?: () => VNode[];
 {% for s in named_slots %}
-{% set d = m.member_doc(s) %}
+{% set d = m.member_doc(s.slot) %}
 {% if d %}
     {{ d | indent(4) }}
 {% endif %}
-    {{ s.name | ts_key }}?: () => VNode[];
+    {{ s.slot.name | ts_key }}?: () => VNode[];
 {% endfor %}
   }>,
 {% else %}
@@ -127,7 +127,11 @@ export const {{ c.name }} = defineComponent({
 {% if named_slots %}
     // A named slot is a `display: contents` wrapper carrying the `slot` attribute. It is left out
     // when the slot is not given: an empty assigned node would hide the slot's fallback content.
-    const { {{ (["default: body"] + (named_slots | map(attribute="name") | list)) | join(", ") }} } = this.$slots;
+{% set ns.destructure = ["default: body"] %}
+{% for s in named_slots %}
+{% set ns.destructure = ns.destructure + [s.local if s.local == s.slot.name else (s.slot.name | ts_key) ~ ": " ~ s.local] %}
+{% endfor %}
+    const { {{ ns.destructure | join(", ") }} } = this.$slots;
 {% endif %}
     return h(
       {{ c.tag | ts_string }},
@@ -152,7 +156,7 @@ export const {{ c.name }} = defineComponent({
       [
         body?.(),
 {% for s in named_slots %}
-        {{ s.name }} && h('span', { slot: {{ s.name | ts_string }}, style: 'display: contents' }, {{ s.name }}()),
+        {{ s.local }} && h('span', { slot: {{ s.slot.name | ts_string }}, style: 'display: contents' }, {{ s.local }}()),
 {% endfor %}
       ],
 {% else %}

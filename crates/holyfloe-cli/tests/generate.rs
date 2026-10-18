@@ -106,7 +106,7 @@ fn emit_error_prints_code_and_hint() {
         "{stderr}"
     );
     assert!(
-        stderr.contains("\n  hint: rename the event with `overrides.x-el.events`"),
+        stderr.contains("\n  hint: drop the prop with `overrides.x-el.excludeProps`, or, when the other name is an event prop, rename the event with `overrides.x-el.events`"),
         "{stderr}"
     );
     fs::remove_dir_all(&dir).unwrap();

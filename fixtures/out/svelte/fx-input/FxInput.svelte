@@ -27,14 +27,16 @@
 -->
 <script lang="ts">
   import '@holyfloe/fixtures/fx-input/fx-input.js';
+  import { defined } from './svelte-utils.js';
 
   let { value = $bindable(), name, disabled, onChange, element = $bindable(), children, ...rest }: FxInputProps = $props();
 
-  // Set as properties: Complex and attribute-less props have no attribute form, and a Boolean
-  // attribute can only be present or absent (absent would leave `undefined`, not `false`).
+  // Set as properties, skipping `undefined`: Complex and attribute-less props have no attribute
+  // form, and a Boolean attribute can only be present or absent (absent would leave `undefined`,
+  // not `false`). `Object.assign` because a getter and its setter may differ in type (Web Awesome
+  // `form` reads as `HTMLFormElement | null` and is set with a form id).
   $effect(() => {
-    if (!element) return;
-    if (disabled !== undefined) element.disabled = disabled;
+    if (element) Object.assign(element, defined({ disabled }));
   });
 </script>
 

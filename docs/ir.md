@@ -110,10 +110,10 @@ No `exports` field means every file is importable as `<pkg>/<path>`. No match at
 
 ## Binding inference heuristic
 
-A binding is inferred when a component has prop `P` in {`value`, `checked`, `open`, `selected`} AND an event `E` in {`change`, `input`, `<P>-change`, `<P>Change`}.
-- `value` + `input`/`change` on form-associated components: `ValuePath::TargetProp("value")`.
-- `checked` + `change`: `ValuePath::TargetProp("checked")`.
-- Otherwise `ValuePath::Detail`.
+A binding is inferred for a writable prop `P` in {`value`, `checked`, `open`, `selected`} when the component fires:
+- `<P>-change` or `<P>Change` (first match wins): `ValuePath::Detail` when the event has a typed `CustomEvent<T>` detail, else `ValuePath::TargetProp(P)`;
+- otherwise, for `value` and `checked` only, `change` or `input`: `ValuePath::TargetProp(P)`. `open` and `selected` never bind through the generic events: Web Awesome's wa-select fires `change` for its value, not its `open` (D-082).
+
 Inferred bindings are marked `inferred: true` and can be disabled with config `bindings: "explicit-only"`.
 
 ## Explicit bindings (D-062, D-063)
