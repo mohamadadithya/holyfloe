@@ -95,5 +95,6 @@ parity:
     @echo "not yet: M4" >&2; exit 1
 
 # Everything that exists today, in order. Extend as milestones land.
-verify: fmt build clippy test gen-fixtures-cem
-    git diff --exit-code -- fixtures/src
+# Committed analyzer output and generated wrappers must match what the tools produce now.
+verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react e2e-react
+    git diff --exit-code -- fixtures/src fixtures/out

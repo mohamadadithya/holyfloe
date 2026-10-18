@@ -27,4 +27,6 @@ jobs:
         with:
           just-version: 1.59.0
       - run: pnpm install --frozen-lockfile
+      # --with-deps installs Chromium's system libraries on Linux.
+      - run: pnpm -C e2e exec playwright install --with-deps chromium
       - run: just verify
