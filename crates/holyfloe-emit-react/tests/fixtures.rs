@@ -82,13 +82,24 @@ fn types_matches_expected() {
 }
 
 /// `react.ref: "prop"` has no expected/ file yet; the snapshot is the spec until M1 step 6 type-checks it.
+/// `react.ref: "prop"` (React 19 only) on fx-button: `fixtures/expected/react-ref-prop/fx-button/`.
 #[test]
-fn ref_prop_snapshot() {
+fn ref_prop_matches_expected() {
     let cfg = ReactConfig {
         ref_style: RefStyle::Prop,
         ..ReactConfig::default()
     };
     let files = emit(&build_fixture("fx-button"), &cfg).unwrap();
+    let expected = fixtures_dir().join("expected/react-ref-prop/fx-button");
+    assert_eq!(fs::read_dir(&expected).unwrap().count(), files.len());
+    for f in &files {
+        assert_eq!(
+            f.contents,
+            read(&expected.join(&f.path)),
+            "react-ref-prop/fx-button/{}",
+            f.path
+        );
+    }
     let component = files.iter().find(|f| f.path == "FxButton.tsx").unwrap();
     insta::assert_snapshot!("ref_prop__fx-button__FxButton.tsx", component.contents);
 }

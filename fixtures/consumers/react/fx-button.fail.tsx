@@ -1,6 +1,5 @@
 // Each line below must fail to type-check, exactly once.
-// shortcut: imports expected/ until M1 emits fixtures/out; switch the path then.
-import { FxButton } from '../../expected/react/fx-button/index.js';
+import { FxButton } from '../../out/react/fx-button/index.js';
 
 // @ts-expect-error variant is a closed union
 export const BadVariant = <FxButton variant="nope" />;

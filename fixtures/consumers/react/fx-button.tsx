@@ -1,8 +1,7 @@
 // Must compile: correct props, events, ref and children.
-// shortcut: imports expected/ until M1 emits fixtures/out; switch the path then.
 import { useRef } from 'react';
 import type { FxButton as FxButtonElement } from '@holyfloe/fixtures/fx-button/fx-button.js';
-import { FxButton } from '../../expected/react/fx-button/index.js';
+import { FxButton } from '../../out/react/fx-button/index.js';
 
 export function Consumer() {
   const ref = useRef<FxButtonElement>(null);

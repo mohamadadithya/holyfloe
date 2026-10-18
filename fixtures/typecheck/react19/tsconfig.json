@@ -1,5 +1,6 @@
 {
-  // Type-checks generated React output and consumer tests against @types/react 19.
+  // Type-checks generated React output (fixtures/out: wrapper, types and ref-prop) and consumer tests
+  // against @types/react 19.
   // skipLibCheck stays off: react-types output is .d.ts and must be checked too.
   "compilerOptions": {
     "strict": true,
@@ -17,5 +18,5 @@
       "react/*": ["./node_modules/@types/react/*"]
     }
   },
-  "include": ["../../expected/react/**/*", "../../consumers/react/**/*", "../../expected/react-types/**/*", "../../consumers/react-types/**/*"]
+  "include": ["../../out/react/**/*", "../../consumers/react/**/*", "../../out/react-types/**/*", "../../consumers/react-types/**/*", "../../out/react-ref-prop/**/*", "../../consumers/react-ref-prop/**/*"]
 }

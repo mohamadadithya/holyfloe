@@ -1,6 +1,5 @@
 // Must compile: correct props, events, ref and children.
-// shortcut: imports expected/ until M1 emits fixtures/out; switch the path then.
-import { FxCard } from '../../expected/react/fx-card/index.js';
+import { FxCard } from '../../out/react/fx-card/index.js';
 
 export function Consumer() {
   return (

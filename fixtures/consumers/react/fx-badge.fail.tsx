@@ -1,6 +1,5 @@
 // Each marked line must fail to type-check.
-// shortcut: imports expected/ until M1 emits fixtures/out; switch the path then.
-import { FxBadge } from '../../expected/react/fx-badge/index.js';
+import { FxBadge } from '../../out/react/fx-badge/index.js';
 
 // @ts-expect-error count is a number
 export const BadCount = <FxBadge count="3" />;

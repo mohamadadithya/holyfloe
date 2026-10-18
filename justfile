@@ -41,8 +41,9 @@ gen-cem-types:
 
 # Generate every fixture x React mode into fixtures/out (committed), then diff against expected/.
 # A fixture uses src/<name>/holyfloe.config.json when it has one, else fixtures/holyfloe.config.json.
+# fx-button also goes out with `react.ref: "prop"` (React 19 only) into react-ref-prop/.
 gen-fixtures: build-fixtures
-    rm -rf fixtures/out/react fixtures/out/react-types
+    rm -rf fixtures/out/react fixtures/out/react-types fixtures/out/react-ref-prop
     stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT; \
     for dir in fixtures/src/*/; do \
         name=$(basename "$dir"); \
@@ -54,14 +55,19 @@ gen-fixtures: build-fixtures
                 --frameworks react --config "$cfg" --react-mode "$mode" > /dev/null; \
             mkdir -p "fixtures/out/$sub"; mv "$stage/react" "fixtures/out/$sub/$name"; \
         done; \
-    done
+    done; \
+    cargo run -q -p holyfloe-cli -- generate --cem fixtures/src/fx-button/custom-elements.json \
+        --out "$stage" --frameworks react --config fixtures/holyfloe.ref-prop.config.json > /dev/null; \
+    mkdir -p fixtures/out/react-ref-prop; mv "$stage/react" fixtures/out/react-ref-prop/fx-button
     diff -r fixtures/expected/react fixtures/out/react
     diff -r fixtures/expected/react-types fixtures/out/react-types
+    diff -r fixtures/expected/react-ref-prop fixtures/out/react-ref-prop
 
 typecheck: typecheck-react
 
-# tsc --strict on generated React output + consumer tests, against @types/react 18 and 19.
-typecheck-react: build-fixtures
+# tsc --strict on fresh fixtures/out + consumer tests: wrapper mode on @types/react 18 and 19,
+# types mode and `react.ref: "prop"` on 19 only.
+typecheck-react: gen-fixtures
     pnpm -C fixtures/typecheck/react18 typecheck
     pnpm -C fixtures/typecheck/react19 typecheck
 

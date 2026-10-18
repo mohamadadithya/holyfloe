@@ -1,7 +1,6 @@
 // Must compile: correct props, events, ref and children.
-// shortcut: imports expected/ until M1 emits fixtures/out; switch the path then.
 import type { FxEvents as FxEventsElement } from '@holyfloe/fixtures/fx-events/fx-events.js';
-import { FxEvents } from '../../expected/react/fx-events/index.js';
+import { FxEvents } from '../../out/react/fx-events/index.js';
 
 export function Consumer() {
   return (

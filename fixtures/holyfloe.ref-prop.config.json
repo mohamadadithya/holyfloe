@@ -1,0 +1,4 @@
+{
+  "moduleRewrite": { "src/": "dist/" },
+  "react": { "ref": "prop" }
+}

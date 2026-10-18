@@ -1,7 +1,6 @@
 // Must compile: correct props, events, ref and children.
-// shortcut: imports expected/ until M1 emits fixtures/out; switch the path then.
 import type { ListItem } from '@holyfloe/fixtures/fx-list/types.js';
-import { FxList } from '../../expected/react/fx-list/index.js';
+import { FxList } from '../../out/react/fx-list/index.js';
 
 const items: ListItem[] = [{ id: 'a', label: 'Apple' }];
 
