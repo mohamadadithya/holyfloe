@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: M1 done (2026-10-18), M2 next.** `holyfloe-cem`, `holyfloe-ir`, `holyfloe-emit-core`, `holyfloe-emit-react`, `holyfloe-fs` and `holyfloe-cli` (`holyfloe generate`) work. The 7 M1 fixtures have expected React output (`wrapper`, `types`, and `react.ref: "prop"` for fx-button), type-checked on React 18/19 and run in Playwright on React 18/19 (Vite) and Next 16. The Vue, Svelte, types, lit and napi crates are stubs; `packages/` doesn't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose. First run on a machine: `pnpm install`, then `pnpm -C e2e exec playwright install chromium`.
+**Current state: M2 done (2026-10-18), M3 next.** `holyfloe generate --frameworks react,vue,svelte` works end to end. All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). The lit and napi crates are stubs; `packages/` doesn't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose. The `@model` analyzer plugin lives in `fixtures/holyfloe-cem-plugin.mjs` until M3 ships it. First run on a machine: `pnpm install`, then `pnpm -C e2e exec playwright install chromium`.
 
 ## Pipeline (big picture)
 
