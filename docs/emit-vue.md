@@ -19,7 +19,7 @@ generated/vue/
    - Boolean: `{ type: Boolean, default: undefined }` so absent stays absent.
    - Complex: pass with the `.prop` modifier form in `h()` (`{ '.items': value }` pattern, or assign in `onMounted`/`watchEffect` via a template ref) so lazy definition cannot demote it to an attribute.
    - Primitive: pass normally.
-4. Events: declare `emits` with typed payloads, e.g. `'my-change': (e: CustomEvent<Detail>) => true`. Attach native listeners to the element and re-emit. Use exact DOM names (Vue's declarative bindings only support lowercase and kebab-case; document that camelCase DOM events need `@` with the exact string via `v-on` object syntax).
+4. Events: declare `emits` keyed by `base_name` with typed payloads, e.g. `MyChange: (e: TypedEvent<El, Detail>) => true`. Attach a native listener for `dom_name` to the element and re-emit under `base_name`. The listener prop is `on<base_name>` as in React, and templates write `@my-change`. Exact DOM names are not used: Vue camelizes emit names to find listeners, so `my-change`, `myChange` and `MyChange` would all reach `onMyChange` (D-066).
 5. v-model: for each `TwoWayBinding`:
    - prop `value` -> `modelValue` prop + `update:modelValue` emit.
    - any other prop `p` -> prop `p` + `update:p` emit (used as `v-model:p`).

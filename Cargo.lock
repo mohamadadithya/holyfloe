@@ -207,10 +207,6 @@ name = "holyfloe-emit-svelte"
 version = "0.0.0"
 
 [[package]]
-name = "holyfloe-emit-types"
-version = "0.0.0"
-
-[[package]]
 name = "holyfloe-emit-vue"
 version = "0.0.0"
 

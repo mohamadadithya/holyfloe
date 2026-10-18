@@ -21,16 +21,15 @@ generated/svelte/
    - Primitive and Boolean: pass in markup as attributes (`<my-button {variant} ...>`).
    - Complex: set in `$effect(() => { if (el) el.items = items; })`. Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455), so this is the supported route.
    - Re-apply after `customElements.whenDefined(tag)`.
-5. Events: Svelte 5 event attributes are case-sensitive (`onclick` listens to `click`, `onClick` to `Click`).
-   - Generate callback props named from the exact DOM event name when it is a valid identifier (`onmy-change` is not, so use the normalized `onMyChange`).
+5. Events: callback props are `on<base_name>` (`onMyChange`, `onFxPress`), the same names as React and Vue (D-066). A mixed rule (exact DOM name when it is an identifier) would give `onmyChange` next to `onMyChange`.
    - Attach with `on(el, dom_name, handler)` from `svelte/events` inside `$effect`, returning the cleanup.
-   - Document the casing rule in the generated file header.
+   - Raw tags differ: Svelte 5 event attributes are case-sensitive and exact (`onclick` listens to `click`), so `svelte-elements.d.ts` types `onmy-change`.
 6. Two-way binding: for each `TwoWayBinding` emit `let { value = $bindable() } = $props();` and a listener that writes `value = <read via ValuePath>`. Consumers get `bind:value`.
 7. Slots to snippets:
    - Default: `{@render children?.()}` inside the element.
    - Named slot `foo`: snippet prop `foo`, rendered as `<span slot="foo" style="display: contents">{@render foo?.()}</span>`. A snippet cannot carry a `slot` attribute itself, hence the wrapper. Snapshot-test this; it is the subtlest part (D-025).
 8. Spread remaining props: `{...rest}` onto the element for global attributes (`class`, `id`, `aria-*`).
-9. Expose the element: `export function getElement()` or a bindable `element` prop (choose one in M2 plan and record in decisions).
+9. Expose the element through a bindable `element` prop: `let { element = $bindable() } = $props()` and `bind:this={element}`; consumers write `bind:element={el}` (D-064).
 
 ## Types
 

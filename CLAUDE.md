@@ -17,7 +17,7 @@ custom-elements.json (from @custom-elements-manifest/analyzer --litelement)
   -> holyfloe-ir    Library/Component IR + 6 passes in fixed order:
                     flatten-inheritance -> drop-non-public -> name-derive
                     -> classify-props -> infer-bindings -> validate
-  -> holyfloe-emit-{react,vue,svelte,types}   minijinja templates -> Vec<OutputFile>
+  -> holyfloe-emit-{react,vue,svelte}   minijinja templates -> Vec<OutputFile>
   -> holyfloe-fs    plan + hash + write-if-changed (only place that touches disk,
                     along with holyfloe-cli and holyfloe-napi)
 ```
@@ -72,7 +72,6 @@ crates/
   holyfloe-emit-react/
   holyfloe-emit-vue/
   holyfloe-emit-svelte/
-  holyfloe-emit-types/ # JSX / Vue / Svelte global type augmentation
   holyfloe-fs/         # output planning, content hashing, write-if-changed
   holyfloe-cli/        # clap + notify
   holyfloe-napi/       # napi-rs v3 bindings
@@ -155,6 +154,17 @@ vite                               8.3.4     MIT            # e2e
 @playwright/test                   1.64.1    Apache-2.0     # e2e, chromium only
 next                               16.4.2    MIT            # e2e/next-app
 @types/node                        26.6.5    MIT            # e2e/next-app
+# M2, resolved 2026-10-18 from npm
+vue                                3.5.44    MIT            # fixtures/typecheck/vue, e2e/vue3
+vue-tsc                            3.3.13    MIT            # fixtures/typecheck/vue
+@vitejs/plugin-vue                 6.0.10    MIT            # e2e/vue3
+nuxt                               4.6.2     MIT   node ^22.22.3 || ^24.15   # e2e/nuxt
+svelte                             5.57.2    MIT            # fixtures/typecheck/svelte, e2e/svelte5, e2e/sveltekit
+svelte-check                       4.7.7     MIT            # fixtures/typecheck/svelte
+@sveltejs/vite-plugin-svelte       7.3.1     MIT            # e2e/svelte5, e2e/sveltekit
+@sveltejs/kit                      3.1.0     MIT   node >=22.17   # e2e/sveltekit
+@sveltejs/adapter-node             6.0.0     MIT            # e2e/sveltekit
+typescript (Vue/Svelte tooling)    6.0.3     Apache-2.0     # vue-tsc, svelte-check, SvelteKit: TS 7 has no classic JS API (D-071)
 # reference only (D-003/D-004, do not depend on):
 @wc-toolkit/react-wrappers 1.2.11, @wc-toolkit/vuejs-types 1.0.3, @wc-toolkit/svelte-types 1.0.3 (MIT)
 @lit-labs/gen-wrapper-react 0.3.5 (BSD-3-Clause)
