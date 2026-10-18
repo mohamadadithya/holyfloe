@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/focusable-mixin.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "FocusableInterface",
+          "members": [
+            {
+              "kind": "field",
+              "name": "focused",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "ringColor",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "toggleFocus",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "description": "Tracks focus. Lives in a second package so fx-mixin exercises cross-package flatten.",
+          "name": "FocusableMixin",
+          "members": [
+            {
+              "kind": "field",
+              "name": "focused",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Whether the element has focus.",
+              "attribute": "focused",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "ringColor",
+              "type": {
+                "text": "string"
+              },
+              "default": "'blue'",
+              "description": "Focus ring color.",
+              "attribute": "ring-color"
+            },
+            {
+              "kind": "method",
+              "name": "toggleFocus",
+              "description": "Flips `focused` and fires `focus-change`."
+            }
+          ],
+          "events": [
+            {
+              "name": "focus-change",
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "focused",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Whether the element has focus.",
+              "fieldName": "focused"
+            },
+            {
+              "name": "ring-color",
+              "type": {
+                "text": "string"
+              },
+              "default": "'blue'",
+              "description": "Focus ring color.",
+              "fieldName": "ringColor"
+            }
+          ],
+          "parameters": [
+            {
+              "name": "superClass",
+              "type": {
+                "text": "T"
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FocusableInterface",
+          "declaration": {
+            "name": "FocusableInterface",
+            "module": "src/focusable-mixin.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "FocusableMixin",
+          "declaration": {
+            "name": "FocusableMixin",
+            "module": "src/focusable-mixin.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

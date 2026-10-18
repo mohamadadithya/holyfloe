@@ -1,0 +1,19 @@
+{
+  "name": "@holyfloe/fixtures-dep",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./dist/*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "lit": "3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

@@ -232,9 +232,22 @@ importers:
       '@custom-elements-manifest/analyzer':
         specifier: 0.11.0
         version: 0.11.0
+      '@holyfloe/fixtures-dep':
+        specifier: workspace:*
+        version: link:src/_dep
       lit:
         specifier: 3.3.3
         version: 3.3.3
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
+  fixtures/src/_dep:
+    dependencies:
+      lit:
+        specifier: 3.3.3
+        version: 3.3.3
+    devDependencies:
       typescript:
         specifier: 7.0.2
         version: 7.0.2

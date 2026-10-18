@@ -8,5 +8,10 @@
     "useDefineForClassFields": false,
     "noEmit": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/_dep"
+  ]
 }

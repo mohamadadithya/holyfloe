@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-dialog/fx-dialog.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A dialog whose `open` state two-way binds through an explicit `@model` tag.",
+          "name": "FxDialog",
+          "cssParts": [
+            {
+              "description": "The dialog panel.",
+              "name": "panel"
+            }
+          ],
+          "slots": [
+            {
+              "description": "Dialog content.",
+              "name": ""
+            },
+            {
+              "description": "Dialog actions.",
+              "name": "footer"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Whether the dialog is shown.",
+              "attribute": "open",
+              "reflects": true
+            },
+            {
+              "kind": "method",
+              "name": "show",
+              "description": "Opens the dialog."
+            },
+            {
+              "kind": "method",
+              "name": "close",
+              "description": "Closes the dialog."
+            },
+            {
+              "kind": "method",
+              "name": "#setOpen",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "open",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "open-change",
+              "type": {
+                "text": "CustomEvent<{ open: boolean }>"
+              },
+              "description": "Fired when the dialog opens or closes."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Whether the dialog is shown.",
+              "fieldName": "open"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-dialog",
+          "customElement": true,
+          "x-holyfloe-models": [
+            {
+              "prop": "open",
+              "event": "open-change",
+              "value": "detail.open"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxDialog",
+          "declaration": {
+            "name": "FxDialog",
+            "module": "src/fx-dialog/fx-dialog.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-dialog",
+          "declaration": {
+            "name": "FxDialog",
+            "module": "src/fx-dialog/fx-dialog.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

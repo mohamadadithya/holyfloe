@@ -21,12 +21,13 @@ fmt:
 build-fixtures:
     pnpm -C fixtures build
 
-# Run the CEM analyzer on each fixture; output is committed.
+# Run the CEM analyzer on each fixture, and on the src/_dep package fx-mixin uses; output is committed.
 gen-fixtures-cem:
-    cd fixtures && for dir in src/*/; do \
+    cd fixtures && for dir in src/[!_]*/; do \
         name=$(basename "$dir"); \
         pnpm exec cem analyze --globs "src/$name/*.ts" --outdir "src/$name" --quiet; \
     done
+    cd fixtures/src/_dep && ../../node_modules/.bin/cem analyze --config ../../custom-elements-manifest.config.mjs --globs "src/*.ts" --quiet
 
 # Regenerate typify output from the patched CEM schema (D-046). Not part of the build.
 gen-cem-types:

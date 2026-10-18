@@ -1,5 +1,6 @@
 packages:
   - fixtures
+  - fixtures/src/_dep
   - fixtures/typecheck/*
   - e2e
   - e2e/react18

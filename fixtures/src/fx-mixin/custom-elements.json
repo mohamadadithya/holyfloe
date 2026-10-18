@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-mixin/fx-mixin.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Gets `focused`, `ringColor` and the `focus-change` event from a mixin in another package.",
+          "name": "FxMixin",
+          "slots": [
+            {
+              "description": "The label.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "prefix",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Shown before the slot.",
+              "attribute": "prefix"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "prefix",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Shown before the slot.",
+              "fieldName": "prefix"
+            }
+          ],
+          "mixins": [
+            {
+              "name": "FocusableMixin",
+              "package": "@holyfloe/fixtures-dep/focusable-mixin.js"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-mixin",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxMixin",
+          "declaration": {
+            "name": "FxMixin",
+            "module": "src/fx-mixin/fx-mixin.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-mixin",
+          "declaration": {
+            "name": "FxMixin",
+            "module": "src/fx-mixin/fx-mixin.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

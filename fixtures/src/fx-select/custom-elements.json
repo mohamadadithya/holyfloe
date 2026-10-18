@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-select/fx-select.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Picks one option. The new value travels in `detail.value`; the binding comes from config.",
+          "name": "FxSelect",
+          "members": [
+            {
+              "kind": "field",
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "The picked option.",
+              "attribute": "value",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "options",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "description": "Options to pick from."
+            },
+            {
+              "kind": "method",
+              "name": "#pick",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "fx-change",
+              "type": {
+                "text": "CustomEvent<{ value: string }>"
+              },
+              "description": "Fired when the user picks an option."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "The picked option.",
+              "fieldName": "value"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-select",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxSelect",
+          "declaration": {
+            "name": "FxSelect",
+            "module": "src/fx-select/fx-select.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-select",
+          "declaration": {
+            "name": "FxSelect",
+            "module": "src/fx-select/fx-select.ts"
+          }
+        }
+      ]
+    }
+  ]
+}
