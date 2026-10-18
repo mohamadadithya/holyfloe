@@ -45,6 +45,8 @@ struct Generate {
 #[derive(ValueEnum, Clone, Copy, PartialEq, Eq)]
 enum Framework {
     React,
+    Vue,
+    Svelte,
 }
 
 #[derive(ValueEnum, Clone, Copy)]
@@ -98,19 +100,26 @@ fn generate(args: &Generate) -> Result<(), String> {
         };
         coded(Some(e.code), &format!("{}{at}", e.message), Some(&e.hint))
     })?;
-    if args.frameworks.contains(&Framework::React) {
-        let mut files = holyfloe_emit_react::emit(&lib, &react)
-            .map_err(|e| coded(e.code(), &e.to_string(), e.hint().as_deref()))?;
+    for framework in [Framework::React, Framework::Vue, Framework::Svelte] {
+        if !args.frameworks.contains(&framework) {
+            continue;
+        }
+        let (dir, files) = match framework {
+            Framework::React => ("react", holyfloe_emit_react::emit(&lib, &react)),
+            Framework::Vue => ("vue", holyfloe_emit_vue::emit(&lib)),
+            Framework::Svelte => ("svelte", holyfloe_emit_svelte::emit(&lib)),
+        };
+        let mut files = files.map_err(|e| coded(e.code(), &e.to_string(), e.hint().as_deref()))?;
         for f in &mut files {
-            f.path = format!("react/{}", f.path);
+            f.path = format!("{dir}/{}", f.path);
         }
         let report =
             holyfloe_fs::write_if_changed(&args.out, &files).map_err(|e| format!("error: {e}"))?;
         println!(
-            "react: {} written, {} unchanged in {}",
+            "{dir}: {} written, {} unchanged in {}",
             report.written.len(),
             report.unchanged.len(),
-            args.out.join("react").display()
+            args.out.join(dir).display()
         );
     }
     Ok(())

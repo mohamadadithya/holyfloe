@@ -40,11 +40,12 @@ gen-cem-types:
             cat src/generated.rs; } > src/generated.rs.tmp && mv src/generated.rs.tmp src/generated.rs
     cargo fmt -p holyfloe-cem
 
-# Generate every fixture x React mode into fixtures/out (committed), then diff against expected/.
-# A fixture uses src/<name>/holyfloe.config.json when it has one, else fixtures/holyfloe.config.json.
-# fx-button also goes out with `react.ref: "prop"` (React 19 only) into react-ref-prop/.
+# Generate every fixture x framework (and React mode) into fixtures/out (committed), then diff
+# against expected/. A fixture uses src/<name>/holyfloe.config.json when it has one, else
+# fixtures/holyfloe.config.json. fx-button also goes out with `react.ref: "prop"` (React 19 only)
+# into react-ref-prop/.
 gen-fixtures: build-fixtures
-    rm -rf fixtures/out/react fixtures/out/react-types fixtures/out/react-ref-prop
+    rm -rf fixtures/out/react fixtures/out/react-types fixtures/out/react-ref-prop fixtures/out/vue
     stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT; \
     for dir in fixtures/src/[!_]*/; do \
         name=$(basename "$dir"); \
@@ -56,6 +57,11 @@ gen-fixtures: build-fixtures
                 --frameworks react --config "$cfg" --react-mode "$mode" > /dev/null; \
             mkdir -p "fixtures/out/$sub"; mv "$stage/react" "fixtures/out/$sub/$name"; \
         done; \
+        for fw in vue; do \
+            cargo run -q -p holyfloe-cli -- generate --cem "$dir/custom-elements.json" --out "$stage" \
+                --frameworks "$fw" --config "$cfg" > /dev/null; \
+            mkdir -p "fixtures/out/$fw"; mv "$stage/$fw" "fixtures/out/$fw/$name"; \
+        done; \
     done; \
     cargo run -q -p holyfloe-cli -- generate --cem fixtures/src/fx-button/custom-elements.json \
         --out "$stage" --frameworks react --config fixtures/holyfloe.ref-prop.config.json > /dev/null; \
@@ -63,6 +69,7 @@ gen-fixtures: build-fixtures
     diff -r fixtures/expected/react fixtures/out/react
     diff -r fixtures/expected/react-types fixtures/out/react-types
     diff -r fixtures/expected/react-ref-prop fixtures/out/react-ref-prop
+    diff -r fixtures/expected/vue fixtures/out/vue
 
 typecheck: typecheck-react
 
@@ -72,8 +79,9 @@ typecheck-react: gen-fixtures
     pnpm -C fixtures/typecheck/react18 typecheck
     pnpm -C fixtures/typecheck/react19 typecheck
 
-typecheck-vue:
-    @echo "not yet: M2" >&2; exit 1
+# vue-tsc (TypeScript 6, D-071) on fresh fixtures/out/vue + consumer tests.
+typecheck-vue: gen-fixtures
+    pnpm -C fixtures/typecheck/vue typecheck
 
 typecheck-svelte:
     @echo "not yet: M2" >&2; exit 1
@@ -86,8 +94,9 @@ e2e: e2e-react
 e2e-react: gen-fixtures
     pnpm -C e2e test:react
 
-e2e-vue:
-    @echo "not yet: M2" >&2; exit 1
+# Playwright (chromium): e2e/vue3 under vite dev and build + preview, on fresh fixtures/out/vue.
+e2e-vue: gen-fixtures
+    pnpm -C e2e test:vue
 
 e2e-svelte:
     @echo "not yet: M2" >&2; exit 1

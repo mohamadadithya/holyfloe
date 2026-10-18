@@ -1,6 +1,7 @@
-{# Shared by component.tsx.j2 and types.d.ts.j2. #}
-{# Component JSDoc text: summary, description, slots, parts, CSS properties, deprecation. #}
-{% macro component_doc(c) %}
+{# Shared by every emitter; registered as "macros.j2" by holyfloe_emit_core::env. #}
+{# Component JSDoc text: summary, description, slots, parts, CSS properties, `extra` (one paragraph
+   per line, e.g. two-way binding notes), deprecation. #}
+{% macro component_doc(c, extra=[]) %}
 {% if c.summary %}
 {{ c.summary }}
 
@@ -30,6 +31,10 @@ CSS custom properties:
 {% endfor %}
 
 {% endif %}
+{% for line in extra %}
+{{ line }}
+
+{% endfor %}
 {% if c.deprecated is not none %}
 @deprecated {{ c.deprecated }}
 {% endif %}

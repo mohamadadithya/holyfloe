@@ -181,7 +181,7 @@ fn prop_named_like_an_event_prop_is_an_error() {
     lib.components[0].props[0].name = "onFxReady".into();
     let err = emit(&lib, &ReactConfig::default()).unwrap_err();
     assert!(
-        matches!(&err, holyfloe_emit_react::EmitError::PropEventClash { prop, event, .. } if prop == "onFxReady" && event == "fx-ready"),
+        matches!(&err, holyfloe_emit_react::EmitError::NameClash { prop, generated, .. } if prop == "onFxReady" && generated.contains("`fx-ready`")),
         "{err}"
     );
     assert_eq!(err.code(), Some("E013"));
