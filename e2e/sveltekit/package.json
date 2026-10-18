@@ -1,0 +1,16 @@
+{
+  "name": "@holyfloe/e2e-sveltekit",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@holyfloe/fixtures": "workspace:*",
+    "svelte": "5.57.2"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-node": "6.0.0",
+    "@sveltejs/kit": "3.1.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "typescript": "6.0.3"
+  }
+}

@@ -10,3 +10,7 @@ e2e/next-app/generated/
 e2e/next-app/.next/
 e2e/next-app/next-env.d.ts
 e2e/next-app/AGENTS.md
+e2e/nuxt/.nuxt/
+e2e/nuxt/.output/
+e2e/sveltekit/.svelte-kit/
+e2e/sveltekit/build/

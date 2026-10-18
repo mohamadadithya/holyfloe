@@ -40,6 +40,11 @@ generated/svelte/
 - Event attribute types use Svelte 5 form (`onmy-change`), not `on:`.
 - A renamed attribute is typed under its attribute name too (`'badge-count'`): for a raw tag, the attribute is what works before the element upgrades and in SSR. The wrappers' own markup is checked against these types when both are in one program.
 
+## SSR (SvelteKit)
+
+- Primitive and Boolean props are server-rendered attributes (custom booleans as `x="true"`, which Lit reads as present); Complex and property-only props are not. Named slot wrappers are server-rendered.
+- SvelteKit 3.1.0 dev and production (adapter-node) hydrate with no console warnings (D-079, e2e `sveltekit`). Kit 3 takes its config in `vite.config.ts` (`sveltekit({ adapter })`); `svelte.config.js` is no longer read.
+
 ## Acceptance (per fixture)
 
 - `svelte-check --fail-on-warnings` passes on generated output plus consumer files.

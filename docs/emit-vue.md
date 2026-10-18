@@ -37,8 +37,8 @@ generated/vue/
 
 ## SSR (Nuxt)
 
-- Wrappers render attributes for Primitive and Boolean props only.
-- Element definition is deferred to the client with a client-only import unless a Lit SSR integration is configured. Do not claim more.
+- Wrappers render attributes for Primitive and Boolean props only; `.`-prefixed (Complex, property-only) keys and listeners are skipped by Vue's server renderer. Named slot wrappers are server-rendered.
+- The side-effect import that defines the element runs on the server too (Lit's Node build), as in React (D-056). Nuxt 4.6.2 dev and production hydrate with no console warnings (D-079, e2e `nuxt`). Deep Lit SSR (shadow DOM in the server HTML) is not claimed.
 
 ## Acceptance (per fixture)
 

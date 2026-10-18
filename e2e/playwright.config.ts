@@ -5,7 +5,8 @@ import { defineConfig, devices } from '@playwright/test';
 //   react: react18/react19 under `vite` dev and build + preview (tests/react.spec.ts), and
 //          next-app under `next dev` and build + start (tests/next.spec.ts).
 //   vue:   vue3 (Vite), svelte: svelte5 (Vite), both dev and build + preview
-//          (tests/wrappers.spec.ts, shared; plus tests/vue.spec.ts or tests/svelte.spec.ts).
+//          (tests/wrappers.spec.ts, shared; plus tests/vue.spec.ts or tests/svelte.spec.ts), and
+//          nuxt / sveltekit, dev and production server (tests/ssr.spec.ts, shared).
 type App = { framework: string; name: string; testMatch: string[]; port: number; command: string; env?: Record<string, string>; timeout?: number };
 
 const host = (port: number) => `--port ${port} --strictPort --host 127.0.0.1`;
@@ -41,9 +42,39 @@ const apps: App[] = [
     const port = 5301 + j;
     return { framework: 'vue', name: `vue3-${mode}`, testMatch: ['wrappers.spec.ts', 'vue.spec.ts'], port, command: vite('vue3', mode, port) };
   }),
+  // Nuxt 4 SSR: `nuxt dev`, and `nuxt build` + the Nitro node server.
+  ...modes.map((mode, j) => {
+    const port = 5311 + j;
+    const nuxt = 'pnpm -C nuxt exec nuxt';
+    return {
+      framework: 'vue',
+      name: `nuxt-${mode}`,
+      testMatch: ['ssr.spec.ts'],
+      port,
+      command: mode === 'dev' ? `${nuxt} dev --port ${port} --host 127.0.0.1` : `${nuxt} build && node nuxt/.output/server/index.mjs`,
+      env: { NUXT_TELEMETRY_DISABLED: '1', PORT: String(port), HOST: '127.0.0.1' },
+      timeout: 180_000,
+    };
+  }),
   ...modes.map((mode, j) => {
     const port = 5401 + j;
     return { framework: 'svelte', name: `svelte5-${mode}`, testMatch: ['wrappers.spec.ts', 'svelte.spec.ts'], port, command: vite('svelte5', mode, port) };
+  }),
+  // SvelteKit 3 SSR: `vite dev`, and `vite build` + adapter-node.
+  ...modes.map((mode, j) => {
+    const port = 5411 + j;
+    return {
+      framework: 'svelte',
+      name: `sveltekit-${mode}`,
+      testMatch: ['ssr.spec.ts'],
+      port,
+      command:
+        mode === 'dev'
+          ? `pnpm -C sveltekit exec vite dev ${host(port)}`
+          : `pnpm -C sveltekit exec vite build --logLevel warn && node sveltekit/build`,
+      env: { PORT: String(port), HOST: '127.0.0.1' },
+      timeout: 180_000,
+    };
   }),
 ];
 
