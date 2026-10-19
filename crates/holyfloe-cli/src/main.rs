@@ -38,7 +38,7 @@ struct Generate {
     /// Overrides `react.mode` from the config.
     #[arg(long)]
     react_mode: Option<ReactModeArg>,
-    /// Keep running and regenerate when the manifest or config changes.
+    /// Keep running and regenerate when the input (manifest or Lit sources) or config changes.
     #[arg(long)]
     watch: bool,
 }
@@ -51,7 +51,7 @@ struct Source {
     #[arg(long)]
     cem: Option<PathBuf>,
     /// Directory of Lit sources to read instead of a manifest (no analyzer needed). Scanned
-    /// recursively, skipping `node_modules`, dot-directories and `--out`.
+    /// recursively, skipping tests, stories, `node_modules`, dot-directories and `--out`.
     #[arg(long)]
     lit: Option<PathBuf>,
 }

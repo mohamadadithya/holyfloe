@@ -1,9 +1,26 @@
 {
   "name": "@holyfloe/core",
-  "version": "0.0.0",
-  "description": "Typed React, Vue and Svelte wrappers for Lit web components, from a Custom Elements Manifest",
+  "version": "0.1.0",
+  "description": "Typed React, Vue and Svelte wrappers for Lit web components, from Lit source or a Custom Elements Manifest",
   "license": "MIT OR Apache-2.0",
-  "repository": "github:mohamadadithya/holyfloe",
+  "keywords": [
+    "lit",
+    "web-components",
+    "custom-elements",
+    "react",
+    "vue",
+    "svelte",
+    "wrapper",
+    "codegen",
+    "custom-elements-manifest"
+  ],
+  "homepage": "https://github.com/mohamadadithya/holyfloe#readme",
+  "bugs": "https://github.com/mohamadadithya/holyfloe/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamadadithya/holyfloe.git",
+    "directory": "packages/core"
+  },
   "main": "index.js",
   "types": "index.d.ts",
   "exports": {
