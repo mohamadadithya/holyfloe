@@ -1,9 +1,25 @@
 {
   "name": "@holyfloe/unplugin",
-  "version": "0.0.0",
-  "description": "Vite, Rollup, webpack, Rspack and esbuild plugin that keeps holyfloe wrappers in sync with a Custom Elements Manifest",
+  "version": "0.1.0",
+  "description": "Vite, Rollup, webpack, Rspack and esbuild plugin that keeps holyfloe wrappers in sync with your Lit components or Custom Elements Manifest",
   "license": "MIT OR Apache-2.0",
-  "repository": "github:mohamadadithya/holyfloe",
+  "keywords": [
+    "lit",
+    "web-components",
+    "custom-elements",
+    "vite-plugin",
+    "unplugin",
+    "react",
+    "vue",
+    "svelte"
+  ],
+  "homepage": "https://github.com/mohamadadithya/holyfloe#readme",
+  "bugs": "https://github.com/mohamadadithya/holyfloe/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamadadithya/holyfloe.git",
+    "directory": "packages/unplugin"
+  },
   "type": "module",
   "exports": {
     ".": {
