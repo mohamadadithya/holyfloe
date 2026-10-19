@@ -116,7 +116,8 @@ pub fn generate(opts: &Options) -> Result<Vec<Run>, Error> {
             hint: Some(e.hint),
         }
     })?;
-    let mut runs = Vec::new();
+    // Emit every framework before writing any, so an emitter error leaves no partial output.
+    let mut emitted = Vec::new();
     for framework in [Framework::React, Framework::Vue, Framework::Svelte] {
         if !opts.frameworks.contains(&framework) {
             continue;
@@ -134,11 +135,16 @@ pub fn generate(opts: &Options) -> Result<Vec<Run>, Error> {
         for f in &mut files {
             f.path = format!("{}/{}", framework.dir(), f.path);
         }
-        let report = holyfloe_fs::write_if_changed(&opts.out, &files)
-            .map_err(|e| Error::plain(e.to_string()))?;
-        runs.push(Run { framework, report });
+        emitted.push((framework, files));
     }
-    Ok(runs)
+    emitted
+        .into_iter()
+        .map(|(framework, files)| {
+            let report = holyfloe_fs::write_if_changed(&opts.out, &files)
+                .map_err(|e| Error::plain(e.to_string()))?;
+            Ok(Run { framework, report })
+        })
+        .collect()
 }
 
 fn read(path: &Path) -> Result<String, Error> {

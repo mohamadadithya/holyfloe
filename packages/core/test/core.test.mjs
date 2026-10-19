@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { __napiBindingTarget, generate, version, watch } from '@holyfloe/core';
@@ -10,8 +11,12 @@ import { __napiBindingTarget, generate, version, watch } from '@holyfloe/core';
 const fixtures = fileURLToPath(new URL('../../../fixtures/', import.meta.url));
 const names = fs.readdirSync(path.join(fixtures, 'src')).filter((n) => !n.startsWith('_'));
 
+const made = [];
+after(() => made.forEach((dir) => fs.rmSync(dir, { recursive: true, force: true })));
+
 function tmp() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'holyfloe-core-'));
+  made.push(fs.mkdtempSync(path.join(os.tmpdir(), 'holyfloe-core-')));
+  return made.at(-1);
 }
 
 /** Same config choice as `just gen-fixtures`. */
@@ -58,6 +63,7 @@ test('holyfloe errors carry their code and hint', () => {
   assert.throws(() => generate(opts), (e) => e.code === 'E002' && /\n  hint: /.test(e.message));
   assert.throws(() => generate({ ...opts, cem: '/nope.json' }), (e) => e.code === 'GenericFailure' && e.message.includes('/nope.json'));
   assert.throws(() => generate({ ...opts, frameworks: ['angular'] }), (e) => e.code === 'InvalidArg');
+  assert.throws(() => generate({ ...opts, frameworks: [] }), (e) => e.code === 'InvalidArg');
 });
 
 test('version() is the package version', () => {
@@ -69,35 +75,65 @@ test('watch() throws in the wasm build', { skip: __napiBindingTarget === 'native
   assert.throws(() => watch(options('fx-button', tmp(), ['react']), () => {}), /not available in the wasm build/);
 });
 
-test('watch() regenerates when the manifest is replaced', { skip: __napiBindingTarget !== 'native' }, async () => {
+/** A copy of fx-button's package, so tests can edit the manifest. */
+function project() {
   const dir = tmp();
   fs.copyFileSync(path.join(fixtures, 'package.json'), path.join(dir, 'package.json'));
   fs.mkdirSync(path.join(dir, 'src/fx-button'), { recursive: true });
   const cem = path.join(dir, 'src/fx-button/custom-elements.json');
-  const original = fs.readFileSync(path.join(fixtures, 'src/fx-button/custom-elements.json'), 'utf8');
-  fs.writeFileSync(cem, original);
+  fs.copyFileSync(path.join(fixtures, 'src/fx-button/custom-elements.json'), cem);
+  return { cem, out: path.join(dir, 'out'), opts: { ...options('fx-button', path.join(dir, 'out'), ['react']), cem } };
+}
+
+const edit = (cem, text) => fs.writeFileSync(cem, fs.readFileSync(cem, 'utf8').replace(/A [a-z]+ button\./, text));
+
+test('watch() regenerates when the manifest is rewritten in place, and stops on close()', { skip: __napiBindingTarget !== 'native' }, async () => {
+  const { cem, out, opts } = project();
+  const wrapper = path.join(out, 'react/FxButton.tsx');
   const runs = [];
   let notify;
-  const w = watch({ ...options('fx-button', path.join(dir, 'out'), ['react']), cem }, (err, reports) => {
+  const w = watch(opts, (err, reports) => {
     runs.push(err ?? reports);
     notify?.();
   });
-  const next = () => new Promise((resolve, reject) => {
+  // A platform may report one write as several events, so wait for the run that has the edit.
+  const until = (pred) => new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error(`timed out, runs: ${JSON.stringify(runs)}`)), 10_000);
-    notify = () => { clearTimeout(t); resolve(); };
+    notify = () => { if (pred()) { clearTimeout(t); resolve(); } };
+    notify();
   });
   try {
-    await next();
+    await until(() => runs.length > 0);
     assert.ok(runs[0][0].written.length > 0, 'first run writes');
-    const edited = original.replace('A clickable button.', 'A shiny button.');
-    assert.notEqual(edited, original);
-    // Replace the file the way the analyzer does.
-    fs.writeFileSync(path.join(dir, 'tmp.json'), edited);
-    fs.renameSync(path.join(dir, 'tmp.json'), cem);
-    await next();
-    assert.deepEqual(runs[1][0].written, ['react/FxButton.tsx']);
-    assert.match(fs.readFileSync(path.join(dir, 'out/react/FxButton.tsx'), 'utf8'), /A shiny button/);
+    edit(cem, 'A shiny button.'); // in place, as the analyzer writes it
+    await until(() => fs.readFileSync(wrapper, 'utf8').includes('A shiny button.'));
   } finally {
     w.close();
   }
+  const seen = runs.length;
+  edit(cem, 'A closed button.');
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  assert.equal(runs.length, seen, 'no callback after close()');
+  assert.doesNotMatch(fs.readFileSync(wrapper, 'utf8'), /A closed button/);
+});
+
+test('watch() keeps running when its Watcher is garbage-collected', { skip: __napiBindingTarget !== 'native' }, () => {
+  const { cem, opts } = project();
+  // In a child process: an unreferenced watch never closes, so it keeps its process alive.
+  const script = `
+    const fs = require('node:fs');
+    const { watch } = require(${JSON.stringify(fileURLToPath(new URL('../index.js', import.meta.url)))});
+    const opts = ${JSON.stringify(opts)};
+    let runs = 0;
+    watch(opts, (err) => {
+      if (err) { console.error(err.message); process.exit(2); }
+      if (++runs > 1) process.exit(0);
+      globalThis.gc();
+      fs.writeFileSync(opts.cem, fs.readFileSync(opts.cem, 'utf8').replace('A clickable button.', 'A collected button.'));
+    });
+    setTimeout(() => process.exit(1), 10_000);
+  `;
+  const r = spawnSync(process.execPath, ['--expose-gc', '-e', script], { encoding: 'utf8' });
+  assert.equal(r.status, 0, `exit ${r.status}: ${r.stderr}`);
+  assert.match(fs.readFileSync(cem, 'utf8'), /A collected button/);
 });

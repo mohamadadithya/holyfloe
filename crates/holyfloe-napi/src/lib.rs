@@ -66,6 +66,11 @@ fn invalid(msg: String) -> Error {
 }
 
 fn options(o: GenerateOptions) -> Result<Options, Error> {
+    if o.frameworks.is_empty() {
+        return Err(invalid(
+            "frameworks is empty: list react, vue or svelte".to_owned(),
+        ));
+    }
     let frameworks = o
         .frameworks
         .iter()
@@ -113,24 +118,46 @@ pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Returned by `watch()`. Keeps the process alive until `close()`.
+#[cfg(feature = "watch")]
+type Callback = ThreadsafeFunction<Vec<FrameworkReport>, (), Vec<FrameworkReport>, Code>;
+
+/// What a watch shares between its JS handle and its event handler.
+#[cfg(feature = "watch")]
+struct Shared {
+    callback: std::sync::Mutex<Option<Callback>>,
+    watcher: std::sync::Mutex<Option<holyfloe_cli::Watcher>>,
+}
+
+/// Returned by `watch()`. Keeps the process alive until `close()`, also when it is not referenced.
 #[napi]
-pub struct Watcher(#[cfg(feature = "watch")] Option<holyfloe_cli::Watcher>);
+pub struct Watcher(#[cfg(feature = "watch")] std::sync::Arc<Shared>);
 
 #[napi]
 impl Watcher {
+    /// Stops watching. No callback runs after this returns.
     #[napi]
-    pub fn close(&mut self) {
+    pub fn close(&mut self) -> Result<(), Error> {
         #[cfg(feature = "watch")]
         {
-            self.0 = None;
+            let callback = self.0.callback.lock().map(|mut c| c.take());
+            if let Ok(Some(callback)) = callback {
+                // Not a plain drop: that still delivers queued runs, abort discards them.
+                #[allow(deprecated)]
+                callback
+                    .abort()
+                    .map_err(|e| Error::new(e.status.into(), e.reason))?;
+            }
+            let watcher = self.0.watcher.lock().map(|mut w| w.take());
+            drop(watcher);
         }
+        Ok(())
     }
 }
 
 /// Generates now and again after each change to the manifest or config. The callback gets
 /// `(error, reports)`; a failed run does not stop the watch. Throws in the wasm build (D-087).
 #[napi]
+// The full type, not `Callback`: napi derives the `.d.ts` callback signature from it.
 pub fn watch(
     options: GenerateOptions,
     callback: ThreadsafeFunction<Vec<FrameworkReport>, (), Vec<FrameworkReport>, Code>,
@@ -146,15 +173,28 @@ pub fn watch(
     }
     #[cfg(feature = "watch")]
     {
-        let callback = std::sync::Arc::new(callback);
+        let shared = std::sync::Arc::new(Shared {
+            callback: std::sync::Mutex::new(Some(callback)),
+            watcher: std::sync::Mutex::new(None),
+        });
+        // The handler owns `shared`, and so the native watcher: a garbage-collected JS Watcher
+        // must not stop the watch (as with `fs.watch`). Only `close()` breaks the cycle.
+        let state = shared.clone();
         let send = move |res: Result<Vec<Run>, holyfloe_cli::Error>| {
-            callback.call(
-                res.map(reports).map_err(to_js),
-                napi::threadsafe_function::ThreadsafeFunctionCallMode::NonBlocking,
-            );
+            if let Ok(callback) = state.callback.lock()
+                && let Some(callback) = callback.as_ref()
+            {
+                callback.call(
+                    res.map(reports).map_err(to_js),
+                    napi::threadsafe_function::ThreadsafeFunctionCallMode::NonBlocking,
+                );
+            }
         };
         let watcher = holyfloe_cli::watch(opts.clone(), send.clone()).map_err(to_js)?;
+        if let Ok(mut slot) = shared.watcher.lock() {
+            *slot = Some(watcher);
+        }
         send(holyfloe_cli::generate(&opts));
-        Ok(Watcher(Some(watcher)))
+        Ok(Watcher(shared))
     }
 }

@@ -9,8 +9,9 @@
  */
 export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-wasip1'
 
-/** Returned by `watch()`. Keeps the process alive until `close()`. */
+/** Returned by `watch()`. Keeps the process alive until `close()`, also when it is not referenced. */
 export declare class Watcher {
+  /** Stops watching. No callback runs after this returns. */
   close(): void
 }
 

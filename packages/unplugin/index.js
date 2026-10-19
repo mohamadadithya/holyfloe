@@ -7,6 +7,7 @@ import { generate } from '@holyfloe/core';
 import { createUnplugin } from 'unplugin';
 
 const holyfloe = createUnplugin((options) => {
+  if (!options?.cem || !options.out) throw new Error('[holyfloe] options `cem` and `out` are required');
   let root = process.cwd();
   const resolved = () => ({
     ...options,

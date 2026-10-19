@@ -14,8 +14,8 @@ pub struct Watcher(#[allow(dead_code)] Debouncer<notify::RecommendedWatcher, Rec
 
 /// Calls `on_run` with a fresh `generate` after each change to `opts.cem` or `opts.config`. It
 /// does not run `generate` first: call it after this returns, so no change is missed. The parent
-/// directories are watched, not the files, because the analyzer replaces the manifest and a
-/// file watch can lose it on rename.
+/// directories are watched, not the files: the analyzer rewrites the manifest in place, but
+/// editors save by renaming a temp file over the original, and a file watch loses it then.
 // shortcut: dependency manifests are not watched; restart to pick up a changed node_modules
 // manifest.
 pub fn watch(
@@ -97,14 +97,21 @@ mod tests {
         let _w = watch(opts(), move |r| tx.send(r).unwrap()).unwrap();
         generate(&opts()).unwrap();
 
-        // Replace the file the way the analyzer does: write elsewhere, rename over it.
+        // In place, as the analyzer writes it; then a rename over it, as editors save.
+        // A platform may report one write as several events, so wait for the run that has it.
+        let next = |desc: &str| loop {
+            let _ = rx.recv_timeout(Duration::from_secs(10)).unwrap();
+            let out = fs::read_to_string(root.join("out/react/XA.tsx")).unwrap();
+            if out.contains(desc) {
+                break;
+            }
+        };
+        fs::write(&cem, manifest("two")).unwrap();
+        next("two");
         let tmp = root.join("tmp.json");
-        fs::write(&tmp, manifest("two")).unwrap();
+        fs::write(&tmp, manifest("three")).unwrap();
         fs::rename(&tmp, &cem).unwrap();
-        let runs = rx.recv_timeout(Duration::from_secs(10)).unwrap().unwrap();
-        assert!(!runs[0].report.written.is_empty(), "{runs:?}");
-        let out = fs::read_to_string(root.join("out/react/XA.tsx")).unwrap();
-        assert!(out.contains("two"), "{out}");
+        next("three");
         fs::remove_dir_all(&root).unwrap();
     }
 }

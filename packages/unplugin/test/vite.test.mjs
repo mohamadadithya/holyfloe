@@ -26,6 +26,11 @@ function project() {
   return dir;
 }
 
+test('options cem and out are required', () => {
+  assert.throws(() => holyfloe.vite(), /options `cem` and `out` are required/);
+  assert.throws(() => holyfloe.vite({ cem: 'a.json' }), /options `cem` and `out` are required/);
+});
+
 test('regenerates on manifest edit and Vite sends an HMR update for the wrapper', async (t) => {
   const dir = project();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -76,10 +81,8 @@ test('regenerates on manifest edit and Vite sends an HMR update for the wrapper'
   await new Promise((resolve) => setTimeout(resolve, 1000));
   const mark = messages.length;
   const unchanged = fs.statSync(path.join(dir, 'out/react/react-utils.ts')).mtimeMs;
-  // Replace the manifest the way the analyzer does.
-  const edited = fs.readFileSync(cem, 'utf8').replace('A clickable button.', 'A shiny button.');
-  fs.writeFileSync(path.join(dir, 'tmp.json'), edited);
-  fs.renameSync(path.join(dir, 'tmp.json'), cem);
+  // In place, as the analyzer writes it.
+  fs.writeFileSync(cem, fs.readFileSync(cem, 'utf8').replace('A clickable button.', 'A shiny button.'));
 
   const update = await until((m, i) => i >= mark && m.type === 'update', 'an HMR update');
   assert.ok(update.updates.some((u) => u.path === '/out/react/FxButton.tsx'), JSON.stringify(update));
