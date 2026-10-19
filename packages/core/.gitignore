@@ -1,2 +1,9 @@
 *.node
 *.wasm
+# wasm32-wasip1-threads build output; shipped in the wasm platform package, not here
+browser.js
+holyfloe.wasi-browser.js
+holyfloe.wasi.cjs
+holyfloe.wasi.d.cts
+wasi-worker-browser.mjs
+wasi-worker.mjs

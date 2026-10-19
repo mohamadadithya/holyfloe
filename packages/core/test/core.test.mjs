@@ -5,7 +5,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { generate, version, watch } from '@holyfloe/core';
+import { __napiBindingTarget, generate, version, watch } from '@holyfloe/core';
 
 const fixtures = fileURLToPath(new URL('../../../fixtures/', import.meta.url));
 const names = fs.readdirSync(path.join(fixtures, 'src')).filter((n) => !n.startsWith('_'));
@@ -65,7 +65,11 @@ test('version() is the package version', () => {
   assert.equal(version(), pkg.version);
 });
 
-test('watch() regenerates when the manifest is replaced', async () => {
+test('watch() throws in the wasm build', { skip: __napiBindingTarget === 'native' }, () => {
+  assert.throws(() => watch(options('fx-button', tmp(), ['react']), () => {}), /not available in the wasm build/);
+});
+
+test('watch() regenerates when the manifest is replaced', { skip: __napiBindingTarget !== 'native' }, async () => {
   const dir = tmp();
   fs.copyFileSync(path.join(fixtures, 'package.json'), path.join(dir, 'package.json'));
   fs.mkdirSync(path.join(dir, 'src/fx-button'), { recursive: true });

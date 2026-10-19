@@ -52,7 +52,11 @@ pub fn write_if_changed(root: &Path, files: &[OutputFile]) -> io::Result<Report>
 fn write_atomic(path: &Path, contents: &[u8]) -> io::Result<()> {
     let mut name = std::ffi::OsString::from(".");
     name.push(path.file_name().unwrap_or_default());
-    name.push(format!(".{}.tmp", std::process::id()));
+    // Not the pid: `std::process::id` panics on wasm32-wasip1.
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.subsec_nanos());
+    name.push(format!(".{nanos}.tmp"));
     let tmp = path.with_file_name(name);
     let res = fs::write(&tmp, contents).and_then(|()| fs::rename(&tmp, path));
     if res.is_err() {

@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use clap::ValueEnum;
 use holyfloe_cli::{Framework, Options, Run};
 use napi::Status;
+use napi::threadsafe_function::ThreadsafeFunction;
 use napi_derive::napi;
 
 #[napi(object)]
@@ -112,58 +113,48 @@ pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-#[cfg(feature = "watch")]
-pub mod watch {
-    use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
+/// Returned by `watch()`. Keeps the process alive until `close()`.
+#[napi]
+pub struct Watcher(#[cfg(feature = "watch")] Option<holyfloe_cli::Watcher>);
 
-    use super::*;
-
-    /// Returned by `watch()`. Keeps the process alive until `close()`.
+#[napi]
+impl Watcher {
     #[napi]
-    pub struct Watcher(Option<holyfloe_cli::Watcher>);
-
-    #[napi]
-    impl Watcher {
-        #[napi]
-        pub fn close(&mut self) {
+    pub fn close(&mut self) {
+        #[cfg(feature = "watch")]
+        {
             self.0 = None;
         }
     }
+}
 
-    /// Generates now and again after each change to the manifest or config. The callback gets
-    /// `(error, reports)`; a failed run does not stop the watch.
-    #[napi]
-    pub fn watch(
-        options: GenerateOptions,
-        callback: ThreadsafeFunction<Vec<FrameworkReport>, (), Vec<FrameworkReport>, Code>,
-    ) -> Result<Watcher, Error> {
-        let opts = self::options(options)?;
+/// Generates now and again after each change to the manifest or config. The callback gets
+/// `(error, reports)`; a failed run does not stop the watch. Throws in the wasm build (D-087).
+#[napi]
+pub fn watch(
+    options: GenerateOptions,
+    callback: ThreadsafeFunction<Vec<FrameworkReport>, (), Vec<FrameworkReport>, Code>,
+) -> Result<Watcher, Error> {
+    let opts = self::options(options)?;
+    #[cfg(not(feature = "watch"))]
+    {
+        let _ = (opts, callback);
+        Err(Error::new(
+            Status::GenericFailure.into(),
+            "watch() is not available in the wasm build of @holyfloe/core".to_owned(),
+        ))
+    }
+    #[cfg(feature = "watch")]
+    {
         let callback = std::sync::Arc::new(callback);
         let send = move |res: Result<Vec<Run>, holyfloe_cli::Error>| {
             callback.call(
                 res.map(reports).map_err(to_js),
-                ThreadsafeFunctionCallMode::NonBlocking,
+                napi::threadsafe_function::ThreadsafeFunctionCallMode::NonBlocking,
             );
         };
         let watcher = holyfloe_cli::watch(opts.clone(), send.clone()).map_err(to_js)?;
         send(holyfloe_cli::generate(&opts));
         Ok(Watcher(Some(watcher)))
-    }
-}
-
-#[cfg(not(feature = "watch"))]
-pub mod watch {
-    use super::*;
-
-    /// Not available in the wasm build (D-087).
-    #[napi]
-    pub fn watch(
-        _options: GenerateOptions,
-        _callback: napi::bindgen_prelude::Unknown,
-    ) -> Result<(), Error> {
-        Err(Error::new(
-            Status::GenericFailure.into(),
-            "watch() is not available in the wasm build of @holyfloe/core".to_owned(),
-        ))
     }
 }

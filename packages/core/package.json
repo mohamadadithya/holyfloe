@@ -39,9 +39,15 @@
   "scripts": {
     "build": "napi build --platform --manifest-path ../../crates/holyfloe-napi/Cargo.toml --package holyfloe-napi --output-dir .",
     "build:release": "pnpm build --release",
-    "test": "node --test"
+    "build:wasm": "pnpm build --target wasm32-wasip1-threads --no-default-features",
+    "test": "node --test",
+    "test:wasm": "NAPI_RS_FORCE_WASI=error node --test"
   },
   "devDependencies": {
-    "@napi-rs/cli": "3.10.8"
+    "@emnapi/core": "2.0.0-alpha.6",
+    "@emnapi/runtime": "2.0.0-alpha.6",
+    "@napi-rs/cli": "3.10.8",
+    "@napi-rs/wasm-runtime": "1.2.5",
+    "emnapi": "2.0.0-alpha.6"
   }
 }

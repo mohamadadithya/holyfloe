@@ -137,6 +137,7 @@ notify                             8.2.0     CC0-1.0
 notify-debouncer-full              0.7.0     MIT OR Apache-2.0
 napi                               3.14.2    MIT
 napi-derive                        3.6.12    MIT
+napi-build                         2.6.0     MIT               1.88     # M3, resolved 2026-10-19
 serde 1.0.229, serde_json 1.0.154, thiserror 2.0.21   (MIT OR Apache-2.0)
 cargo-dist                         0.33.0 (GitHub release; crates.io has 0.32.0)  MIT OR Apache-2.0
 
@@ -146,6 +147,8 @@ lit                                3.3.3     BSD-3-Clause   # fixtures only
 custom-elements-manifest (schema)  2.1.0     BSD-3-Clause
 unplugin                           3.4.0     MIT   node ^20.19 || >=22.12
 @napi-rs/cli                       3.10.8    MIT
+@napi-rs/wasm-runtime              1.2.5     MIT            # M3, packages/core wasm build
+emnapi, @emnapi/core, @emnapi/runtime  2.0.0-alpha.6  MIT  # one version for all three; not beta.2 (D-087)
 typescript                         7.0.2     Apache-2.0     # fixtures build + typecheck, next-app
 react, react-dom                   18.3.1 / 19.3.1   MIT   # e2e/react18, e2e/react19 (+ next-app)
 @types/react                       18.3.31 / 19.3.0  MIT   # fixtures/typecheck/react18, react19

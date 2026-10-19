@@ -42,6 +42,6 @@ export declare function version(): string
 
 /**
  * Generates now and again after each change to the manifest or config. The callback gets
- * `(error, reports)`; a failed run does not stop the watch.
+ * `(error, reports)`; a failed run does not stop the watch. Throws in the wasm build (D-087).
  */
 export declare function watch(options: GenerateOptions, callback: ((err: Error | null, arg: Array<FrameworkReport>) => void)): Watcher
