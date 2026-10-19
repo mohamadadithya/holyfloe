@@ -14,3 +14,7 @@ e2e/nuxt/.nuxt/
 e2e/nuxt/.output/
 e2e/sveltekit/.svelte-kit/
 e2e/sveltekit/build/
+
+# Docs site (site/)
+site/dist/
+site/.astro/

@@ -30,4 +30,4 @@ import holyfloeModels from '@holyfloe/core/cem-plugin';
 export default { litelement: true, plugins: [holyfloeModels()] };
 ```
 
-Bundler users: see [`@holyfloe/unplugin`](https://www.npmjs.com/package/@holyfloe/unplugin). Full documentation: [github.com/mohamadadithya/holyfloe](https://github.com/mohamadadithya/holyfloe).
+Bundler users: see [`@holyfloe/unplugin`](https://www.npmjs.com/package/@holyfloe/unplugin). Full documentation: [mohamadadithya.github.io/holyfloe](https://mohamadadithya.github.io/holyfloe/).

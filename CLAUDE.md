@@ -62,6 +62,7 @@ Names verified free on 2026-10-17 (D-045). Use these names everywhere; if one be
 | Unresolved facts | `docs/open-questions.md` |
 | Cutting a release, release CI, npm publishing | `docs/releasing.md` |
 | Contributor setup, PR expectations | `CONTRIBUTING.md` |
+| User docs site (Starlight) | `site/src/content/docs/` (D-099) |
 
 ## Workspace layout
 
@@ -81,6 +82,7 @@ packages/
   core/             # @holyfloe/core: napi loader + types (generated, committed), cem-plugin.mjs
   unplugin/         # @holyfloe/unplugin: unplugin factory calling core (plain ESM)
 fixtures/           # Lit component corpus + expected outputs (the spec)
+site/               # Astro Starlight user docs, deployed to GitHub Pages (D-099)
 e2e/                # react18/ react19/ next-app/ vue3/ nuxt/ svelte5/ sveltekit/
 ```
 
@@ -126,6 +128,7 @@ just test-unplugin                      # Vite + @holyfloe/unplugin HMR test (pn
 just dist-plan                          # cargo-dist 0.33.0 release plan (needs `dist` on PATH)
 just release X.Y.Z                      # release step 1: bump all versions + loader + changelog, open the PR
 just tag                                # release step 2: after merging, tag origin/main and push (starts CI)
+just docs | docs-build                  # docs site dev server / static build (site/dist)
 just approve                            # release step 3: approve the 11 staged npm packages in order, with 2FA
 ```
 
@@ -166,6 +169,9 @@ vite                               8.3.4     MIT            # e2e
 @playwright/test                   1.64.1    Apache-2.0     # e2e, chromium only
 next                               16.4.2    MIT            # e2e/next-app
 @types/node                        26.6.5    MIT            # e2e/next-app
+# docs site, resolved 2026-10-19 from npm (D-099)
+astro                              7.4.0     MIT   node >=22.22   # site/
+@astrojs/starlight                 0.42.6    MIT            # site/
 # M2, resolved 2026-10-18 from npm
 vue                                3.5.44    MIT            # fixtures/typecheck/vue, e2e/vue3
 vue-tsc                            3.3.13    MIT            # fixtures/typecheck/vue
@@ -187,4 +193,4 @@ typescript (Vue/Svelte tooling)    6.0.3     Apache-2.0     # vue-tsc, svelte-ch
 - Rust edition 2024, MSRV 1.97 (set by oxc 0.154), toolchain pinned in `rust-toolchain.toml`. `rustfmt` defaults.
 - JS tooling: pnpm 12 workspace (root `package.json` `packageManager`). TypeScript 7 removed `baseUrl`; use `paths` only.
 - Commit per logical step. Message format: `<area>: <what changed>`, e.g. `ir: add react prop-kind pass` (milestone work used `m1:` to `m4:`; areas are listed in CONTRIBUTING.md).
-- Docs are source of truth for behavior. If code and docs disagree, fix the docs in the same commit.
+- Docs are source of truth for behavior. If code and docs disagree, fix the docs in the same commit. User-visible changes also update the matching `site/` page (D-099).

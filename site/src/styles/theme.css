@@ -1,0 +1,92 @@
+/* Palette from the logo (src/assets/logo.svg): violet petals #6D28D9 / #A78BFA. Grays lean violet. */
+
+/* Dark mode */
+:root {
+  --sl-color-accent-low: hsl(262, 45%, 20%);
+  --sl-color-accent: hsl(262, 83%, 66%);
+  --sl-color-accent-high: hsl(258, 100%, 87%);
+  --sl-color-white: hsl(0, 0%, 100%);
+  --sl-color-gray-1: hsl(255, 20%, 94%);
+  --sl-color-gray-2: hsl(255, 8%, 77%);
+  --sl-color-gray-3: hsl(255, 6%, 56%);
+  --sl-color-gray-4: hsl(255, 7%, 36%);
+  --sl-color-gray-5: hsl(255, 10%, 23%);
+  --sl-color-gray-6: hsl(255, 14%, 16%);
+  --sl-color-black: hsl(255, 12%, 10%);
+}
+
+/* Light mode */
+:root[data-theme='light'] {
+  --sl-color-accent-low: hsl(258, 90%, 92%);
+  --sl-color-accent: hsl(262, 69%, 50%);
+  --sl-color-accent-high: hsl(263, 70%, 30%);
+  --sl-color-white: hsl(255, 12%, 10%);
+  --sl-color-gray-1: hsl(255, 14%, 16%);
+  --sl-color-gray-2: hsl(255, 10%, 23%);
+  --sl-color-gray-3: hsl(255, 7%, 36%);
+  --sl-color-gray-4: hsl(255, 6%, 56%);
+  --sl-color-gray-5: hsl(255, 6%, 77%);
+  --sl-color-gray-6: hsl(255, 20%, 94%);
+  --sl-color-gray-7: hsl(255, 20%, 97%);
+  --sl-color-black: hsl(0, 0%, 100%);
+}
+
+/* Homepage 3D logo (hero image in src/content/docs/index.mdx). Each <i> is one depth layer:
+   --i 0 is the front face, higher --i sits further back and darker, which reads as extrusion. */
+.hf-3d {
+  width: min(18rem, 70vw);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  perspective: 900px;
+}
+.hf-3d__scene,
+.hf-3d__halo,
+.hf-3d__bloom {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.hf-3d__scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  animation: hf-sway 10s ease-in-out infinite;
+}
+.hf-3d__scene::before {
+  /* soft gold glow behind the halo */
+  content: '';
+  position: absolute;
+  inset: -10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, hsl(40 62% 49% / 0.22), transparent 62%);
+  transform: translateZ(-60px);
+}
+.hf-3d__halo {
+  animation: hf-spin 16s linear infinite;
+}
+.hf-3d__halo i {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  /* Darkest in the middle layers, so both faces stay gold as the halo spins. */
+  border: 0.6rem solid color-mix(in oklab, #c9962e, #000 calc(min(var(--i), 5 - var(--i)) * 14%));
+  transform: translateZ(calc(var(--i) * -2px));
+}
+.hf-3d__bloom i {
+  position: absolute;
+  inset: 0;
+  background: url('/holyfloe/petals.svg') center / contain no-repeat;
+  transform: translateZ(calc(30px - var(--i) * 1.5px));
+  filter: brightness(calc(1 - var(--i) * 0.07));
+}
+@keyframes hf-sway {
+  0%, 100% { transform: rotateY(-24deg) rotateX(6deg) translateY(0); }
+  50% { transform: rotateY(24deg) rotateX(-4deg) translateY(-8px); }
+}
+@keyframes hf-spin {
+  to { transform: rotateY(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hf-3d__scene { animation: none; transform: rotateY(-18deg) rotateX(6deg); }
+  .hf-3d__halo { animation: none; }
+}

@@ -1,0 +1,91 @@
+---
+title: holyfloe
+description: Typed React, Vue and Svelte wrappers for Lit web components, generated from your Lit source or a Custom Elements Manifest.
+template: splash
+# Starlight would render "holyfloe | holyfloe".
+head:
+  - tag: title
+    content: holyfloe
+hero:
+  tagline: Typed React, Vue and Svelte wrappers for Lit web components, generated from your Lit source or a Custom Elements Manifest.
+  # 3D logo: stacked layers give depth, styles in src/styles/theme.css.
+  image:
+    html: |
+      <div class="hf-3d" role="img" aria-label="holyfloe logo">
+        <div class="hf-3d__scene">
+          <div class="hf-3d__halo"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i></div>
+          <div class="hf-3d__bloom"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i></div>
+        </div>
+      </div>
+  actions:
+    - text: Get started
+      link: /holyfloe/getting-started/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/mohamadadithya/holyfloe
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Write a component once in Lit:
+
+```ts
+/**
+ * @model open open-change detail.open
+ * @fires {CustomEvent<{ open: boolean }>} open-change - Fired when the dialog opens or closes.
+ * @slot - Dialog content.
+ * @slot footer - Dialog actions.
+ */
+@customElement('fx-dialog')
+export class FxDialog extends LitElement {
+  @property({ type: Boolean, reflect: true }) open = false;
+  show() { /* ... */ }
+}
+```
+
+and use it as a native component in each framework, fully typed:
+
+<Tabs syncKey="framework">
+  <TabItem label="React">
+    ```tsx
+    // React 18 and 19
+    <FxDialog ref={ref} open={open} onOpenChange={(e) => setOpen(e.detail.open)}>
+      Body
+      <button slot="footer">OK</button>
+    </FxDialog>
+    ```
+  </TabItem>
+  <TabItem label="Vue">
+    ```vue
+    <FxDialog v-model:open="open">
+      Body
+      <template #footer><button @click="open = false">OK</button></template>
+    </FxDialog>
+    ```
+  </TabItem>
+  <TabItem label="Svelte">
+    ```svelte
+    <FxDialog bind:open bind:element>
+      Body
+      {#snippet footer()}<button onclick={() => element?.show()}>OK</button>{/snippet}
+    </FxDialog>
+    ```
+  </TabItem>
+</Tabs>
+
+<CardGrid>
+  <Card title="Real components" icon="puzzle">
+    React `forwardRef` components (or React 19 type augmentations), Vue `defineComponent` wrappers and Svelte 5 components with runes.
+  </Card>
+  <Card title="Exact types, no type checker" icon="approve-check">
+    Props are typed from the element class (`El['prop']`), events from `CustomEvent<T>`. Slots become React `slot` children, Vue named slots and Svelte snippets.
+  </Card>
+  <Card title="Two-way binding" icon="random">
+    `v-model` in Vue and `bind:` in Svelte, inferred for `value`, `checked`, `open` and `selected`, or declared with `@model`.
+  </Card>
+  <Card title="SSR-safe" icon="rocket">
+    Primitive props render as attributes on the server; objects and arrays are set as properties on the client. Tested on Next 16, Nuxt 4 and SvelteKit 3.
+  </Card>
+</CardGrid>

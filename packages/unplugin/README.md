@@ -23,4 +23,4 @@ Options: `cem` or `lit` (exactly one), `out`, `frameworks`, and optionally `conf
 
 `holyfloe.rollup()`, `holyfloe.webpack()`, `holyfloe.rspack()`, `holyfloe.esbuild()` and `holyfloe.rolldown()` are available too; only Vite is tested so far.
 
-Full documentation: [github.com/mohamadadithya/holyfloe](https://github.com/mohamadadithya/holyfloe).
+Full documentation: [mohamadadithya.github.io/holyfloe](https://mohamadadithya.github.io/holyfloe/).
