@@ -67,7 +67,7 @@ Names verified free on 2026-10-17 (D-045). Use these names everywhere; if one be
 crates/
   holyfloe-cem/        # serde types for CEM 2.1.0 (typify on schema/patch.py output, checked in, never regenerated in build.rs)
   holyfloe-ir/         # IR structs + normalization passes. Pure, no I/O.
-  holyfloe-lit/        # M4 only: oxc-based Lit extractor -> IR. Feature-gated.
+  holyfloe-lit/        # oxc-based Lit extractor -> manifest (serde_json) -> holyfloe-ir (D-089). Feature-gated in the CLI.
   holyfloe-emit-core/  # minijinja env, shared filters (ts_string, jsdoc)
   holyfloe-emit-react/
   holyfloe-emit-vue/
@@ -129,7 +129,8 @@ Do NOT pin from memory. Resolve each from the registry first, then record here. 
 
 ```
 # Rust (pin exact: =x.y.z)                 license             MSRV
-oxc_parser / oxc_ast / oxc_semantic 0.154.0  MIT               1.97.0   # sets workspace MSRV
+oxc_parser / oxc_ast / oxc_semantic 0.154.0  MIT               1.97.0   # sets workspace MSRV; oxc_semantic pinned but unused (D-089)
+oxc_ast_visit / oxc_allocator / oxc_span 0.154.0  MIT          1.97.0   # M4, resolved 2026-10-19
 oxc_resolver                       11.24.3   MIT               1.95.0
 minijinja                          3.0.1     Apache-2.0        1.70     # feature "serde"; wrap data in Serde(&x) (D-032)
 typify                             0.8.0     Apache-2.0
