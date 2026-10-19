@@ -375,6 +375,28 @@ importers:
         specifier: 2.0.0-alpha.6
         version: 2.0.0-alpha.6
 
+  packages/unplugin:
+    dependencies:
+      '@holyfloe/core':
+        specifier: workspace:*
+        version: link:../core
+      unplugin:
+        specifier: 3.4.0
+        version: 3.4.0(esbuild@0.28.2)(rolldown@1.2.14)(rollup@4.64.7)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2))
+    devDependencies:
+      '@vitejs/plugin-react':
+        specifier: 6.1.2
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2))
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)
+
 packages:
 
   '@babel/code-frame@7.29.7':
