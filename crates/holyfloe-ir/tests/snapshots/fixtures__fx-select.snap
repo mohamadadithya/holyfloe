@@ -1,0 +1,94 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-select",
+      "name": "FxSelect",
+      "class_name": "FxSelect",
+      "module": {
+        "path": "src/fx-select/fx-select.ts",
+        "specifier": "@holyfloe/fixtures/fx-select/fx-select.js"
+      },
+      "export_name": "FxSelect",
+      "definition": {
+        "path": "src/fx-select/fx-select.ts",
+        "specifier": "@holyfloe/fixtures/fx-select/fx-select.js"
+      },
+      "summary": null,
+      "description": "Picks one option. The new value travels in `detail.value`; the binding comes from config.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "value",
+          "attribute": "value",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "The picked option.",
+          "deprecated": null
+        },
+        {
+          "name": "options",
+          "attribute": null,
+          "ty": {
+            "text": "string[]",
+            "imports": []
+          },
+          "default": "[]",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Complex",
+          "description": "Options to pick from.",
+          "deprecated": null
+        }
+      ],
+      "events": [
+        {
+          "dom_name": "fx-change",
+          "base_name": "FxChange",
+          "detail": {
+            "text": "{ value: string }",
+            "imports": []
+          },
+          "event_type": {
+            "text": "CustomEvent<{ value: string }>",
+            "imports": []
+          },
+          "description": "Fired when the user picks an option.",
+          "deprecated": null
+        }
+      ],
+      "slots": [],
+      "methods": [],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": [
+        {
+          "prop": "value",
+          "event": "fx-change",
+          "value": {
+            "DetailField": "value"
+          },
+          "inferred": false
+        }
+      ]
+    }
+  ]
+}

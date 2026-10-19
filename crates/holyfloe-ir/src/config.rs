@@ -86,7 +86,21 @@ pub enum BindingsMode {
 pub struct ComponentOverride {
     /// DOM event name -> base prop name (no framework prefix), e.g. `"myChange": "MyChangeCamel"`.
     pub events: BTreeMap<String, String>,
+    /// Explicit two-way bindings; they replace `@model` and inferred ones on the same prop (D-062).
+    pub bindings: Vec<BindingOverride>,
     /// Props to leave out of every wrapper. The manifest cannot tell a stale JSDoc `@property`
     /// (Web Awesome `wa-drawer` `modal`) from a real untyped field, and `El['prop']` fails on it.
     pub exclude_props: Vec<String>,
+}
+
+/// `{ "prop": "value", "event": "fx-change", "value": "detail.value" }`. Unknown keys are errors:
+/// a misspelled `value` would silently fall back to `detail`.
+#[derive(Deserialize, Clone, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct BindingOverride {
+    pub prop: String,
+    pub event: String,
+    /// `detail` (default), `detail.<field>` or `target.<prop>`.
+    #[serde(default)]
+    pub value: Option<String>,
 }

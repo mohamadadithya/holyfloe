@@ -1,0 +1,111 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-input",
+      "name": "FxInput",
+      "class_name": "FxInput",
+      "module": {
+        "path": "src/fx-input/fx-input.ts",
+        "specifier": "@holyfloe/fixtures/fx-input/fx-input.js"
+      },
+      "export_name": "FxInput",
+      "definition": {
+        "path": "src/fx-input/fx-input.ts",
+        "specifier": "@holyfloe/fixtures/fx-input/fx-input.js"
+      },
+      "summary": "Form-associated text input.",
+      "description": "Text field that takes part in forms. `value` follows every keystroke.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "value",
+          "attribute": "value",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "The current text.",
+          "deprecated": null
+        },
+        {
+          "name": "name",
+          "attribute": "name",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Field name used when the form submits.",
+          "deprecated": null
+        },
+        {
+          "name": "disabled",
+          "attribute": "disabled",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Disables the field.",
+          "deprecated": null
+        }
+      ],
+      "events": [
+        {
+          "dom_name": "change",
+          "base_name": "Change",
+          "detail": null,
+          "event_type": {
+            "text": "Event",
+            "imports": []
+          },
+          "description": "Fired when the user commits a value. Has no detail; read `value`.",
+          "deprecated": null
+        }
+      ],
+      "slots": [],
+      "methods": [],
+      "css_parts": [
+        {
+          "name": "input",
+          "description": "The native input.",
+          "deprecated": null
+        }
+      ],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": true,
+      "bindings": [
+        {
+          "prop": "value",
+          "event": "change",
+          "value": {
+            "TargetProp": "value"
+          },
+          "inferred": true
+        }
+      ]
+    }
+  ]
+}

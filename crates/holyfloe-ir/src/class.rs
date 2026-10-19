@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use holyfloe_cem as cem;
 
 use crate::model::*;
-use crate::passes::classify_props;
+use crate::passes::{classify_props, infer_bindings};
 use crate::{Config, IrError, PackageInfo, module_path};
 
 /// `true` -> `Some("")`, a reason -> `Some(reason)`. Every CEM `*Deprecated` enum has this shape.
@@ -23,6 +23,8 @@ macro_rules! deprecated {
 #[derive(Clone, Debug)]
 pub(crate) struct Class {
     pub name: String,
+    /// The dependency package declaring the class; `None` for the manifest being built.
+    pub package: Option<String>,
     pub module: String,
     pub tag: Option<String>,
     /// Module holding the `custom-element-definition` export, when the manifest has one.
@@ -31,9 +33,14 @@ pub(crate) struct Class {
     pub reexports: Vec<String>,
     /// Names the declaring module exports this class under, e.g. `default`.
     pub own_exports: Vec<String>,
-    /// The class that declares the superclass, re-exports followed. `None` when it is in
-    /// another package or not in the manifest.
-    pub superclass: Option<Key>,
+    /// The class that declares the superclass, re-exports followed.
+    pub superclass: Option<Base>,
+    /// Mixins applied in the extends clause, innermost first (CEM order).
+    pub mixins: Vec<Base>,
+    /// From a static `formAssociated` field defaulting to `true` (D-065); set by drop-non-public.
+    pub form_associated: bool,
+    /// `@model` tags from the holyfloe analyzer plugin (D-063).
+    pub models: Vec<cem::HolyfloeModel>,
     pub summary: Option<String>,
     pub description: Option<String>,
     pub deprecated: Option<String>,
@@ -47,6 +54,17 @@ pub(crate) struct Class {
 
 /// A declared class: (normalized module, class name).
 pub(crate) type Key = (String, String);
+
+/// A superclass or mixin reference.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum Base {
+    /// A class in the same manifest.
+    Local(Key),
+    /// A class in another package's manifest. Missing when that package has none (`lit`).
+    // shortcut: matched by class name within the package, not by module; upgrade if a dependency
+    // declares two classes with one name.
+    Package { package: String, name: String },
+}
 
 pub(crate) fn key(module: &str, name: &str) -> Key {
     (module_path::normalize(module).to_owned(), name.to_owned())
@@ -157,21 +175,33 @@ pub(crate) fn discover(pkg: &cem::Package) -> Vec<Class> {
     let mut classes = Vec::new();
     for module in &pkg.modules {
         for decl in &module.declarations {
-            let (mut class, superclass) = match decl {
-                cem::JavaScriptModuleDeclarationsItem::CustomElementDeclaration(d) => {
-                    (from_element(d, &module.path), d.superclass.as_ref())
-                }
-                cem::JavaScriptModuleDeclarationsItem::ClassDeclaration(d) => {
-                    (from_class(d, &module.path), d.superclass.as_ref())
-                }
-                // shortcut: mixins are not flattened yet; fx-mixin brings them in M2.
+            let (mut class, superclass, mixins) = match decl {
+                cem::JavaScriptModuleDeclarationsItem::CustomElementDeclaration(d) => (
+                    from_element(d, &module.path),
+                    d.superclass.as_ref(),
+                    &d.mixins,
+                ),
+                cem::JavaScriptModuleDeclarationsItem::ClassDeclaration(d) => (
+                    from_class(d, &module.path),
+                    d.superclass.as_ref(),
+                    &d.mixins,
+                ),
+                cem::JavaScriptModuleDeclarationsItem::CustomElementMixinDeclaration(d) => (
+                    from_mixin(d, &module.path),
+                    d.superclass.as_ref(),
+                    &d.mixins,
+                ),
                 _ => continue,
             };
-            // shortcut: superclasses from other packages (LitElement, dependency manifests)
-            // are not merged; cross-package flatten comes with fx-mixin in M2.
-            class.superclass = superclass
-                .filter(|s| s.package.is_none())
-                .map(|s| target(&module.path, s));
+            let base = |r: &cem::Reference| match &r.package {
+                Some(p) => Base::Package {
+                    package: module_path::package_name(p).to_owned(),
+                    name: r.name.clone(),
+                },
+                None => Base::Local(target(&module.path, r)),
+            };
+            class.superclass = superclass.map(base);
+            class.mixins = mixins.iter().map(base).collect();
             class.tag = class.tag.as_deref().map(unquote);
             let own = key(&module.path, &class.name);
             class.reexports = reexports.get(&own).cloned().unwrap_or_default();
@@ -219,6 +249,7 @@ fn class_name(decl: &cem::JavaScriptModuleDeclarationsItem) -> Option<&str> {
     match decl {
         cem::JavaScriptModuleDeclarationsItem::CustomElementDeclaration(d) => Some(&d.name),
         cem::JavaScriptModuleDeclarationsItem::ClassDeclaration(d) => Some(&d.name),
+        cem::JavaScriptModuleDeclarationsItem::CustomElementMixinDeclaration(d) => Some(&d.name),
         _ => None,
     }
 }
@@ -228,31 +259,22 @@ fn from_element(d: &cem::CustomElementDeclaration, module: &str) -> Class {
         .members
         .iter()
         .map(|m| match m {
-            cem::CustomElementDeclarationMembersItem::CustomElementField(f) => Member {
-                name: f.name.clone(),
-                privacy: f.privacy,
-                is_static: f.static_.unwrap_or(false),
-                description: f.description.clone(),
-                deprecated: deprecated!(f.deprecated, CustomElementFieldDeprecated),
-                field: Some(Field {
-                    attribute: f.attribute.clone(),
-                    reflects: f.reflects.unwrap_or(false),
-                    readonly: f.readonly.unwrap_or(false),
-                    ty: f.type_.clone(),
-                    default: f.default.clone(),
-                }),
-            },
+            cem::CustomElementDeclarationMembersItem::CustomElementField(f) => element_field(f),
             cem::CustomElementDeclarationMembersItem::ClassMethod(m) => method(m),
         })
         .collect();
     Class {
         name: d.name.clone(),
+        package: None,
         module: module.to_owned(),
         tag: d.tag_name.clone(),
         definition_module: None,
         reexports: Vec::new(),
         own_exports: Vec::new(),
         superclass: None,
+        mixins: Vec::new(),
+        form_associated: false,
+        models: d.x_holyfloe_models.clone(),
         summary: d.summary.clone(),
         description: d.description.clone(),
         deprecated: deprecated!(d.deprecated, CustomElementDeclarationDeprecated),
@@ -262,6 +284,59 @@ fn from_element(d: &cem::CustomElementDeclaration, module: &str) -> Class {
         css_parts: d.css_parts.clone(),
         css_props: d.css_properties.clone(),
         css_states: d.css_states.clone(),
+    }
+}
+
+/// A mixin is never a component itself; flatten merges it into the classes that apply it.
+fn from_mixin(d: &cem::CustomElementMixinDeclaration, module: &str) -> Class {
+    let members = d
+        .members
+        .iter()
+        .map(|m| match m {
+            cem::CustomElementMixinDeclarationMembersItem::CustomElementField(f) => {
+                element_field(f)
+            }
+            cem::CustomElementMixinDeclarationMembersItem::ClassMethod(m) => method(m),
+        })
+        .collect();
+    Class {
+        name: d.name.clone(),
+        package: None,
+        module: module.to_owned(),
+        tag: None,
+        definition_module: None,
+        reexports: Vec::new(),
+        own_exports: Vec::new(),
+        superclass: None,
+        mixins: Vec::new(),
+        form_associated: false,
+        models: Vec::new(),
+        summary: d.summary.clone(),
+        description: d.description.clone(),
+        deprecated: deprecated!(d.deprecated, CustomElementMixinDeclarationDeprecated),
+        members,
+        events: d.events.clone(),
+        slots: d.slots.clone(),
+        css_parts: d.css_parts.clone(),
+        css_props: d.css_properties.clone(),
+        css_states: d.css_states.clone(),
+    }
+}
+
+fn element_field(f: &cem::CustomElementField) -> Member {
+    Member {
+        name: f.name.clone(),
+        privacy: f.privacy,
+        is_static: f.static_.unwrap_or(false),
+        description: f.description.clone(),
+        deprecated: deprecated!(f.deprecated, CustomElementFieldDeprecated),
+        field: Some(Field {
+            attribute: f.attribute.clone(),
+            reflects: f.reflects.unwrap_or(false),
+            readonly: f.readonly.unwrap_or(false),
+            ty: f.type_.clone(),
+            default: f.default.clone(),
+        }),
     }
 }
 
@@ -289,12 +364,16 @@ fn from_class(d: &cem::ClassDeclaration, module: &str) -> Class {
         .collect();
     Class {
         name: d.name.clone(),
+        package: None,
         module: module.to_owned(),
         tag: None,
         definition_module: None,
         reexports: Vec::new(),
         own_exports: Vec::new(),
         superclass: None,
+        mixins: Vec::new(),
+        form_associated: false,
+        models: Vec::new(),
         summary: d.summary.clone(),
         description: d.description.clone(),
         deprecated: deprecated!(d.deprecated, ClassDeclarationDeprecated),
@@ -373,6 +452,22 @@ impl Class {
             Some(path) => module_ref(path)?,
             None => module.clone(),
         };
+        // Prop and event names are checked in infer-bindings, after name-derive drops excluded props.
+        let bindings = self
+            .models
+            .into_iter()
+            .map(|m| {
+                let value = infer_bindings::value_path(m.value.as_deref()).ok_or_else(|| {
+                    infer_bindings::bad_path(m.value.as_deref(), &tag, &self.module, "`@model`")
+                })?;
+                Ok(TwoWayBinding {
+                    prop: m.prop,
+                    event: m.event,
+                    value,
+                    inferred: false,
+                })
+            })
+            .collect::<Result<_, IrError>>()?;
         let mut props = Vec::new();
         let mut methods = Vec::new();
         for m in self.members {
@@ -475,9 +570,8 @@ impl Class {
                     description: s.description,
                 })
                 .collect(),
-            // Not in CEM. Config flag or `static formAssociated` detection come with fx-input (M2).
-            form_associated: false,
-            bindings: Vec::new(),
+            form_associated: self.form_associated,
+            bindings,
             tag,
         })
     }
@@ -585,7 +679,7 @@ mod tests {
             exports: Some(json!({})),
             ..PackageInfo::default()
         };
-        let err = crate::build(&cem, &pkg, &Config::default()).unwrap_err();
+        let err = crate::build(&cem, &pkg, &[], &Config::default()).unwrap_err();
         assert_eq!(err.code, "E008");
         assert!(err.hint.contains("exclude"));
     }
@@ -598,7 +692,7 @@ mod tests {
             exports: Some(json!({ ".": "./dist/index.js" })),
             ..PackageInfo::default()
         };
-        let err = crate::build(&cem, &pkg, &Config::default()).unwrap_err();
+        let err = crate::build(&cem, &pkg, &[], &Config::default()).unwrap_err();
         assert_eq!(err.code, "E002");
         assert_eq!(err.tag.as_deref(), Some("x-a"));
         assert_eq!(err.module.as_deref(), Some("src/x.ts"));
@@ -661,7 +755,7 @@ mod tests {
             exports: Some(json!({ "./*": "./exports/*" })),
             ..PackageInfo::default()
         };
-        let lib = crate::build(&cem, &pkg, &Config::default()).unwrap();
+        let lib = crate::build(&cem, &pkg, &[], &Config::default()).unwrap();
         assert_eq!(
             lib.components.len(),
             1,
@@ -700,7 +794,7 @@ mod tests {
             exports: Some(json!({ "./define/*": "./exports/define/*" })),
             ..PackageInfo::default()
         };
-        let err = crate::build(&cem, &pkg, &Config::default()).unwrap_err();
+        let err = crate::build(&cem, &pkg, &[], &Config::default()).unwrap_err();
         assert_eq!(err.code, "E002");
         assert_eq!(err.module.as_deref(), Some("components/a/src/XA.js"));
         assert!(err.hint.contains("re-export"));
@@ -745,7 +839,7 @@ mod tests {
             ..PackageInfo::default()
         };
         // `src/private.ts` is not exported, but nothing imports BEvent, so no E002.
-        let c = crate::build(&cem, &pkg, &Config::default())
+        let c = crate::build(&cem, &pkg, &[], &Config::default())
             .unwrap()
             .components
             .remove(0);
@@ -766,7 +860,10 @@ mod tests {
             tag_formatter: Some(json!("x")),
             ..Config::default()
         };
-        assert_eq!(crate::build(&cem, &pkg, &cfg).unwrap_err().code, "E010");
+        assert_eq!(
+            crate::build(&cem, &pkg, &[], &cfg).unwrap_err().code,
+            "E010"
+        );
     }
 
     #[test]
@@ -788,7 +885,7 @@ mod tests {
             name: "pkg".into(),
             ..PackageInfo::default()
         };
-        let c = crate::build(&cem, &pkg, &Config::default())
+        let c = crate::build(&cem, &pkg, &[], &Config::default())
             .unwrap()
             .components
             .remove(0);

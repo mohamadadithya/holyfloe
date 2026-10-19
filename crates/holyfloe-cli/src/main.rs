@@ -6,7 +6,7 @@ use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use holyfloe_emit_react::{ReactConfig, ReactMode};
-use holyfloe_ir::{Config, PackageInfo};
+use holyfloe_ir::{Config, Dependency, PackageInfo};
 
 #[derive(Parser)]
 #[command(
@@ -45,6 +45,8 @@ struct Generate {
 #[derive(ValueEnum, Clone, Copy, PartialEq, Eq)]
 enum Framework {
     React,
+    Vue,
+    Svelte,
 }
 
 #[derive(ValueEnum, Clone, Copy)]
@@ -68,7 +70,8 @@ fn main() -> ExitCode {
 fn generate(args: &Generate) -> Result<(), String> {
     let cem = holyfloe_cem::parse(&read(&args.cem)?)
         .map_err(|e| format!("error: {}: {e}", args.cem.display()))?;
-    let pkg = nearest_package(&args.cem)?;
+    let (pkg, pkg_dir) = nearest_package(&args.cem)?;
+    let deps = dependencies(&cem, &pkg_dir)?;
     let raw: serde_json::Value = match &args.config {
         Some(path) => serde_json::from_str(&read(path)?)
             .map_err(|e| format!("error: {}: {e}", path.display()))?,
@@ -90,26 +93,33 @@ fn generate(args: &Generate) -> Result<(), String> {
         };
     }
 
-    let lib = holyfloe_ir::build(&cem, &pkg, &cfg).map_err(|e| {
+    let lib = holyfloe_ir::build(&cem, &pkg, &deps, &cfg).map_err(|e| {
         let at = match e.module {
             Some(m) if !e.message.contains(&m) => format!(" ({m})"),
             _ => String::new(),
         };
         coded(Some(e.code), &format!("{}{at}", e.message), Some(&e.hint))
     })?;
-    if args.frameworks.contains(&Framework::React) {
-        let mut files = holyfloe_emit_react::emit(&lib, &react)
-            .map_err(|e| coded(e.code(), &e.to_string(), e.hint().as_deref()))?;
+    for framework in [Framework::React, Framework::Vue, Framework::Svelte] {
+        if !args.frameworks.contains(&framework) {
+            continue;
+        }
+        let (dir, files) = match framework {
+            Framework::React => ("react", holyfloe_emit_react::emit(&lib, &react)),
+            Framework::Vue => ("vue", holyfloe_emit_vue::emit(&lib)),
+            Framework::Svelte => ("svelte", holyfloe_emit_svelte::emit(&lib)),
+        };
+        let mut files = files.map_err(|e| coded(e.code(), &e.to_string(), e.hint().as_deref()))?;
         for f in &mut files {
-            f.path = format!("react/{}", f.path);
+            f.path = format!("{dir}/{}", f.path);
         }
         let report =
             holyfloe_fs::write_if_changed(&args.out, &files).map_err(|e| format!("error: {e}"))?;
         println!(
-            "react: {} written, {} unchanged in {}",
+            "{dir}: {} written, {} unchanged in {}",
             report.written.len(),
             report.unchanged.len(),
-            args.out.join("react").display()
+            args.out.join(dir).display()
         );
     }
     Ok(())
@@ -132,9 +142,51 @@ fn read(path: &Path) -> Result<String, String> {
     fs::read_to_string(path).map_err(|e| format!("error: {}: {e}", path.display()))
 }
 
-/// The nearest `package.json` above the manifest that has a `name`. Nameless ones are skipped:
-/// they are build markers such as `dist/esm/package.json` = `{"type": "module"}` (tshy).
-fn nearest_package(cem: &Path) -> Result<PackageInfo, String> {
+/// Manifests of the packages that superclasses and mixins come from (D-069), found like Node
+/// does: `node_modules/<name>` from the package directory upward, each dependency's own
+/// dependencies from its real directory. Packages without a `customElements` manifest (`lit`)
+/// are skipped.
+fn dependencies(cem: &holyfloe_cem::Package, dir: &Path) -> Result<Vec<Dependency>, String> {
+    let mut deps: Vec<Dependency> = Vec::new();
+    let mut queue: Vec<(String, PathBuf)> = holyfloe_ir::referenced_packages(cem)
+        .into_iter()
+        .map(|name| (name, dir.to_owned()))
+        .collect();
+    while let Some((name, from)) = queue.pop() {
+        if deps.iter().any(|d| d.name == name) {
+            continue;
+        }
+        let Some(root) = from
+            .ancestors()
+            .map(|d| d.join("node_modules").join(&name))
+            .find(|root| root.join("package.json").is_file())
+        else {
+            continue;
+        };
+        let pkg_path = root.join("package.json");
+        let value: serde_json::Value = serde_json::from_str(&read(&pkg_path)?)
+            .map_err(|e| format!("error: {}: {e}", pkg_path.display()))?;
+        let Some(manifest) = value["customElements"].as_str() else {
+            continue;
+        };
+        let manifest = root.join(manifest);
+        let dep_cem = holyfloe_cem::parse(&read(&manifest)?)
+            .map_err(|e| format!("error: {}: {e}", manifest.display()))?;
+        let real =
+            fs::canonicalize(&root).map_err(|e| format!("error: {}: {e}", root.display()))?;
+        queue.extend(
+            holyfloe_ir::referenced_packages(&dep_cem)
+                .into_iter()
+                .map(|n| (n, real.clone())),
+        );
+        deps.push(Dependency { name, cem: dep_cem });
+    }
+    Ok(deps)
+}
+
+/// The nearest `package.json` above the manifest that has a `name`, and its directory. Nameless
+/// ones are skipped: they are build markers such as `dist/esm/package.json` = `{"type": "module"}` (tshy).
+fn nearest_package(cem: &Path) -> Result<(PackageInfo, PathBuf), String> {
     let abs = std::path::absolute(cem).map_err(|e| format!("error: {}: {e}", cem.display()))?;
     for path in abs.ancestors().skip(1).map(|dir| dir.join("package.json")) {
         if !path.is_file() {
@@ -143,7 +195,8 @@ fn nearest_package(cem: &Path) -> Result<PackageInfo, String> {
         let parse_err = |e: serde_json::Error| format!("error: {}: {e}", path.display());
         let value: serde_json::Value = serde_json::from_str(&read(&path)?).map_err(parse_err)?;
         if value.get("name").is_some() {
-            return serde_json::from_value(value).map_err(parse_err);
+            let dir = path.parent().unwrap_or(Path::new(".")).to_owned();
+            return Ok((serde_json::from_value(value).map_err(parse_err)?, dir));
         }
     }
     Err(format!(

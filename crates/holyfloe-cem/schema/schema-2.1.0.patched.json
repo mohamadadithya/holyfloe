@@ -422,6 +422,12 @@
         "tagName": {
           "description": "An optional tag name that should be specified if this is a\nself-registering element.\n\nSelf-registering elements must also include a CustomElementExport\nin the module's exports.",
           "type": "string"
+        },
+        "x-holyfloe-models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HolyfloeModel"
+          }
         }
       },
       "required": [
@@ -597,7 +603,6 @@
         }
       },
       "required": [
-        "customElement",
         "kind",
         "name"
       ],
@@ -761,9 +766,6 @@
               },
               {
                 "$ref": "#/definitions/FunctionDeclaration"
-              },
-              {
-                "$ref": "#/definitions/MixinDeclaration"
               },
               {
                 "$ref": "#/definitions/VariableDeclaration"
@@ -1166,6 +1168,26 @@
       ],
       "type": "object",
       "description": "Additional metadata for fields on custom elements."
+    },
+    "HolyfloeModel": {
+      "type": "object",
+      "description": "A two-way binding from a `@model` JSDoc tag, written by the holyfloe analyzer plugin.",
+      "properties": {
+        "prop": {
+          "type": "string"
+        },
+        "event": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "description": "`detail` (default), `detail.<field>` or `target.<prop>`."
+        }
+      },
+      "required": [
+        "prop",
+        "event"
+      ]
     }
   },
   "description": "The top-level interface of a custom elements manifest file.\n\nBecause custom elements are JavaScript classes, describing a custom element\nmay require describing arbitrary JavaScript concepts like modules, classes,\nfunctions, etc. So custom elements manifests are capable of documenting\nthe elements in a package, as well as those JavaScript concepts.\n\nThe modules described in a package should be the public entrypoints that\nother packages may import from. Multiple modules may export the same object\nvia re-exports, but in most cases a package should document the single\ncanonical export that should be used.",

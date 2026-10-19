@@ -1,6 +1,6 @@
 # Svelte 5 emitter spec
 
-Reference for type shapes: `@wc-toolkit/svelte-types` (its README still shows `on:` event syntax; update to Svelte 5 attribute events). Port shapes, write original code.
+Reference for type shapes: `@wc-toolkit/svelte-types`, but not its augmentation target: 1.0.3 augments the legacy `svelteHTML.IntrinsicElements`, which Svelte 5's svelte-check ignores (D-080). Augment `SvelteHTMLElements` in `svelte/elements`. Port shapes, write original code.
 
 ## Output
 
@@ -18,24 +18,34 @@ generated/svelte/
 2. Props via `let { variant, items, children, ...rest } = $props();`.
 3. Binding to the element: `bind:this={el}`.
 4. Props by `PropKind`:
-   - Primitive and Boolean: pass in markup as attributes (`<my-button {variant} ...>`).
-   - Complex: set in `$effect(() => { if (el) el.items = items; })`. Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455), so this is the supported route.
-   - Re-apply after `customElements.whenDefined(tag)`.
-5. Events: Svelte 5 event attributes are case-sensitive (`onclick` listens to `click`, `onClick` to `Click`).
-   - Generate callback props named from the exact DOM event name when it is a valid identifier (`onmy-change` is not, so use the normalized `onMyChange`).
-   - Attach with `on(el, dom_name, handler)` from `svelte/events` inside `$effect`, returning the cleanup.
-   - Document the casing rule in the generated file header.
+   - Primitive: in markup (`{variant}`); renamed attributes use the attribute name. Svelte skips an attribute that starts `undefined`, so the element keeps its default.
+   - Boolean: in markup as `x={x || undefined}` (SSR and pre-upgrade: an attribute can only be present or absent), and also set as a property in `$effect`, so `false` reaches the element as `false`, not `undefined` (review e2e 2026-10-18).
+   - Complex, and props without an attribute: set in the same `$effect`. The effect is `if (element) Object.assign(element, defined({ ... }))`: `defined()` (in `svelte-utils.ts`) skips `undefined`, and `Object.assign` because a getter and its setter can differ in type (Web Awesome `form`), which a typed `element.form = form` rejects (D-084). Svelte 5 has no `prop:` or `attr:` forcing syntax (sveltejs/svelte#15455).
+   - Locals: props named like reserved words, the wrapper's own locals, or runes (`effect`, `state`, `derived`, `props`, `bindable`, `inspect`, `host`) bind `<name>_`; a local `effect` would turn `$effect` into a store subscription (Web Awesome `wa-skeleton`).
+   - A wrapper that renders an `autofocus`, `tabindex` or `accesskey` attribute (the library's own prop) gets `<!-- svelte-ignore a11y_... -->` for exactly those codes.
+   - No `whenDefined` re-apply: Lit keeps properties set before the upgrade (to be proven by fx-lazy).
+5. Events: callback props are `on<base_name>` (`onMyChange`, `onFxPress`), the same names as React and Vue (D-066). A mixed rule (exact DOM name when it is an identifier) would give `onmyChange` next to `onMyChange`.
+   - Attach with an event attribute on the host, `onmy-change={(e) => onMyChange?.(e)}`. Svelte attaches it when it creates the element, so events fired in Lit's first update are not lost (a `$effect` would run later).
+   - Names Svelte delegates to the root (`change`, `click`, `input` and the rest of its list; Svelte 5.57.2 `DELEGATED_EVENTS`) only arrive if the event bubbles, and `new Event('change')` does not. Those, and names that end in `capture` (which Svelte would read as a capture flag), use the capture form `onchangecapture`: a capture listener on the host fires at the target either way (D-075, fixture `fx-input`).
+   - The props type omits both `on<base_name>` and the exact `on<dom_name>` key, so `onchange` cannot be passed through `...rest` next to `onChange`.
+   - Raw tags differ: Svelte 5 event attributes are case-sensitive and exact (`onclick` listens to `click`), so `svelte-elements.d.ts` types `onmy-change`.
 6. Two-way binding: for each `TwoWayBinding` emit `let { value = $bindable() } = $props();` and a listener that writes `value = <read via ValuePath>`. Consumers get `bind:value`.
 7. Slots to snippets:
-   - Default: `{@render children?.()}` inside the element.
-   - Named slot `foo`: snippet prop `foo`, rendered as `<span slot="foo" style="display: contents">{@render foo?.()}</span>`. A snippet cannot carry a `slot` attribute itself, hence the wrapper. Snapshot-test this; it is the subtlest part (D-025).
+   - Default: `{@render children?.()}` inside the element, for every component, documented or not (React passes children through too; dropping them silently would surprise).
+   - Named slot `foo`: snippet prop named after the slot as an identifier (`help-text` -> `helpText`), with `Snippet` appended when that is already a prop or another wrapper name (Shoelace's `label` slot next to its `label` prop -> `labelSnippet`, D-081). Rendered as `<span slot="foo" style="display: contents">{@render foo?.()}</span>`. A snippet cannot carry a `slot` attribute itself, hence the wrapper. Snapshot-test this; it is the subtlest part (D-025).
 8. Spread remaining props: `{...rest}` onto the element for global attributes (`class`, `id`, `aria-*`).
-9. Expose the element: `export function getElement()` or a bindable `element` prop (choose one in M2 plan and record in decisions).
+9. Expose the element through a bindable `element` prop: `let { element = $bindable() } = $props()` and `bind:this={element}`; consumers write `bind:element={el}` (D-064).
 
 ## Types
 
 - `svelte-elements.d.ts` augments `SvelteHTMLElements` with each tag's props and event attributes.
 - Event attribute types use Svelte 5 form (`onmy-change`), not `on:`.
+- A renamed attribute is typed under its attribute name too (`'badge-count'`): for a raw tag, the attribute is what works before the element upgrades and in SSR. The wrappers' own markup is checked against these types when both are in one program.
+
+## SSR (SvelteKit)
+
+- Primitive and Boolean props are server-rendered attributes (custom booleans as `x="true"`, which Lit reads as present); Complex and property-only props are not. Named slot wrappers are server-rendered.
+- SvelteKit 3.1.0 dev and production (adapter-node) hydrate with no console warnings (D-079, e2e `sveltekit`). Kit 3 takes its config in `vite.config.ts` (`sveltekit({ adapter })`); `svelte.config.js` is no longer read.
 
 ## Acceptance (per fixture)
 
@@ -44,6 +54,7 @@ generated/svelte/
 - Named slot renders in the right shadow slot (e2e asserts `assignedNodes()`).
 - Playwright svelte5 and sveltekit apps: props, events, bind, slots.
 
-## Unverified (see open-questions.md)
+## Raw tags without the wrapper (D-077, e2e `svelte5?raw`)
 
-- OQ-004: exact property-vs-attribute heuristic Svelte 5 uses for lazily defined elements. The e2e suite is the source of truth, not older community write-ups.
+- Before the element is defined, Svelte sets objects and arrays as properties (they survive the upgrade) and everything else, functions included, as attributes (a function is lost). After definition it uses the element's setters. There is no `prop:`/`attr:` syntax: svelte-check reads `prop:items` as an attribute with an illegal colon (a warning).
+- `bind:value` on a custom element is a compile error in Svelte 5.57.2, so raw two-way binding is impossible; the wrappers' `$bindable` props are the way.

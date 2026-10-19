@@ -1,0 +1,46 @@
+{# Shared by every emitter; registered as "macros.j2" by holyfloe_emit_core::env. #}
+{# Component JSDoc text: summary, description, slots, parts, CSS properties, `extra` (one paragraph
+   per line, e.g. two-way binding notes), deprecation. #}
+{% macro component_doc(c, extra=[]) %}
+{% if c.summary %}
+{{ c.summary }}
+
+{% endif %}
+{% if c.description %}
+{{ c.description }}
+
+{% endif %}
+{% if c.slots %}
+Slots:
+{% for s in c.slots %}
+- {{ s.name or "default" }}{{ (": " ~ s.description) if s.description else "" }}
+{% endfor %}
+
+{% endif %}
+{% if c.css_parts %}
+CSS parts:
+{% for p in c.css_parts %}
+- {{ p.name }}{{ (": " ~ p.description) if p.description else "" }}
+{% endfor %}
+
+{% endif %}
+{% if c.css_props %}
+CSS custom properties:
+{% for p in c.css_props %}
+- {{ p.name }}{{ (": " ~ p.description) if p.description else "" }}
+{% endfor %}
+
+{% endif %}
+{% for line in extra %}
+{{ line }}
+
+{% endfor %}
+{% if c.deprecated is not none %}
+@deprecated {{ c.deprecated }}
+{% endif %}
+{% endmacro %}
+{# A member's doc comment: `/** text */` on one line, a block for several lines, "" for none. #}
+{% macro member_doc(x) %}
+{% set t = ((x.description or "") ~ (("\n\n@deprecated " ~ x.deprecated) if x.deprecated is not none else "")) | trim %}
+{{- (t | jsdoc) if "\n" in t else ("/** " ~ (t | replace("*/", "*\\/")) ~ " */") if t else "" -}}
+{% endmacro %}

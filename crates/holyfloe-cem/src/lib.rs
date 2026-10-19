@@ -42,7 +42,7 @@ pub enum ParseError {
 
 /// Parse a manifest. Use this, not `serde_json::from_str`: the declarations enum is untagged,
 /// so an element that misses one required field would silently become a plain
-/// `ClassDeclaration` (or `MixinDeclaration`) and lose its tag. Here that is an error.
+/// `ClassDeclaration` and lose its tag. Here that is an error.
 ///
 /// Other declarations and exports that match no schema variant are dropped instead of failing
 /// the manifest: published manifests include bundled dependency code (Lion ships minified Lit

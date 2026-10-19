@@ -1,0 +1,90 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-lazy",
+      "name": "FxLazy",
+      "class_name": "FxLazy",
+      "module": {
+        "path": "src/fx-lazy/fx-lazy.ts",
+        "specifier": "@holyfloe/fixtures/fx-lazy/fx-lazy.js"
+      },
+      "export_name": "FxLazy",
+      "definition": {
+        "path": "src/fx-lazy/fx-lazy.ts",
+        "specifier": "@holyfloe/fixtures/fx-lazy/fx-lazy.js"
+      },
+      "summary": null,
+      "description": "Not defined on import: apps call `defineFxLazy()` after their first render, so wrappers\nmeet an element that is not upgraded yet.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "items",
+          "attribute": null,
+          "ty": {
+            "text": "string[]",
+            "imports": []
+          },
+          "default": "[]",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Complex",
+          "description": "Rendered as a list.",
+          "deprecated": null
+        },
+        {
+          "name": "label",
+          "attribute": "label",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Text above the list.",
+          "deprecated": null
+        },
+        {
+          "name": "active",
+          "attribute": "active",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Highlights the element.",
+          "deprecated": null
+        }
+      ],
+      "events": [],
+      "slots": [],
+      "methods": [],
+      "css_parts": [
+        {
+          "name": "label",
+          "description": "The label.",
+          "deprecated": null
+        }
+      ],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: M1 done (2026-10-18), M2 next.** `holyfloe-cem`, `holyfloe-ir`, `holyfloe-emit-core`, `holyfloe-emit-react`, `holyfloe-fs` and `holyfloe-cli` (`holyfloe generate`) work. The 7 M1 fixtures have expected React output (`wrapper`, `types`, and `react.ref: "prop"` for fx-button), type-checked on React 18/19 and run in Playwright on React 18/19 (Vite) and Next 16. The Vue, Svelte, types, lit and napi crates are stubs; `packages/` doesn't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose. First run on a machine: `pnpm install`, then `pnpm -C e2e exec playwright install chromium`.
+**Current state: M2 done (2026-10-18), M3 next.** `holyfloe generate --frameworks react,vue,svelte` works end to end. All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). The lit and napi crates are stubs; `packages/` doesn't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose. The `@model` analyzer plugin lives in `fixtures/holyfloe-cem-plugin.mjs` until M3 ships it. First run on a machine: `pnpm install`, then `pnpm -C e2e exec playwright install chromium`.
 
 ## Pipeline (big picture)
 
@@ -17,7 +17,7 @@ custom-elements.json (from @custom-elements-manifest/analyzer --litelement)
   -> holyfloe-ir    Library/Component IR + 6 passes in fixed order:
                     flatten-inheritance -> drop-non-public -> name-derive
                     -> classify-props -> infer-bindings -> validate
-  -> holyfloe-emit-{react,vue,svelte,types}   minijinja templates -> Vec<OutputFile>
+  -> holyfloe-emit-{react,vue,svelte}   minijinja templates -> Vec<OutputFile>
   -> holyfloe-fs    plan + hash + write-if-changed (only place that touches disk,
                     along with holyfloe-cli and holyfloe-napi)
 ```
@@ -72,7 +72,6 @@ crates/
   holyfloe-emit-react/
   holyfloe-emit-vue/
   holyfloe-emit-svelte/
-  holyfloe-emit-types/ # JSX / Vue / Svelte global type augmentation
   holyfloe-fs/         # output planning, content hashing, write-if-changed
   holyfloe-cli/        # clap + notify
   holyfloe-napi/       # napi-rs v3 bindings
@@ -155,6 +154,17 @@ vite                               8.3.4     MIT            # e2e
 @playwright/test                   1.64.1    Apache-2.0     # e2e, chromium only
 next                               16.4.2    MIT            # e2e/next-app
 @types/node                        26.6.5    MIT            # e2e/next-app
+# M2, resolved 2026-10-18 from npm
+vue                                3.5.44    MIT            # fixtures/typecheck/vue, e2e/vue3
+vue-tsc                            3.3.13    MIT            # fixtures/typecheck/vue
+@vitejs/plugin-vue                 6.0.10    MIT            # e2e/vue3
+nuxt                               4.6.2     MIT   node ^22.22.3 || ^24.15   # e2e/nuxt
+svelte                             5.57.2    MIT            # fixtures/typecheck/svelte, e2e/svelte5, e2e/sveltekit
+svelte-check                       4.7.7     MIT            # fixtures/typecheck/svelte
+@sveltejs/vite-plugin-svelte       7.3.1     MIT            # e2e/svelte5, e2e/sveltekit
+@sveltejs/kit                      3.1.0     MIT   node >=22.17   # e2e/sveltekit
+@sveltejs/adapter-node             6.0.0     MIT            # e2e/sveltekit
+typescript (Vue/Svelte tooling)    6.0.3     Apache-2.0     # vue-tsc, svelte-check, SvelteKit: TS 7 has no classic JS API (D-071)
 # reference only (D-003/D-004, do not depend on):
 @wc-toolkit/react-wrappers 1.2.11, @wc-toolkit/vuejs-types 1.0.3, @wc-toolkit/svelte-types 1.0.3 (MIT)
 @lit-labs/gen-wrapper-react 0.3.5 (BSD-3-Clause)

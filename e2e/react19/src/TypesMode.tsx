@@ -16,16 +16,19 @@ export function TypesMode() {
         onMYEVENT={(e: CustomEvent<{ count: number }>) => log(`native MYEVENT:${e.detail.count}`)}
       />
       <fx-badge id="native-badge" count={5} tone="warning" />
+      {/* OQ-008: a complex prop on an element that is not defined yet (#define-lazy). */}
+      <fx-lazy id="native-lazy" items={['p', 'q']} label="Native" />
     </>
   );
 }
 
-// Loose JSX typing for the two tags above, so editors don't flag this file.
+// Loose JSX typing for the tags above, so editors don't flag this file.
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'fx-events': Record<string, unknown>;
       'fx-badge': Record<string, unknown>;
+      'fx-lazy': Record<string, unknown>;
     }
   }
 }

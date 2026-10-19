@@ -41,4 +41,37 @@ for name in ("CustomElementDeclaration", "CustomElementMixinDeclaration"):
 defs["Event"]["required"].remove("type")
 assert defs["Event"]["required"] == ["name"], "upstream Event.required changed"
 
+# 4. holyfloe extension (D-063): the analyzer drops unknown JSDoc tags, so the holyfloe analyzer
+#    plugin writes `@model <prop> <event> [<path>]` here. Without the property serde would drop it.
+defs["HolyfloeModel"] = {
+    "type": "object",
+    "description": "A two-way binding from a `@model` JSDoc tag, written by the holyfloe analyzer plugin.",
+    "properties": {
+        "prop": {"type": "string"},
+        "event": {"type": "string"},
+        "value": {
+            "type": "string",
+            "description": "`detail` (default), `detail.<field>` or `target.<prop>`.",
+        },
+    },
+    "required": ["prop", "event"],
+}
+assert "x-holyfloe-models" not in defs["CustomElementDeclaration"]["properties"]
+defs["CustomElementDeclaration"]["properties"]["x-holyfloe-models"] = {
+    "type": "array",
+    "items": {"$ref": "#/definitions/HolyfloeModel"},
+}
+
+# 5. The analyzer writes Lit mixins (members with `attribute`/`reflects`, events) without
+#    `customElement: true`. CustomElementMixinDeclaration requires it, so untagged serde fell back
+#    to MixinDeclaration and dropped events, attributes and `reflects` (fixture fx-mixin's dep).
+#    With it optional, every mixin parses as the superset, and MixinDeclaration leaves the union
+#    (typify cannot build an enum from two variants where one contains the other).
+mixin_required = defs["CustomElementMixinDeclaration"]["required"]
+mixin_required.remove("customElement")
+assert sorted(mixin_required) == ["kind", "name"], "upstream CustomElementMixinDeclaration changed"
+before = len(decls["anyOf"])
+decls["anyOf"] = [r for r in decls["anyOf"] if r["$ref"] != "#/definitions/MixinDeclaration"]
+assert len(decls["anyOf"]) == before - 1, "upstream declarations union changed"
+
 (here / "schema-2.1.0.patched.json").write_text(json.dumps(schema, indent=2) + "\n")

@@ -176,6 +176,8 @@ dependencies = [
  "clap",
  "holyfloe-cem",
  "holyfloe-emit-react",
+ "holyfloe-emit-svelte",
+ "holyfloe-emit-vue",
  "holyfloe-fs",
  "holyfloe-ir",
  "serde_json",
@@ -185,7 +187,9 @@ dependencies = [
 name = "holyfloe-emit-core"
 version = "0.0.0"
 dependencies = [
+ "holyfloe-ir",
  "minijinja",
+ "thiserror",
 ]
 
 [[package]]
@@ -205,14 +209,26 @@ dependencies = [
 [[package]]
 name = "holyfloe-emit-svelte"
 version = "0.0.0"
-
-[[package]]
-name = "holyfloe-emit-types"
-version = "0.0.0"
+dependencies = [
+ "holyfloe-cem",
+ "holyfloe-emit-core",
+ "holyfloe-ir",
+ "insta",
+ "minijinja",
+ "serde_json",
+]
 
 [[package]]
 name = "holyfloe-emit-vue"
 version = "0.0.0"
+dependencies = [
+ "holyfloe-cem",
+ "holyfloe-emit-core",
+ "holyfloe-ir",
+ "insta",
+ "minijinja",
+ "serde_json",
+]
 
 [[package]]
 name = "holyfloe-fs"

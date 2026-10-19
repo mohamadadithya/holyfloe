@@ -1,0 +1,108 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-dialog",
+      "name": "FxDialog",
+      "class_name": "FxDialog",
+      "module": {
+        "path": "src/fx-dialog/fx-dialog.ts",
+        "specifier": "@holyfloe/fixtures/fx-dialog/fx-dialog.js"
+      },
+      "export_name": "FxDialog",
+      "definition": {
+        "path": "src/fx-dialog/fx-dialog.ts",
+        "specifier": "@holyfloe/fixtures/fx-dialog/fx-dialog.js"
+      },
+      "summary": null,
+      "description": "A dialog whose `open` state two-way binds through an explicit `@model` tag.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "open",
+          "attribute": "open",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Whether the dialog is shown.",
+          "deprecated": null
+        }
+      ],
+      "events": [
+        {
+          "dom_name": "open-change",
+          "base_name": "OpenChange",
+          "detail": {
+            "text": "{ open: boolean }",
+            "imports": []
+          },
+          "event_type": {
+            "text": "CustomEvent<{ open: boolean }>",
+            "imports": []
+          },
+          "description": "Fired when the dialog opens or closes.",
+          "deprecated": null
+        }
+      ],
+      "slots": [
+        {
+          "name": "",
+          "description": "Dialog content.",
+          "deprecated": null
+        },
+        {
+          "name": "footer",
+          "description": "Dialog actions.",
+          "deprecated": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "show",
+          "description": "Opens the dialog.",
+          "deprecated": null
+        },
+        {
+          "name": "close",
+          "description": "Closes the dialog.",
+          "deprecated": null
+        }
+      ],
+      "css_parts": [
+        {
+          "name": "panel",
+          "description": "The dialog panel.",
+          "deprecated": null
+        }
+      ],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": [
+        {
+          "prop": "open",
+          "event": "open-change",
+          "value": {
+            "DetailField": "open"
+          },
+          "inferred": false
+        }
+      ]
+    }
+  ]
+}

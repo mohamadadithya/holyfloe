@@ -42,7 +42,7 @@ just e2e-react                          # Playwright react18 + react19 (vite dev
 ## M2: Vue 3 and Svelte 5 (about 3 weeks)
 
 Scope
-- `holyfloe-emit-vue`, `holyfloe-emit-svelte`, `holyfloe-emit-types` (templates only, no new infrastructure).
+- `holyfloe-emit-vue`, `holyfloe-emit-svelte` (templates only). Each framework emitter also renders its raw-tag type augmentation; `holyfloe-emit-types` was removed (D-068).
 - `TwoWayBinding` end to end: `@model` JSDoc convention finalized and recorded in decisions (closes D-026), v-model, `$bindable`.
 - Snippet-to-slot mapping for Svelte.
 - Resolve OQ-003 and OQ-004 with e2e tests, then update the emitter docs.

@@ -1,0 +1,8 @@
+{
+  "moduleRewrite": { "src/": "dist/" },
+  "overrides": {
+    "fx-select": {
+      "bindings": [{ "prop": "value", "event": "fx-change", "value": "detail.value" }]
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/fx-lazy/fx-lazy.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Not defined on import: apps call `defineFxLazy()` after their first render, so wrappers\nmeet an element that is not upgraded yet.",
+          "name": "FxLazy",
+          "cssParts": [
+            {
+              "description": "The label.",
+              "name": "label"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "items",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "description": "Rendered as a list."
+            },
+            {
+              "kind": "field",
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Text above the list.",
+              "attribute": "label"
+            },
+            {
+              "kind": "field",
+              "name": "active",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Highlights the element.",
+              "attribute": "active",
+              "reflects": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Text above the list.",
+              "fieldName": "label"
+            },
+            {
+              "name": "active",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Highlights the element.",
+              "fieldName": "active"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "fx-lazy",
+          "customElement": true
+        },
+        {
+          "kind": "function",
+          "name": "defineFxLazy",
+          "description": "Registers `fx-lazy`. Safe to call twice."
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FxLazy",
+          "declaration": {
+            "name": "FxLazy",
+            "module": "src/fx-lazy/fx-lazy.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "defineFxLazy",
+          "declaration": {
+            "name": "defineFxLazy",
+            "module": "src/fx-lazy/fx-lazy.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "fx-lazy",
+          "declaration": {
+            "name": "FxLazy",
+            "module": "src/fx-lazy/fx-lazy.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

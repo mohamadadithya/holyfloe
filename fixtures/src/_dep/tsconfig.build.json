@@ -1,0 +1,10 @@
+{
+  // A second package for fx-mixin (cross-package flatten, D-069). Same settings as fixtures.
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": []
+}

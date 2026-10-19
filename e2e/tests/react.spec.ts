@@ -171,3 +171,71 @@ test.describe('types mode (React 19 only)', () => {
     await expect(el(page, 'native-badge').locator('span')).toHaveText('5');
   });
 });
+
+test.describe('fx-input', () => {
+  test('value follows typing; change updates the parent state', async ({ page }) => {
+    expect(await prop(page, 'input', 'value')).toBe('start');
+    const native = el(page, 'input').locator('input');
+    await native.fill('hello');
+    await native.press('Enter'); // the native change, which the host re-dispatches
+    await expect(el(page, 'input-state')).toHaveText('hello');
+    expect(await prop(page, 'input', 'value')).toBe('hello');
+    await expect(el(page, 'input')).toHaveAttribute('name', 'q');
+  });
+});
+
+test.describe('fx-dialog', () => {
+  test('open round trip through open-change, and show() through the ref', async ({ page }) => {
+    await expect(el(page, 'dialog')).not.toHaveAttribute('open');
+    await page.click('#open-dialog');
+    await expect(el(page, 'dialog')).toHaveAttribute('open', '');
+    await el(page, 'dialog').locator('[part=close]').click();
+    await expect(el(page, 'dialog-state')).toHaveText('false');
+    await expect(el(page, 'dialog')).not.toHaveAttribute('open');
+    await page.click('#show-dialog');
+    await expect(el(page, 'dialog-state')).toHaveText('true');
+    await expect(el(page, 'dialog')).toHaveAttribute('open', '');
+  });
+});
+
+test.describe('fx-select', () => {
+  test('detail.value reaches the parent', async ({ page }) => {
+    await expect(el(page, 'select')).toHaveAttribute('value', 'b');
+    await el(page, 'select').locator('[part=option]', { hasText: 'c' }).click();
+    await expect(el(page, 'select-state')).toHaveText('c');
+    await expect(el(page, 'select')).toHaveAttribute('value', 'c');
+  });
+});
+
+test.describe('fx-mixin', () => {
+  test('props and event from the dependency mixin', async ({ page }) => {
+    await expect(el(page, 'mixin')).toHaveAttribute('focused', '');
+    await expect(el(page, 'mixin')).toHaveAttribute('ring-color', 'red');
+    expect(await prop(page, 'mixin', 'prefix')).toBe('> '); // not reflected: React 19 sets only the property
+    await page.evaluate(() => (document.getElementById('mixin') as any).toggleFocus());
+    expect(await logged(page, /^focus:/)).toEqual(['focus:false']);
+  });
+});
+
+test.describe('fx-lazy', () => {
+  test('props set before the element is defined arrive after it upgrades', async ({ page }) => {
+    expect(await page.evaluate(() => customElements.get('fx-lazy'))).toBeUndefined();
+    await expect(el(page, 'lazy')).toHaveAttribute('label', 'Lazy');
+    await expect(el(page, 'lazy')).not.toHaveAttribute('items');
+    await page.click('#define-lazy');
+    await expect(el(page, 'lazy').locator('li')).toHaveText(['x', 'y']);
+    expect(await prop(page, 'lazy', 'items')).toEqual(['x', 'y']);
+    expect(await prop(page, 'lazy', 'label')).toBe('Lazy');
+    expect(await prop(page, 'lazy', 'active')).toBe(true);
+  });
+
+  test('OQ-008: React 19 types mode writes a complex prop on an undefined element as an attribute, and loses it', async ({ page }) => {
+    test.skip(isReact18(), 'types mode needs React 19');
+    // At render `items` is not on the element yet, so React 19 writes String(value).
+    await expect(el(page, 'native-lazy')).toHaveAttribute('items', 'p,q');
+    await page.click('#define-lazy');
+    await expect(el(page, 'native-lazy').locator('[part=label]')).toHaveText('Native'); // primitives survive as attributes
+    expect(await prop(page, 'native-lazy', 'items')).toEqual([]); // the array never arrives
+    await expect(el(page, 'native-lazy').locator('li')).toHaveCount(0);
+  });
+});

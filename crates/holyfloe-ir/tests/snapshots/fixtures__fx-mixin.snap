@@ -1,0 +1,108 @@
+---
+source: crates/holyfloe-ir/tests/fixtures.rs
+expression: build_fixture(name)
+---
+{
+  "package": {
+    "name": "@holyfloe/fixtures",
+    "version": null,
+    "exports": {
+      "./*": "./dist/*"
+    }
+  },
+  "components": [
+    {
+      "tag": "fx-mixin",
+      "name": "FxMixin",
+      "class_name": "FxMixin",
+      "module": {
+        "path": "src/fx-mixin/fx-mixin.ts",
+        "specifier": "@holyfloe/fixtures/fx-mixin/fx-mixin.js"
+      },
+      "export_name": "FxMixin",
+      "definition": {
+        "path": "src/fx-mixin/fx-mixin.ts",
+        "specifier": "@holyfloe/fixtures/fx-mixin/fx-mixin.js"
+      },
+      "summary": null,
+      "description": "Gets `focused`, `ringColor` and the `focus-change` event from a mixin in another package.",
+      "deprecated": null,
+      "props": [
+        {
+          "name": "prefix",
+          "attribute": "prefix",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "''",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Shown before the slot.",
+          "deprecated": null
+        },
+        {
+          "name": "focused",
+          "attribute": "focused",
+          "ty": {
+            "text": "boolean",
+            "imports": []
+          },
+          "default": "false",
+          "reflects": true,
+          "readonly": false,
+          "kind": "Boolean",
+          "description": "Whether the element has focus.",
+          "deprecated": null
+        },
+        {
+          "name": "ringColor",
+          "attribute": "ring-color",
+          "ty": {
+            "text": "string",
+            "imports": []
+          },
+          "default": "'blue'",
+          "reflects": false,
+          "readonly": false,
+          "kind": "Primitive",
+          "description": "Focus ring color.",
+          "deprecated": null
+        }
+      ],
+      "events": [
+        {
+          "dom_name": "focus-change",
+          "base_name": "FocusChange",
+          "detail": null,
+          "event_type": {
+            "text": "CustomEvent",
+            "imports": []
+          },
+          "description": null,
+          "deprecated": null
+        }
+      ],
+      "slots": [
+        {
+          "name": "",
+          "description": "The label.",
+          "deprecated": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "toggleFocus",
+          "description": "Flips `focused` and fires `focus-change`.",
+          "deprecated": null
+        }
+      ],
+      "css_parts": [],
+      "css_props": [],
+      "css_states": [],
+      "form_associated": false,
+      "bindings": []
+    }
+  ]
+}

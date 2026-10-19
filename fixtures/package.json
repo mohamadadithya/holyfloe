@@ -7,10 +7,11 @@
     "./*": "./dist/*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "pnpm -C src/_dep build && tsc -p tsconfig.build.json"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "0.11.0",
+    "@holyfloe/fixtures-dep": "workspace:*",
     "lit": "3.3.3",
     "typescript": "7.0.2"
   }

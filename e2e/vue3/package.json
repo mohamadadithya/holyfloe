@@ -1,0 +1,13 @@
+{
+  "name": "@holyfloe/e2e-vue3",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@holyfloe/fixtures": "workspace:*",
+    "vue": "3.5.44"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10"
+  }
+}

@@ -565,6 +565,12 @@ pub struct CustomElementDeclaration {
         skip_serializing_if = "::std::option::Option::is_none"
     )]
     pub tag_name: ::std::option::Option<::std::string::String>,
+    #[serde(
+        rename = "x-holyfloe-models",
+        default,
+        skip_serializing_if = "::std::vec::Vec::is_empty"
+    )]
+    pub x_holyfloe_models: ::std::vec::Vec<HolyfloeModel>,
 }
 #[doc = "Whether the class or mixin is deprecated.\nIf the value is a string, it's the reason for the deprecation."]
 #[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
@@ -866,8 +872,11 @@ pub struct CustomElementMixinDeclaration {
     )]
     pub css_states: ::std::vec::Vec<CssCustomState>,
     #[doc = "Distinguishes a regular JavaScript class from a\ncustom element class"]
-    #[serde(rename = "customElement")]
-    pub custom_element: bool,
+    #[serde(
+        rename = "customElement",
+        skip_serializing_if = "::std::option::Option::is_none"
+    )]
+    pub custom_element: ::std::option::Option<bool>,
     #[serde(default, skip_serializing_if = "::std::vec::Vec::is_empty")]
     pub demos: ::std::vec::Vec<Demo>,
     #[doc = "Whether the class or mixin is deprecated.\nIf the value is a string, it's the reason for the deprecation."]
@@ -1172,6 +1181,15 @@ pub struct FunctionDeclarationReturn {
     )]
     pub type_: ::std::option::Option<Type>,
 }
+#[doc = "A two-way binding from a `@model` JSDoc tag, written by the holyfloe analyzer plugin."]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+pub struct HolyfloeModel {
+    pub event: ::std::string::String,
+    pub prop: ::std::string::String,
+    #[doc = "`detail` (default), `detail.<field>` or `target.<prop>`."]
+    #[serde(skip_serializing_if = "::std::option::Option::is_none")]
+    pub value: ::std::option::Option<::std::string::String>,
+}
 #[doc = "`JavaScriptExport`"]
 #[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
 pub struct JavaScriptExport {
@@ -1281,7 +1299,6 @@ pub enum JavaScriptModuleDeclarationsItem {
     CustomElementMixinDeclaration(CustomElementMixinDeclaration),
     ClassDeclaration(ClassDeclaration),
     FunctionDeclaration(FunctionDeclaration),
-    MixinDeclaration(MixinDeclaration),
     VariableDeclaration(VariableDeclaration),
 }
 impl ::std::convert::From<CustomElementDeclaration> for JavaScriptModuleDeclarationsItem {
@@ -1302,11 +1319,6 @@ impl ::std::convert::From<ClassDeclaration> for JavaScriptModuleDeclarationsItem
 impl ::std::convert::From<FunctionDeclaration> for JavaScriptModuleDeclarationsItem {
     fn from(value: FunctionDeclaration) -> Self {
         Self::FunctionDeclaration(value)
-    }
-}
-impl ::std::convert::From<MixinDeclaration> for JavaScriptModuleDeclarationsItem {
-    fn from(value: MixinDeclaration) -> Self {
-        Self::MixinDeclaration(value)
     }
 }
 impl ::std::convert::From<VariableDeclaration> for JavaScriptModuleDeclarationsItem {

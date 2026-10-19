@@ -18,7 +18,6 @@ holyfloe-emit-core = { path = "crates/holyfloe-emit-core" }
 holyfloe-emit-react = { path = "crates/holyfloe-emit-react" }
 holyfloe-emit-vue = { path = "crates/holyfloe-emit-vue" }
 holyfloe-emit-svelte = { path = "crates/holyfloe-emit-svelte" }
-holyfloe-emit-types = { path = "crates/holyfloe-emit-types" }
 holyfloe-fs = { path = "crates/holyfloe-fs" }
 
 serde = { version = "=1.0.229", features = ["derive"] }

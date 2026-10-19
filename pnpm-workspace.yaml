@@ -1,11 +1,19 @@
 packages:
   - fixtures
+  - fixtures/src/_dep
   - fixtures/typecheck/*
   - e2e
   - e2e/react18
   - e2e/react19
   - e2e/next-app
+  - e2e/vue3
+  - e2e/svelte5
+  - e2e/nuxt
+  - e2e/sveltekit
 
 # Postinstall only matters for the analyzer --dependencies scan, which we do not use.
 allowBuilds:
   rs-module-lexer: false
+  # Nuxt's tree (e2e/nuxt). The script only verifies the platform binary, which pnpm installs
+  # through optionalDependencies anyway.
+  esbuild: false

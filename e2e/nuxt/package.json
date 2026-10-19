@@ -1,0 +1,11 @@
+{
+  "name": "@holyfloe/e2e-nuxt",
+  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@holyfloe/fixtures": "workspace:*",
+    "nuxt": "4.6.2",
+    "vue": "3.5.44"
+  }
+}
