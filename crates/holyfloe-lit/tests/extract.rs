@@ -2,12 +2,29 @@
 //! manifest `holyfloe_lit::extract` builds for it.
 
 use std::fs;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use serde_json::{Value, json};
 
-/// A temp package `name` with `files` (path, source); returns its root.
-fn package(name: &str, files: &[(&str, &str)]) -> PathBuf {
+/// A temp package root, removed when the test ends.
+struct Pkg(PathBuf);
+
+impl Deref for Pkg {
+    type Target = Path;
+    fn deref(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl Drop for Pkg {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
+/// A temp package `name` with `files` (path, source).
+fn package(name: &str, files: &[(&str, &str)]) -> Pkg {
     let root = std::env::temp_dir().join(format!("holyfloe-lit-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&root);
     for (path, src) in files {
@@ -16,7 +33,7 @@ fn package(name: &str, files: &[(&str, &str)]) -> PathBuf {
         fs::write(p, src).unwrap();
     }
     fs::write(root.join("package.json"), r#"{ "name": "pkg" }"#).unwrap();
-    root
+    Pkg(root)
 }
 
 fn extract(root: &Path, files: &[&str]) -> Value {
@@ -144,6 +161,8 @@ export class XEl extends LitElement {
   @property() ringColor = 'red';
   @property({ attribute: false }) items: string[] = [];
   @property({ type: Boolean }) declare compact: boolean;
+  @property() offset = -1;
+  @property() limit = Infinity;
   @property() private secret = '';
   protected guarded = 1;
   #hidden = 2;
@@ -153,7 +172,12 @@ export class XEl extends LitElement {
     );
     let m = extract(&root, &["src/x-el.ts"]);
     let el = decl(module(&m, "src/x-el.ts"), "XEl");
-    assert_eq!(names(el, "members"), ["ringColor", "items", "compact"]);
+    assert_eq!(
+        names(el, "members"),
+        ["ringColor", "items", "compact", "offset", "limit"]
+    );
+    assert_eq!(member(el, "offset")["type"]["text"], "number");
+    assert_eq!(member(el, "limit")["type"]["text"], "number");
     assert_eq!(member(el, "ringColor")["attribute"], "ringcolor");
     assert!(member(el, "items").get("attribute").is_none());
     assert_eq!(member(el, "items")["type"]["text"], "string[]");
@@ -175,10 +199,12 @@ fn events_from_generics_with_type_references() {
                 r#"
 import { LitElement } from 'lit';
 import type { Detail } from './types.js';
+import { html } from 'lit';
 interface Local { n: number }
 /**
  * @fires {CustomEvent<Local>} x-local - Documented.
  * @event x-docs-only
+ * @event {CustomEvent<{ Detail: string; html?: number }>} x-keys - Keys named like imports.
  * @event {CustomEvent<Local>} x-local - Documented twice: merged, later text wins.
  */
 export class XEl extends LitElement {
@@ -201,6 +227,8 @@ export class XEl extends LitElement {
             { "name": "x-local", "description": "Documented twice: merged, later text wins.",
               "type": { "text": "CustomEvent<Local>", "references": [{ "name": "Local", "module": "src/x-el.ts" }] } },
             { "name": "x-docs-only" },
+            { "name": "x-keys", "description": "Keys named like imports.",
+              "type": { "text": "CustomEvent<{ Detail: string; html?: number }>", "references": [] } },
             { "name": "x-pick",
               "type": { "text": "CustomEvent<Detail>", "references": [{ "name": "Detail", "module": "src/types.ts" }] } },
             { "name": "x-plain", "type": { "text": "Event", "references": [] } },
@@ -288,7 +316,7 @@ fn css_tags_and_window_define() {
  * @cssstate active - When active.
  * @tag ignored-when-defined
  */
-class XEl extends HTMLElement {}
+export class XEl extends HTMLElement {}
 window.customElements.define('x-el', XEl);
 "#,
         )],
@@ -303,7 +331,12 @@ window.customElements.define('x-el', XEl);
         el["cssStates"],
         json!([{ "name": "active", "description": "When active." }])
     );
-    assert_eq!(module(&m, "x-el.js")["exports"][0]["name"], "x-el");
+    let exports = module(&m, "x-el.js")["exports"].as_array().unwrap();
+    assert!(
+        exports
+            .iter()
+            .any(|e| e["kind"] == "custom-element-definition" && e["name"] == "x-el")
+    );
     assert_eq!(el["tagName"], "x-el", "the defined tag beats `@tag`");
 }
 
@@ -366,4 +399,69 @@ fn parse_errors_name_the_file_and_line() {
     let err = holyfloe_lit::extract(&root, &[root.join("x.ts")]).unwrap_err();
     let msg = err.to_string();
     assert!(msg.contains("x.ts:2: "), "{msg}");
+    // An error at the start of a line is on that line.
+    let root = package("broken-col0", &[("x.ts", "export class X {\n}\n}\n")]);
+    let err = holyfloe_lit::extract(&root, &[root.join("x.ts")]).unwrap_err();
+    let msg = err.to_string();
+    assert!(msg.contains("x.ts:3: "), "{msg}");
+}
+
+#[test]
+fn unexported_classes_are_not_components() {
+    let root = package(
+        "unexported",
+        &[
+            (
+                "src/x-a.ts",
+                "class XA extends HTMLElement {}\ncustomElements.define('x-a', XA);\n",
+            ),
+            (
+                "src/x-b.ts",
+                "import { customElement } from 'lit/decorators.js';\n@customElement('x-b')\nclass XB extends HTMLElement {}\n",
+            ),
+            (
+                "src/x-c.ts",
+                "class XC extends HTMLElement {}\ncustomElements.define('x-c', XC);\nexport default XC;\n",
+            ),
+            (
+                "src/x-d.ts",
+                "class XD extends HTMLElement {}\ncustomElements.define('x-d', XD);\nexport { XD as Renamed };\n",
+            ),
+        ],
+    );
+    let m = extract(
+        &root,
+        &["src/x-a.ts", "src/x-b.ts", "src/x-c.ts", "src/x-d.ts"],
+    );
+    for (path, class) in [("src/x-a.ts", "XA"), ("src/x-b.ts", "XB")] {
+        let x = module(&m, path);
+        assert!(
+            decl(x, class).get("tagName").is_none(),
+            "{class} is not exported"
+        );
+        assert!(x["exports"].as_array().unwrap().is_empty(), "{x:#}");
+    }
+    // `export default XC;` and `export { XD as Renamed }` export them.
+    let c = module(&m, "src/x-c.ts");
+    assert_eq!(decl(c, "XC")["tagName"], "x-c");
+    assert!(c["exports"].as_array().unwrap().contains(&json!({
+        "kind": "js", "name": "default", "declaration": { "name": "XC", "module": "src/x-c.ts" }
+    })));
+    assert_eq!(decl(module(&m, "src/x-d.ts"), "XD")["tagName"], "x-d");
+}
+
+#[test]
+fn jsdoc_privacy_hides_members_of_js_sources() {
+    let root = package(
+        "privacy",
+        &[(
+            "x-el.js",
+            "export class XEl extends HTMLElement {\n  /** @private */\n  _secret = 1;\n  /** @protected */\n  helper() {}\n  /** Shown. */\n  shown = 2;\n}\ncustomElements.define('x-el', XEl);\n",
+        )],
+    );
+    let m = extract(&root, &["x-el.js"]);
+    assert_eq!(
+        names(decl(module(&m, "x-el.js"), "XEl"), "members"),
+        ["shown"]
+    );
 }

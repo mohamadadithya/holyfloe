@@ -57,6 +57,14 @@ impl Doc {
             .map(|(_, t)| t.as_str())
     }
 
+    /// `@internal`, `@private` or `@protected`: not public API (the analyzer reads the last two
+    /// as privacy, for JS sources without TypeScript modifiers).
+    pub fn hidden(&self) -> bool {
+        ["internal", "private", "protected"]
+            .iter()
+            .any(|t| self.has(t))
+    }
+
     /// `@deprecated` gives `Some("")` without a reason, like the IR.
     pub fn deprecated(&self) -> Option<&str> {
         self.tag("deprecated")

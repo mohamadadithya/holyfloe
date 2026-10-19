@@ -188,7 +188,12 @@ pub fn lit_sources(dir: &Path, out: &Path) -> Result<Vec<PathBuf>, Error> {
     let out = real(out);
     let mut files = Vec::new();
     let mut dirs = vec![dir.to_owned()];
+    // Real paths already walked: a symlink back up the tree (`loop -> ..`) is read once.
+    let mut seen = std::collections::HashSet::new();
     while let Some(d) = dirs.pop() {
+        if !seen.insert(real(&d)) {
+            continue;
+        }
         for entry in fs::read_dir(&d).map_err(|e| Error::at(&d, e))? {
             let path = entry.map_err(|e| Error::at(&d, e))?.path();
             let name = path.file_name().unwrap_or_default().to_string_lossy();
@@ -333,6 +338,19 @@ mod tests {
             })
             .collect();
         assert_eq!(rel, ["src/a.ts", "src/sub/b.js"]);
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn lit_sources_read_a_symlink_loop_once() {
+        let root = std::env::temp_dir().join(format!("holyfloe-loop-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::write(root.join("src/a.ts"), "").unwrap();
+        std::os::unix::fs::symlink("..", root.join("src/loop")).unwrap();
+        let files = lit_sources(&root.join("src"), &root.join("out")).unwrap();
+        assert_eq!(files.len(), 1, "{files:?}");
         fs::remove_dir_all(&root).unwrap();
     }
 }

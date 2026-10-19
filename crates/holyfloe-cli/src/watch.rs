@@ -18,7 +18,8 @@ pub struct Watcher(#[allow(dead_code)] Debouncer<notify::RecommendedWatcher, Rec
 /// directories are watched, not the files: the analyzer rewrites the manifest in place, but
 /// editors save by renaming a temp file over the original, and a file watch loses it then.
 // shortcut: dependency manifests are not watched; restart to pick up a changed node_modules
-// manifest.
+// manifest. Nor are base classes `--lit` follows outside its directory (D-092): watching the
+// whole package would watch node_modules too. Widen `--lit` to include them.
 pub fn watch(
     opts: Options,
     mut on_run: impl FnMut(Result<Vec<Run>, Error>) + Send + 'static,

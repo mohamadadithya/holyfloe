@@ -171,7 +171,10 @@ impl Ctx<'_> {
             let at = err.labels.first().map_or(0, |l| l.offset());
             return Err(LitError::Parse {
                 path: self.file.to_owned(),
-                line: src[..(at as usize).min(src.len())].lines().count().max(1),
+                line: 1 + src.as_bytes()[..(at as usize).min(src.len())]
+                    .iter()
+                    .filter(|b| **b == b'\n')
+                    .count(),
                 message: err.message.to_string(),
             });
         }
@@ -256,15 +259,22 @@ impl Ctx<'_> {
                     }
                     _ => {}
                 },
-                Statement::ExportDefaultDeclaration(d) => {
-                    if let ExportDefaultDeclarationKind::ClassDeclaration(c) = &d.declaration
-                        && let Some(decl) = self.class(&mut m, c, start, None)
-                    {
-                        exports.push(self.js_export(&json!("default"), &decl["name"]));
-                        exports.extend(self.definition(&decl));
-                        declarations.push(decl);
+                Statement::ExportDefaultDeclaration(d) => match &d.declaration {
+                    ExportDefaultDeclarationKind::ClassDeclaration(c) => {
+                        if let Some(decl) = self.class(&mut m, c, start, None) {
+                            exports.push(self.js_export(&json!("default"), &decl["name"]));
+                            exports.extend(self.definition(&decl));
+                            declarations.push(decl);
+                        }
                     }
-                }
+                    // `export default XEl;` (Shoelace's registering modules).
+                    ExportDefaultDeclarationKind::Identifier(id) => {
+                        let decl = self.reference(&mut m, &id.name);
+                        exports
+                            .push(json!({ "kind": "js", "name": "default", "declaration": decl }));
+                    }
+                    _ => {}
+                },
                 Statement::VariableDeclaration(v) => {
                     for d in &v.declarations {
                         declarations.extend(self.mixin_var(&mut m, d, start));
@@ -294,10 +304,33 @@ impl Ctx<'_> {
                 _ => {}
             }
         }
+        // A class this module does not export is no component: a wrapper could not import its
+        // type (TS2459), and the analyzer drops unexported declarations. It stays a base class.
+        let exported: BTreeSet<String> = exports
+            .iter()
+            .filter(|e| e["declaration"]["module"] == self.path.as_str())
+            .filter_map(|e| e["declaration"]["name"].as_str().map(str::to_owned))
+            .collect();
+        let unexported: BTreeSet<String> = declarations
+            .iter()
+            .filter_map(|d| d["name"].as_str())
+            .filter(|n| !exported.contains(*n))
+            .map(str::to_owned)
+            .collect();
+        for d in &mut declarations {
+            if d["name"].as_str().is_some_and(|n| unexported.contains(n))
+                && let Some(o) = d.as_object_mut()
+            {
+                o.remove("tagName");
+            }
+        }
         // `customElements.define('x-y', XY)`, anywhere in the module (fx-lazy defines in a function).
         let mut defines = Defines::default();
         defines.visit_program(&program);
         for (tag, class) in defines.found {
+            if unexported.contains(&class) {
+                continue;
+            }
             // The defined tag beats a JSDoc `@tag`, as in the analyzer's tag linking.
             if let Some(d) = declarations
                 .iter_mut()
@@ -634,13 +667,24 @@ impl Ctx<'_> {
             .collect()
     }
 
-    /// Imported or module-local type names that appear in `text`.
+    /// Imported or module-local type names that appear in `text`. A word followed by `:` or `?:`
+    /// is an object key (`{ html: string }`), not a reference.
     fn type_references(&self, m: &mut Module, text: &str) -> Vec<Value> {
+        let is_word = |c: char| c.is_alphanumeric() || c == '_' || c == '$';
         let mut seen = BTreeSet::new();
-        let words: Vec<&str> = text
-            .split(|c: char| !(c.is_alphanumeric() || c == '_' || c == '$'))
-            .filter(|w| !w.is_empty() && seen.insert(*w))
-            .collect();
+        let mut words: Vec<&str> = Vec::new();
+        let mut rest = text;
+        while let Some(start) = rest.find(is_word) {
+            let tail = &rest[start..];
+            let end = tail.find(|c: char| !is_word(c)).unwrap_or(tail.len());
+            let (word, after) = tail.split_at(end);
+            let after = after.trim_start();
+            let is_key = after.starts_with(':') || after.starts_with("?:");
+            if !is_key && seen.insert(word) {
+                words.push(word);
+            }
+            rest = after;
+        }
         let mut refs = Vec::new();
         for w in words {
             if m.imports.contains_key(w) || m.local_types.contains(w) {
@@ -826,7 +870,7 @@ impl<'c, 'a, 'x> Members<'c, 'a, 'x> {
         let mut starts = vec![span.start];
         starts.extend(decorators.iter().map(|d| d.span.start));
         let doc = self.ctx.doc(m, &starts);
-        if doc.has("internal")
+        if doc.hidden()
             || decorators
                 .iter()
                 .any(|d| INTERNAL_DECORATORS.contains(&decorator_name(d)))
@@ -898,7 +942,7 @@ impl<'c, 'a, 'x> Members<'c, 'a, 'x> {
         let mut starts = vec![md.span.start];
         starts.extend(md.decorators.iter().map(|d| d.span.start));
         let doc = self.ctx.doc(m, &starts);
-        if doc.has("internal") {
+        if doc.hidden() {
             return;
         }
         let src = m.src;
@@ -1084,6 +1128,18 @@ fn literal_type(e: &Expression) -> Option<String> {
         match e.get_inner_expression() {
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => "string",
             Expression::NumericLiteral(_) => "number",
+            Expression::UnaryExpression(u)
+                if matches!(
+                    u.operator,
+                    UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus
+                ) && matches!(
+                    u.argument.get_inner_expression(),
+                    Expression::NumericLiteral(_)
+                ) =>
+            {
+                "number"
+            }
+            Expression::Identifier(id) if id.name == "Infinity" || id.name == "NaN" => "number",
             Expression::BooleanLiteral(_) => "boolean",
             Expression::BigIntLiteral(_) => "bigint",
             _ => return None,
