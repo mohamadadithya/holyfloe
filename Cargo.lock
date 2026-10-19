@@ -437,7 +437,7 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "holyfloe-cem"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -446,7 +446,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "holyfloe-cem",
@@ -463,7 +463,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-emit-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-ir",
  "minijinja",
@@ -472,7 +472,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-emit-react"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-cem",
  "holyfloe-emit-core",
@@ -486,7 +486,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-emit-svelte"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-cem",
  "holyfloe-emit-core",
@@ -498,7 +498,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-emit-vue"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-cem",
  "holyfloe-emit-core",
@@ -510,14 +510,14 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-fs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-emit-core",
 ]
 
 [[package]]
 name = "holyfloe-ir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-cem",
  "insta",
@@ -528,7 +528,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-lit"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "holyfloe-cem",
  "holyfloe-ir",
@@ -544,7 +544,7 @@ dependencies = [
 
 [[package]]
 name = "holyfloe-napi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "holyfloe-cli",
