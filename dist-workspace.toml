@@ -10,8 +10,6 @@ ci = "github"
 # Build only holyfloe-cli: a --workspace build includes holyfloe-napi's cdylib, which the static
 # musl target cannot produce.
 precise-builds = true
-# Build every artifact on pull requests too, without releasing (temporary: first CI run).
-pr-run-mode = "upload"
 # The installers to generate for each app
 installers = []
 # Target platforms to build apps for (Rust target-triple syntax)
