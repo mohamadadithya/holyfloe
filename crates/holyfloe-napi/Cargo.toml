@@ -1,10 +1,27 @@
 [package]
 name = "holyfloe-napi"
-description = "napi-rs bindings (M3)."
+description = "Node bindings for holyfloe (napi-rs), published as @holyfloe/core."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["watch"]
+# Off for wasm32-wasip1-threads, see D-087.
+watch = ["holyfloe-cli/watch"]
+
 [dependencies]
+clap.workspace = true
+holyfloe-cli.workspace = true
+holyfloe-emit-react.workspace = true
+napi.workspace = true
+napi-derive.workspace = true
+serde_json.workspace = true
+
+[build-dependencies]
+napi-build.workspace = true
