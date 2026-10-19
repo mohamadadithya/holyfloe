@@ -161,7 +161,7 @@ export default { litelement: true, plugins: [holyfloeModels()] };
 
 ## Status
 
-0.1.0, the first release. Tested against Shoelace 2 and Web Awesome 3: every component compiles in all three frameworks. Design decisions are logged in [`docs/decisions.md`](docs/decisions.md).
+0.1.0, the first release. Tested against Shoelace 2 and Web Awesome 3: every component compiles in all three frameworks. Design decisions are logged in [`docs/decisions.md`](docs/decisions.md). AI coding assistants can read [`llms.txt`](llms.txt), a summary with links to every doc.
 
 ## License
 

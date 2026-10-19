@@ -1,0 +1,39 @@
+# holyfloe
+
+> holyfloe generates typed React (18, 19), Vue 3 and Svelte 5 wrapper components for Lit web components. It reads Lit source directly (`--lit`, via oxc) or a Custom Elements Manifest (`--cem`), and writes one wrapper per element. It's a Rust engine shipped as a CLI binary, an npm package with a Node API (`@holyfloe/core`) and a bundler plugin (`@holyfloe/unplugin`).
+
+Facts an assistant should get right:
+
+- Packages: `@holyfloe/core` (Node API: `generate`, `watch`, `version`; analyzer plugin at `@holyfloe/core/cem-plugin`) and `@holyfloe/unplugin` (`holyfloe.vite(...)`, also `.rollup`, `.webpack`, `.rspack`, `.esbuild`, `.rolldown`; only Vite is tested). CLI binary: `holyfloe`.
+- CLI: `holyfloe generate (--lit <dir> | --cem <custom-elements.json>) --out <dir> --frameworks react,vue,svelte [--config holyfloe.config.json] [--react-mode wrapper|types] [--watch]`. Exactly one of `--lit` and `--cem`.
+- Node and plugin options mirror the CLI: `{ lit | cem, out, frameworks, config?, reactMode? }`, with exactly one of `lit` and `cem`.
+- Output goes to `<out>/react/`, `<out>/vue/`, `<out>/svelte/`: one file per element (`FxButton.tsx`, `FxButton.ts`, `FxButton.svelte`), an `index.ts`, a shared `react-utils.ts`/`vue-utils.ts`/`svelte-utils.ts`, and types for the plain tags (`global-components.d.ts` for Vue, `svelte-elements.d.ts` for Svelte). Only files whose content changed are written; nothing is deleted.
+- Component names are PascalCase of the tag (`fx-button` gives `FxButton`). Each event gets a PascalCase base name (`open-change` gives `OpenChange`): the React and Svelte prop is `onOpenChange`, and the Vue wrapper emits `OpenChange`, listened to with `@open-change` or `onOpenChange`.
+- Types are never resolved: props are typed `Element['prop']` from an `import type` of the element class, and event details come from `CustomEvent<T>`. The package's `package.json` `exports` decides import paths; use config `moduleRewrite` (e.g. `{ "src/": "dist/" }`) when source paths differ from published ones. Error E002 means a module matched no `exports` entry.
+- Two-way binding: Vue `v-model:<prop>` and Svelte `bind:<prop>`, inferred for `value`, `checked`, `open` and `selected`, or declared with JSDoc `@model <prop> <event> [detail.<field>|target.<prop>]` or config `overrides.<tag>.bindings`. React gets no binding helper.
+- SSR: string, number and boolean props render as attributes; objects, arrays and functions are set as properties on the client. React wrappers include `'use client'`. Next.js needs `"moduleResolution": "nodenext"`, because wrappers import each other with `.js` paths.
+- JSDoc tags read: `@fires`/`@event {CustomEvent<T>} name - text`, `@slot [name] - text`, `@csspart`/`@part`, `@cssprop`/`@cssproperty`, `@cssstate`, `@model`, `@deprecated`, `@internal`, `@private`, `@protected`, `@tag`, `@summary`.
+- Error codes: E002 module not exported, E003 inheritance cycle, E004 duplicate tag, E005 duplicate prop, E006 events that map to the same prop name (rename with `overrides.<tag>.events`), E007 empty event name, E008 invalid tag or name, E009 override for something that does not exist, E010 unsupported config key, E012 detail type import clash, E013 prop clashes with a generated name (exclude it with `overrides.<tag>.excludeProps`), E014 component names equal ignoring case, E015 invalid binding.
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/README.md): install, usage in each framework, CLI, Vite plugin, Node API, configuration, JSDoc tags, known limits
+- [@holyfloe/core README](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/packages/core/README.md): Node API and the CEM analyzer plugin
+- [@holyfloe/unplugin README](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/packages/unplugin/README.md): bundler plugin options and behaviour
+- [IR and configuration reference](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/docs/ir.md): every `holyfloe.config.json` key, module resolution, binding inference rules, the error code table
+- [React output](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/docs/emit-react.md): wrapper and types modes, refs, events, SSR handling
+- [Vue output](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/docs/emit-vue.md): `defineComponent` wrappers, `v-model`, slots
+- [Svelte output](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/docs/emit-svelte.md): Svelte 5 components, snippets for slots, `bind:`
+- [Changelog](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/CHANGELOG.md)
+
+## Examples
+
+- [Fixture components](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/fixtures/README.md): the 12 Lit components used as the spec, and what each covers
+- [Generated React wrapper](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/fixtures/expected/react/fx-dialog/FxDialog.tsx), [Vue](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/fixtures/expected/vue/fx-dialog/FxDialog.ts), [Svelte](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/fixtures/expected/svelte/fx-dialog/FxDialog.svelte): expected output for `fx-dialog`
+- [Lit source of fx-dialog](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/fixtures/src/fx-dialog/fx-dialog.ts)
+
+## Optional
+
+- [Design decisions](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/docs/decisions.md): why each behaviour is the way it is (D-001 onward), including real-library findings
+- [Roadmap](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/docs/roadmap.md): milestones and their exit commands
+- [Contributor guide](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/CLAUDE.md): workspace layout, commands, pinned versions, hard rules
