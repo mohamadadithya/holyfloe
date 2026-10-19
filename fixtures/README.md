@@ -22,6 +22,8 @@ fixtures/
   custom-elements-manifest.config.mjs  # analyzer config, uses `@holyfloe/core/cem-plugin` (`@model` -> `x-holyfloe-models`, D-063)
 ```
 
+Each fixture's Lit source is also the input for `holyfloe-lit`: `just parity` builds the IR from `src/<name>/*.ts` and from the committed `custom-elements.json` and requires them equal (D-089).
+
 ## Corpus (12 components)
 
 | # | Fixture | Covers | First needed in |

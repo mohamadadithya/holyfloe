@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: M3 done (2026-10-19), M4 next (optional).** `holyfloe generate --frameworks react,vue,svelte [--watch]` works end to end. All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). `@holyfloe/core` (napi, native + wasm32-wasip1-threads, D-087) exposes `generate()`, `watch()`, `version()` and the `@model` analyzer plugin `@holyfloe/core/cem-plugin`; `@holyfloe/unplugin` regenerates on manifest edits and Vite HMR picks the wrappers up (D-088). Standalone binaries come from cargo-dist (`dist-workspace.toml`, `.github/workflows/release.yml`), npm platform packages from `.github/workflows/napi.yml`; both run on a version tag and nothing is published yet (D-045). The lit crate is a stub; `just parity` exits 1 on purpose until M4. First run on a machine: `pnpm install`, `pnpm -C e2e exec playwright install chromium`, `rustup target add wasm32-wasip1-threads`.
+**Current state: M4 done (2026-10-19); all roadmap milestones complete, npm release next.** `holyfloe generate (--cem <manifest> | --lit <dir>) --frameworks react,vue,svelte [--watch]` works end to end. `--lit` reads Lit source with oxc (`holyfloe-lit`, D-089..D-094), no analyzer needed; `just parity` proves it gives the analyzer's IR on all 12 fixtures, and Shoelace 2 / Web Awesome 3 sources compile with 0 errors in all three frameworks (D-094). All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). `@holyfloe/core` (napi, native + wasm32-wasip1-threads, D-087) exposes `generate()`, `watch()`, `version()` and the `@model` analyzer plugin `@holyfloe/core/cem-plugin`; `@holyfloe/unplugin` regenerates on manifest or Lit source edits (`cem` or `lit` option, D-093) and Vite HMR picks the wrappers up (D-088). Standalone binaries come from cargo-dist (`dist-workspace.toml`, `.github/workflows/release.yml`), npm platform packages from `.github/workflows/napi.yml`; both run on a version tag and nothing is published yet (D-045). First run on a machine: `pnpm install`, `pnpm -C e2e exec playwright install chromium`, `rustup target add wasm32-wasip1-threads`.
 
 ## Pipeline (big picture)
 
@@ -107,7 +107,7 @@ just e2e                                # Playwright matrix in e2e/
 just verify                             # everything that exists today, in order (see justfile)
 ```
 
-Focused variants (`parity` is a placeholder until M4):
+Focused variants:
 
 ```
 cargo test -p holyfloe-ir <test_name>   # single test in one crate
@@ -116,7 +116,8 @@ just gen-fixtures-cem                   # run the CEM analyzer over fixtures/src
 just gen-cem-types                      # re-patch the schema and re-run typify (needs cargo-typify 0.8.0)
 just typecheck-react | typecheck-vue | typecheck-svelte
 just e2e-react | e2e-vue | e2e-svelte
-just parity                             # M4: oxc IR == analyzer IR on every fixture
+just parity                             # IR from Lit source (holyfloe-lit) == IR from the analyzer manifest, every fixture
+cargo test -p holyfloe-lit              # extractor tests (tests/extract.rs) + parity
 just test-core                          # build the host napi addon, then pnpm -C packages/core test
 just test-core-wasm                     # same suite on the wasm32-wasip1-threads binding
 just test-unplugin                      # Vite + @holyfloe/unplugin HMR test (pnpm -C packages/unplugin test)
