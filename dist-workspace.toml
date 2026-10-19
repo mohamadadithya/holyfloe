@@ -7,6 +7,9 @@ members = ["cargo:."]
 cargo-dist-version = "0.33.0"
 # CI backends to support
 ci = "github"
+# Build only holyfloe-cli: a --workspace build includes holyfloe-napi's cdylib, which the static
+# musl target cannot produce.
+precise-builds = true
 # The installers to generate for each app
 installers = []
 # Target platforms to build apps for (Rust target-triple syntax)
