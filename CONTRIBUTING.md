@@ -42,6 +42,7 @@ Lit source (read by `holyfloe-lit` with oxc) or a Custom Elements Manifest goes 
 | [`docs/emit-react.md`](docs/emit-react.md), [`emit-vue.md`](docs/emit-vue.md), [`emit-svelte.md`](docs/emit-svelte.md) | what each framework's output looks like and why |
 | [`docs/decisions.md`](docs/decisions.md) | every settled design decision (D-001 onward) |
 | [`fixtures/README.md`](fixtures/README.md) | the 12 fixture components and what each covers |
+| [`site/`](site/src/content/docs) | the user docs site; `just docs` serves it locally |
 | [`CLAUDE.md`](CLAUDE.md) | the full contributor reference: layout, commands, pinned versions, hard rules (also read by AI coding assistants) |
 
 ## Making a change
@@ -85,8 +86,8 @@ It runs format, build, clippy, tests, fixture regeneration (which must leave no 
 
 ## Pull requests
 
-- **Keep each PR to one logical change,** with docs updated in the same PR when behaviour changes: docs are the source of truth.
-- **Commit messages:** `<area>: <what changed>`, lowercase, e.g. `ir: infer bindings for the indeterminate prop` or `emit-svelte: keep slot order`. Common areas are `ir`, `lit`, `emit-react`, `emit-vue`, `emit-svelte`, `cli`, `napi`, `unplugin`, `fixtures`, `docs`, `ci` and `release`.
+- **Keep each PR to one logical change,** with docs updated in the same PR when behaviour changes: docs are the source of truth. User-visible changes also update the matching page in `site/`.
+- **Commit messages:** `<area>: <what changed>`, lowercase, e.g. `ir: infer bindings for the indeterminate prop` or `emit-svelte: keep slot order`. Common areas are `ir`, `lit`, `emit-react`, `emit-vue`, `emit-svelte`, `cli`, `napi`, `unplugin`, `fixtures`, `docs`, `site`, `ci` and `release`.
 - **Say what you verified** in the PR description: which commands ran, and anything you couldn't run.
 - **CI must pass:** `just verify` on Ubuntu and macOS.
 

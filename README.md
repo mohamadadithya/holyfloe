@@ -2,6 +2,8 @@
 
 Typed React, Vue and Svelte wrappers for Lit web components, generated from your Lit source or from a [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest).
 
+**Documentation: [mohamadadithya.github.io/holyfloe](https://mohamadadithya.github.io/holyfloe/)**
+
 Write a component once in Lit:
 
 ```ts

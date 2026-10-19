@@ -182,8 +182,15 @@ approve:
 parity:
     cargo test -p holyfloe-lit --test parity
 
+# Docs site (site/, Astro Starlight, D-099): local dev server, and the build CI deploys to GitHub Pages.
+docs:
+    pnpm -C site dev
+
+docs-build:
+    pnpm -C site build
+
 # Everything that exists today, in order. Extend as milestones land.
 # Committed analyzer output, generated wrappers and the napi loader must match what the tools
 # produce now.
-verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte parity test-core test-core-wasm test-unplugin
+verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte parity test-core test-core-wasm test-unplugin docs-build
     git diff --exit-code -- fixtures/src fixtures/out packages/core/index.js packages/core/index.d.ts

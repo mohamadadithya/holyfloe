@@ -17,6 +17,7 @@ Facts an assistant should get right:
 
 ## Docs
 
+- [Docs site](https://mohamadadithya.github.io/holyfloe/): the user guide (getting started, CLI, bundler plugin, Node API, frameworks, configuration, error codes); sources in `site/src/content/docs/`
 - [README](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/README.md): install, usage in each framework, CLI, Vite plugin, Node API, configuration, JSDoc tags, known limits
 - [@holyfloe/core README](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/packages/core/README.md): Node API and the CEM analyzer plugin
 - [@holyfloe/unplugin README](https://raw.githubusercontent.com/mohamadadithya/holyfloe/main/packages/unplugin/README.md): bundler plugin options and behaviour
