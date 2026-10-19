@@ -1,6 +1,6 @@
 [package]
 name = "holyfloe-lit"
-description = "M4: oxc-based Lit extractor producing IR. Optional; the analyzer stays the default input."
+description = "Lit source extractor (oxc): reads Lit components and builds a Custom Elements Manifest for holyfloe-ir."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,3 +8,15 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+oxc_allocator.workspace = true
+oxc_ast.workspace = true
+oxc_ast_visit.workspace = true
+oxc_parser.workspace = true
+oxc_resolver.workspace = true
+oxc_span.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+holyfloe-cem.workspace = true
+holyfloe-ir.workspace = true

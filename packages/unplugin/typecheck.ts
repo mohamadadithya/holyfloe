@@ -3,6 +3,7 @@ import { generate, watch, type FrameworkReport } from '@holyfloe/core';
 import holyfloe from '@holyfloe/unplugin';
 
 holyfloe.vite({ cem: 'a.json', out: 'out', frameworks: ['react', 'vue'], reactMode: 'types' });
+holyfloe.vite({ lit: 'src', out: 'out', frameworks: ['svelte'] });
 // @ts-expect-error unknown framework
 holyfloe.vite({ cem: 'a.json', out: 'out', frameworks: ['angular'] });
 

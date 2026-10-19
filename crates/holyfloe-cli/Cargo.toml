@@ -16,17 +16,21 @@ holyfloe-emit-svelte.workspace = true
 holyfloe-emit-vue.workspace = true
 holyfloe-fs.workspace = true
 holyfloe-ir.workspace = true
+holyfloe-lit = { workspace = true, optional = true }
 notify = { workspace = true, optional = true }
 notify-debouncer-full = { workspace = true, optional = true }
 serde_json.workspace = true
 
 [features]
-default = ["watch"]
+default = ["watch", "lit"]
 watch = ["dep:notify", "dep:notify-debouncer-full"]
+lit = ["dep:holyfloe-lit"]
 
 [[bin]]
 name = "holyfloe"
 path = "src/main.rs"
+# The binary needs `--watch`; the napi crate uses only the library (wasm builds without it).
+required-features = ["watch"]
 
 [package.metadata.dist]
 # The workspace is `publish = false`; this crate is the one binary cargo-dist ships (D-044).

@@ -1,17 +1,16 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "module": "es2022",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false,
-    "noEmit": true
-  },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/_dep"
+  // Solution-style, for editors: each file opens in the project that checks it. The fixture
+  // sources use tsconfig.src.json; generated wrappers, consumer tests and expected output use the
+  // typecheck/* projects, which have React, Vue or Svelte installed.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.src.json" },
+    { "path": "./typecheck/react19/tsconfig.json" },
+    { "path": "./typecheck/react18/tsconfig.json" },
+    { "path": "./typecheck/vue/tsconfig.json" },
+    { "path": "./typecheck/svelte/tsconfig.json" },
+    { "path": "./typecheck/react19/tsconfig.expected.json" },
+    { "path": "./typecheck/vue/tsconfig.expected.json" },
+    { "path": "./typecheck/svelte/tsconfig.expected.json" }
   ]
 }

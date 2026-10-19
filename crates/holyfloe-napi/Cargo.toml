@@ -11,9 +11,10 @@ publish.workspace = true
 crate-type = ["cdylib"]
 
 [features]
-default = ["watch"]
+default = ["watch", "lit"]
 # Off for wasm32-wasip1-threads, see D-087.
 watch = ["holyfloe-cli/watch"]
+lit = ["holyfloe-cli/lit"]
 
 [dependencies]
 clap.workspace = true

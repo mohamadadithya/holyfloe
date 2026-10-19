@@ -1,5 +1,6 @@
 //! The generate pipeline on disk, shared by the `holyfloe` binary and `holyfloe-napi`: read the
-//! manifest, config and dependency manifests, build the IR, emit, write through `holyfloe-fs`.
+//! manifest (or extract one from Lit source), config and dependency manifests, build the IR,
+//! emit, write through `holyfloe-fs`.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,14 +15,22 @@ pub use watch::{Watcher, watch};
 
 #[derive(Clone)]
 pub struct Options {
-    /// `custom-elements.json`. The `package.json` nearest to it names the package and its exports.
-    pub cem: PathBuf,
+    pub input: Input,
     pub out: PathBuf,
     pub frameworks: Vec<Framework>,
     /// `holyfloe.config.json`.
     pub config: Option<PathBuf>,
     /// Overrides `react.mode` from the config.
     pub react_mode: Option<ReactMode>,
+}
+
+/// Where components come from. The `package.json` nearest to it names the package and its exports.
+#[derive(Clone, Debug)]
+pub enum Input {
+    /// A `custom-elements.json`, e.g. from the CEM analyzer.
+    Cem(PathBuf),
+    /// A directory of Lit sources, read with `holyfloe-lit` (D-089).
+    Lit(PathBuf),
 }
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
@@ -87,8 +96,18 @@ impl Error {
 }
 
 pub fn generate(opts: &Options) -> Result<Vec<Run>, Error> {
-    let cem = holyfloe_cem::parse(&read(&opts.cem)?).map_err(|e| Error::at(&opts.cem, e))?;
-    let (pkg, pkg_dir) = nearest_package(&opts.cem)?;
+    let (cem, pkg, pkg_dir) = match &opts.input {
+        Input::Cem(path) => {
+            let cem = holyfloe_cem::parse(&read(path)?).map_err(|e| Error::at(path, e))?;
+            let (pkg, dir) = nearest_package(path)?;
+            (cem, pkg, dir)
+        }
+        // The `package.json` start path makes a package.json in `dir` itself count.
+        Input::Lit(dir) => {
+            let (pkg, pkg_dir) = nearest_package(&dir.join("package.json"))?;
+            (lit_manifest(dir, &pkg_dir, &opts.out)?, pkg, pkg_dir)
+        }
+    };
     let deps = dependencies(&cem, &pkg_dir)?;
     let raw: serde_json::Value = match &opts.config {
         Some(path) => serde_json::from_str(&read(path)?).map_err(|e| Error::at(path, e))?,
@@ -147,6 +166,71 @@ pub fn generate(opts: &Options) -> Result<Vec<Run>, Error> {
         .collect()
 }
 
+#[cfg(feature = "lit")]
+fn lit_manifest(dir: &Path, root: &Path, out: &Path) -> Result<holyfloe_cem::Package, Error> {
+    let manifest = holyfloe_lit::extract(root, &lit_sources(dir, out)?)
+        .map_err(|e| Error::plain(e.to_string()))?;
+    holyfloe_cem::parse(&manifest.to_string()).map_err(|e| Error::at(dir, e))
+}
+
+#[cfg(not(feature = "lit"))]
+fn lit_manifest(dir: &Path, _: &Path, _: &Path) -> Result<holyfloe_cem::Package, Error> {
+    Err(Error::at(
+        dir,
+        "this build of holyfloe has no Lit input; pass a manifest",
+    ))
+}
+
+/// Source files under `dir`: `.ts`, `.tsx`, `.mts`, `.js`, `.mjs`, `.jsx`, not declarations,
+/// tests or stories (`*.test.*`, `*.spec.*`, `*.stories.*`), `node_modules`, dot-directories
+/// or `out` (the wrappers holyfloe writes are not sources).
+pub fn lit_sources(dir: &Path, out: &Path) -> Result<Vec<PathBuf>, Error> {
+    let out = real(out);
+    let mut files = Vec::new();
+    let mut dirs = vec![dir.to_owned()];
+    // Real paths already walked: a symlink back up the tree (`loop -> ..`) is read once.
+    let mut seen = std::collections::HashSet::new();
+    while let Some(d) = dirs.pop() {
+        if !seen.insert(real(&d)) {
+            continue;
+        }
+        for entry in fs::read_dir(&d).map_err(|e| Error::at(&d, e))? {
+            let path = entry.map_err(|e| Error::at(&d, e))?.path();
+            let name = path.file_name().unwrap_or_default().to_string_lossy();
+            if path.is_dir() {
+                if !(name.starts_with('.') || name == "node_modules" || real(&path) == out) {
+                    dirs.push(path);
+                }
+            } else if is_source(&path) {
+                files.push(path);
+            }
+        }
+    }
+    files.sort();
+    Ok(files)
+}
+
+pub fn is_source(path: &Path) -> bool {
+    let name = path.file_name().unwrap_or_default().to_string_lossy();
+    let ext = path.extension().unwrap_or_default();
+    // Test files define throwaway elements (Web Awesome's `test-segments`).
+    let not_source = [".d.", ".test.", ".spec.", ".stories."];
+    ["ts", "tsx", "mts", "js", "mjs", "jsx"]
+        .iter()
+        .any(|x| ext == *x)
+        && !not_source.iter().any(|m| name.contains(m))
+}
+
+/// `path` with symlinks resolved, also when it does not exist yet (an `--out` not yet written).
+pub fn real(path: &Path) -> PathBuf {
+    let abs = std::path::absolute(path).unwrap_or_else(|_| path.to_owned());
+    match (fs::canonicalize(&abs), abs.parent(), abs.file_name()) {
+        (Ok(p), _, _) => p,
+        (Err(_), Some(parent), Some(name)) => real(parent).join(name),
+        _ => abs,
+    }
+}
+
 fn read(path: &Path) -> Result<String, Error> {
     fs::read_to_string(path).map_err(|e| Error::at(path, e))
 }
@@ -192,10 +276,10 @@ fn dependencies(cem: &holyfloe_cem::Package, dir: &Path) -> Result<Vec<Dependenc
     Ok(deps)
 }
 
-/// The nearest `package.json` above the manifest that has a `name`, and its directory. Nameless
+/// The nearest `package.json` above `start` that has a `name`, and its directory. Nameless
 /// ones are skipped: they are build markers such as `dist/esm/package.json` = `{"type": "module"}` (tshy).
-fn nearest_package(cem: &Path) -> Result<(PackageInfo, PathBuf), Error> {
-    let abs = std::path::absolute(cem).map_err(|e| Error::at(cem, e))?;
+fn nearest_package(start: &Path) -> Result<(PackageInfo, PathBuf), Error> {
+    let abs = std::path::absolute(start).map_err(|e| Error::at(start, e))?;
     for path in abs.ancestors().skip(1).map(|dir| dir.join("package.json")) {
         if !path.is_file() {
             continue;
@@ -214,8 +298,59 @@ fn nearest_package(cem: &Path) -> Result<(PackageInfo, PathBuf), Error> {
         code: None,
         message: format!(
             "no package.json with a `name` found above {}",
-            cem.display()
+            start.display()
         ),
-        hint: Some("the manifest must live inside the package it describes".to_owned()),
+        hint: Some("the manifest or sources must live inside the package they describe".to_owned()),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lit_sources_skip_out_dependencies_hidden_dirs_and_declarations() {
+        let root = std::env::temp_dir().join(format!("holyfloe-sources-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        for f in [
+            "src/a.ts",
+            "src/sub/b.js",
+            "src/c.d.ts",
+            "src/a.test.ts",
+            "src/a.stories.ts",
+            "src/gen/react/X.tsx",
+            "src/node_modules/dep/d.ts",
+            "src/.cache/e.ts",
+            "src/readme.md",
+        ] {
+            let p = root.join(f);
+            fs::create_dir_all(p.parent().unwrap()).unwrap();
+            fs::write(p, "").unwrap();
+        }
+        let files = lit_sources(&root.join("src"), &root.join("src/gen")).unwrap();
+        let rel: Vec<_> = files
+            .iter()
+            .map(|f| {
+                f.strip_prefix(&root)
+                    .unwrap()
+                    .to_string_lossy()
+                    .replace('\\', "/")
+            })
+            .collect();
+        assert_eq!(rel, ["src/a.ts", "src/sub/b.js"]);
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn lit_sources_read_a_symlink_loop_once() {
+        let root = std::env::temp_dir().join(format!("holyfloe-loop-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::write(root.join("src/a.ts"), "").unwrap();
+        std::os::unix::fs::symlink("..", root.join("src/loop")).unwrap();
+        let files = lit_sources(&root.join("src"), &root.join("out")).unwrap();
+        assert_eq!(files.len(), 1, "{files:?}");
+        fs::remove_dir_all(&root).unwrap();
+    }
 }

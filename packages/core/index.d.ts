@@ -27,8 +27,13 @@ export interface FrameworkReport {
 export declare function generate(options: GenerateOptions): Array<FrameworkReport>
 
 export interface GenerateOptions {
-  /** `custom-elements.json`. The `package.json` nearest to it names the package and its exports. */
-  cem: string
+  /**
+   * `custom-elements.json`. Give this or `lit`. The `package.json` nearest to the input names
+   * the package and its exports.
+   */
+  cem?: string
+  /** Directory of Lit sources, read without the analyzer. Give this or `cem`. */
+  lit?: string
   /** Wrappers go to `<out>/<framework>/`. */
   out: string
   frameworks: Array<'react' | 'vue' | 'svelte'>

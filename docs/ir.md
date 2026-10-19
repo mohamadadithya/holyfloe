@@ -1,6 +1,6 @@
 # IR specification
 
-The IR is the only thing emitters read. It is framework-neutral, serde-serializable, and built by `holyfloe-ir` from CEM (M1) or from Lit source (M4).
+The IR is the only thing emitters read. It is framework-neutral, serde-serializable, and built by `holyfloe-ir` from a manifest: one the CEM analyzer wrote (`--cem`), or one `holyfloe-lit` extracts from Lit source with oxc (`--lit`, D-089). Both go through the same `parse` and `build`, and `just parity` checks they give the same IR on every fixture.
 
 ## Data model
 
@@ -71,6 +71,8 @@ pub enum ValuePath { Detail, DetailField(String), TargetProp(String) }
 
 ## Input
 
+`holyfloe_lit::extract(root, files)` returns the manifest as JSON, and callers parse it like any other (what it reads: D-090, D-091, D-094).
+
 Parse manifests with `holyfloe_cem::parse`, never `serde_json::from_str`. The declarations enum is untagged, so an element missing one required field would otherwise fall back to a plain `ClassDeclaration` and silently lose its tag. `parse` makes that an error. Other declarations and `js` exports that match no schema variant are dropped: published manifests include bundled dependency code (Lion ships minified Lit classes and Popper exports), and those never produce output. `Event.type` is optional (schema patch 3, D-049).
 
 `build(cem, package_json, deps, config)` first checks the config (`E010`), then discovers classes. `deps` are the manifests of other packages that superclasses and mixins name (D-069); the CLI finds them through `node_modules/<pkg>/package.json` `customElements`, and a package without one (`lit`) is skipped:
@@ -128,7 +130,7 @@ Inferred bindings are marked `inferred: true` and can be disabled with config `b
 | Need | CEM gap | IR fill |
 |---|---|---|
 | Two-way binding | Not modelled | `@model` JSDoc tag via the holyfloe analyzer plugin, config override, or heuristic above |
-| Event detail types | `type.text` often bare `CustomEvent` | `@fires name {DetailType}` JSDoc convention (M1-M3); `new CustomEvent<T>` extraction (M4) |
+| Event detail types | `type.text` often bare `CustomEvent` | `@fires {CustomEvent<T>} name` JSDoc convention; with `--lit`, also `this.dispatchEvent(new CustomEvent<T>(...))` (D-090) |
 | Prop kind | Only type text | `classify-props` pass |
 | Form association | Absent | The analyzer records `static formAssociated = true` as a static field; the IR reads it (D-065) |
 | Importable type specifiers | `type.references` optional, often missing | Emit `import type { El } from '<pkg>/<module>'` and use `El['prop']` |

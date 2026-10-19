@@ -164,7 +164,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2
 
   e2e:
     devDependencies:

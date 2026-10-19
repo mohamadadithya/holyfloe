@@ -39,7 +39,7 @@
   "scripts": {
     "build": "napi build --platform --manifest-path ../../crates/holyfloe-napi/Cargo.toml --package holyfloe-napi --output-dir .",
     "build:release": "pnpm build --release",
-    "build:wasm": "pnpm build --target wasm32-wasip1-threads --no-default-features",
+    "build:wasm": "pnpm build --target wasm32-wasip1-threads --no-default-features --features lit",
     "test": "node --test",
     "test:wasm": "NAPI_RS_FORCE_WASI=error node --test"
   },

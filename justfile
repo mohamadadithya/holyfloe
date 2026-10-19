@@ -13,8 +13,9 @@ test:
 
 clippy:
     cargo clippy --workspace --all-targets -- -D warnings
-    # The wasm build's feature set (D-087).
-    cargo clippy -p holyfloe-napi --all-targets --no-default-features -- -D warnings
+    # The wasm build's feature set (D-087), and the CLI library without watch and Lit input.
+    cargo clippy -p holyfloe-napi --all-targets --no-default-features --features lit -- -D warnings
+    cargo clippy -p holyfloe-cli --all-targets --no-default-features -- -D warnings
 
 fmt:
     cargo fmt --all -- --check
@@ -132,11 +133,12 @@ test-unplugin: build-napi build-fixtures
 dist-plan:
     dist plan
 
+# IR from the Lit source (holyfloe-lit) == IR from the committed analyzer manifest, every fixture.
 parity:
-    @echo "not yet: M4" >&2; exit 1
+    cargo test -p holyfloe-lit --test parity
 
 # Everything that exists today, in order. Extend as milestones land.
 # Committed analyzer output, generated wrappers and the napi loader must match what the tools
 # produce now.
-verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte test-core test-core-wasm test-unplugin
+verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte parity test-core test-core-wasm test-unplugin
     git diff --exit-code -- fixtures/src fixtures/out packages/core/index.js packages/core/index.d.ts

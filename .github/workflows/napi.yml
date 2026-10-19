@@ -27,7 +27,7 @@ jobs:
           - { target: aarch64-unknown-linux-musl, host: ubuntu-latest, flags: --cross-compile, zig: true }
           - { target: x86_64-pc-windows-msvc, host: windows-latest }
           - { target: aarch64-pc-windows-msvc, host: windows-latest }
-          - { target: wasm32-wasip1-threads, host: ubuntu-latest, flags: --no-default-features }
+          - { target: wasm32-wasip1-threads, host: ubuntu-latest, flags: --no-default-features --features lit }
     runs-on: ${{ matrix.host }}
     steps:
       - uses: actions/checkout@v7

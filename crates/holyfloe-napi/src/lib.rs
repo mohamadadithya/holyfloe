@@ -11,8 +11,11 @@ use napi_derive::napi;
 
 #[napi(object)]
 pub struct GenerateOptions {
-    /// `custom-elements.json`. The `package.json` nearest to it names the package and its exports.
-    pub cem: String,
+    /// `custom-elements.json`. Give this or `lit`. The `package.json` nearest to the input names
+    /// the package and its exports.
+    pub cem: Option<String>,
+    /// Directory of Lit sources, read without the analyzer. Give this or `cem`.
+    pub lit: Option<String>,
     /// Wrappers go to `<out>/<framework>/`.
     pub out: String,
     #[napi(ts_type = "Array<'react' | 'vue' | 'svelte'>")]
@@ -66,6 +69,11 @@ fn invalid(msg: String) -> Error {
 }
 
 fn options(o: GenerateOptions) -> Result<Options, Error> {
+    let input = match (o.cem, o.lit) {
+        (Some(cem), None) => holyfloe_cli::Input::Cem(PathBuf::from(cem)),
+        (None, Some(dir)) => holyfloe_cli::Input::Lit(PathBuf::from(dir)),
+        _ => return Err(invalid("give exactly one of `cem` and `lit`".to_owned())),
+    };
     if o.frameworks.is_empty() {
         return Err(invalid(
             "frameworks is empty: list react, vue or svelte".to_owned(),
@@ -87,7 +95,7 @@ fn options(o: GenerateOptions) -> Result<Options, Error> {
         })
         .transpose()?;
     Ok(Options {
-        cem: PathBuf::from(o.cem),
+        input,
         out: PathBuf::from(o.out),
         frameworks,
         config: o.config.map(PathBuf::from),
