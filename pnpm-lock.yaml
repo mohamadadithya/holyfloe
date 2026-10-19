@@ -301,6 +301,9 @@ importers:
       lit:
         specifier: 3.3.3
         version: 3.3.3
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2
       typescript:
         specifier: 7.0.2
         version: 7.0.2
