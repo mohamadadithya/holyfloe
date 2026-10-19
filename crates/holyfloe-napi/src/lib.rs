@@ -87,7 +87,7 @@ fn options(o: GenerateOptions) -> Result<Options, Error> {
         })
         .transpose()?;
     Ok(Options {
-        cem: PathBuf::from(o.cem),
+        input: holyfloe_cli::Input::Cem(PathBuf::from(o.cem)),
         out: PathBuf::from(o.out),
         frameworks,
         config: o.config.map(PathBuf::from),

@@ -1,7 +1,7 @@
 //! Runs the built `holyfloe` binary on fixtures.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 fn fixtures() -> PathBuf {
@@ -166,4 +166,38 @@ fn skips_nameless_package_json() {
     let el = fs::read_to_string(dir.join("out/react/XEl.tsx")).unwrap();
     assert!(el.contains("import 'pkg/x.js';"), "{el}");
     fs::remove_dir_all(&dir).unwrap();
+}
+
+/// `--lit` reads the Lit source instead of the manifest and writes the same wrappers.
+#[test]
+fn lit_input_matches_expected() {
+    let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures");
+    let out = temp_out("lit");
+    let run = Command::new(env!("CARGO_BIN_EXE_holyfloe"))
+        .args(["generate", "--frameworks", "react,vue,svelte", "--lit"])
+        .arg(fixtures.join("src/fx-dialog"))
+        .arg("--config")
+        .arg(fixtures.join("holyfloe.config.json"))
+        .arg("--out")
+        .arg(&out)
+        .output()
+        .unwrap();
+    assert!(
+        run.status.success(),
+        "{}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    for fw in ["react", "vue", "svelte"] {
+        let expected = fixtures.join("expected").join(fw).join("fx-dialog");
+        for entry in fs::read_dir(&expected).unwrap() {
+            let name = entry.unwrap().file_name();
+            assert_eq!(
+                fs::read_to_string(out.join(fw).join(&name)).unwrap(),
+                fs::read_to_string(expected.join(&name)).unwrap(),
+                "{fw}/{}",
+                name.to_string_lossy()
+            );
+        }
+    }
+    fs::remove_dir_all(&out).unwrap();
 }

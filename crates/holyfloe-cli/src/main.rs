@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use holyfloe_cli::{Framework, Options};
+use holyfloe_cli::{Framework, Input, Options};
 use holyfloe_emit_react::ReactMode;
 
 #[derive(Parser)]
@@ -26,9 +26,8 @@ enum Cmd {
 
 #[derive(Args)]
 struct Generate {
-    /// `custom-elements.json`. The `package.json` nearest to it names the package and its exports.
-    #[arg(long)]
-    cem: PathBuf,
+    #[command(flatten)]
+    source: Source,
     #[arg(long)]
     out: PathBuf,
     #[arg(long, value_delimiter = ',', required = true)]
@@ -44,6 +43,19 @@ struct Generate {
     watch: bool,
 }
 
+/// Exactly one input. The `package.json` nearest to it names the package and its exports.
+#[derive(Args)]
+#[group(required = true, multiple = false)]
+struct Source {
+    /// `custom-elements.json`, e.g. from the CEM analyzer.
+    #[arg(long)]
+    cem: Option<PathBuf>,
+    /// Directory of Lit sources to read instead of a manifest (no analyzer needed). Scanned
+    /// recursively, skipping `node_modules`, dot-directories and `--out`.
+    #[arg(long)]
+    lit: Option<PathBuf>,
+}
+
 #[derive(ValueEnum, Clone, Copy)]
 enum ReactModeArg {
     Wrapper,
@@ -53,7 +65,11 @@ enum ReactModeArg {
 fn main() -> ExitCode {
     let Cmd::Generate(args) = Cli::parse().cmd;
     let opts = Options {
-        cem: args.cem,
+        // The group makes exactly one of the two present.
+        input: match (args.source.cem, args.source.lit) {
+            (Some(cem), _) => Input::Cem(cem),
+            (None, dir) => Input::Lit(dir.unwrap_or_default()),
+        },
         out: args.out,
         frameworks: args.frameworks,
         config: args.config,
