@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Packages are published from CI through npm trusted publishing, with provenance: npm shows that each version was built from this repository by GitHub Actions. No code changes.
+
 ## 0.1.0
 
 First release.
