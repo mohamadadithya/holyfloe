@@ -14,7 +14,6 @@
     "@holyfloe/core": "workspace:*",
     "@holyfloe/fixtures-dep": "workspace:*",
     "lit": "3.3.3",
-    "svelte": "5.57.2",
     "typescript": "7.0.2"
   }
 }

@@ -5,10 +5,10 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.src.json" },
-    { "path": "./typecheck/react19" },
-    { "path": "./typecheck/react18" },
-    { "path": "./typecheck/vue" },
-    { "path": "./typecheck/svelte" },
+    { "path": "./typecheck/react19/tsconfig.json" },
+    { "path": "./typecheck/react18/tsconfig.json" },
+    { "path": "./typecheck/vue/tsconfig.json" },
+    { "path": "./typecheck/svelte/tsconfig.json" },
     { "path": "./typecheck/react19/tsconfig.expected.json" },
     { "path": "./typecheck/vue/tsconfig.expected.json" },
     { "path": "./typecheck/svelte/tsconfig.expected.json" }
