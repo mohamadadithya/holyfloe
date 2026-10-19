@@ -75,6 +75,8 @@ jobs:
         run: |
           pnpm exec napi create-npm-dirs
           pnpm exec napi artifacts --output-dir artifacts
+          # npm packs LICENSE* files automatically; Apache-2.0 asks for a copy in each package.
+          for dir in npm/*/; do cp LICENSE-MIT LICENSE-APACHE "$dir"; done
           ls -R npm
       - uses: actions/upload-artifact@v7
         with:
@@ -85,3 +87,5 @@ jobs:
             packages/core/index.d.ts
             packages/core/cem-plugin.mjs
             packages/core/package.json
+            packages/core/README.md
+            packages/core/LICENSE-*
