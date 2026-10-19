@@ -182,7 +182,8 @@ fn lit_manifest(dir: &Path, _: &Path, _: &Path) -> Result<holyfloe_cem::Package,
 }
 
 /// Source files under `dir`: `.ts`, `.tsx`, `.mts`, `.js`, `.mjs`, `.jsx`, not declarations,
-/// `node_modules`, dot-directories or `out` (the wrappers holyfloe writes are not sources).
+/// tests or stories (`*.test.*`, `*.spec.*`, `*.stories.*`), `node_modules`, dot-directories
+/// or `out` (the wrappers holyfloe writes are not sources).
 pub fn lit_sources(dir: &Path, out: &Path) -> Result<Vec<PathBuf>, Error> {
     let out = real(out);
     let mut files = Vec::new();
@@ -207,11 +208,12 @@ pub fn lit_sources(dir: &Path, out: &Path) -> Result<Vec<PathBuf>, Error> {
 pub fn is_source(path: &Path) -> bool {
     let name = path.file_name().unwrap_or_default().to_string_lossy();
     let ext = path.extension().unwrap_or_default();
+    // Test files define throwaway elements (Web Awesome's `test-segments`).
+    let not_source = [".d.", ".test.", ".spec.", ".stories."];
     ["ts", "tsx", "mts", "js", "mjs", "jsx"]
         .iter()
         .any(|x| ext == *x)
-        && !name.ends_with(".d.ts")
-        && !name.ends_with(".d.mts")
+        && !not_source.iter().any(|m| name.contains(m))
 }
 
 /// `path` with symlinks resolved, also when it does not exist yet (an `--out` not yet written).
@@ -309,6 +311,8 @@ mod tests {
             "src/a.ts",
             "src/sub/b.js",
             "src/c.d.ts",
+            "src/a.test.ts",
+            "src/a.stories.ts",
             "src/gen/react/X.tsx",
             "src/node_modules/dep/d.ts",
             "src/.cache/e.ts",

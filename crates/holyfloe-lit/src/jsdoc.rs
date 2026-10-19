@@ -21,6 +21,9 @@ impl Doc {
                 let (name, text) = tag.split_once(char::is_whitespace).unwrap_or((tag, ""));
                 doc.tags.push((name.to_owned(), text.trim().to_owned()));
             } else if let Some((_, text)) = doc.tags.last_mut() {
+                // Tag text continues on the next lines. `@summary` keeps the line breaks;
+                // `tag_body` collapses them, as the analyzer does for events, slots and parts.
+                let line = line.trim();
                 if !line.is_empty() {
                     if !text.is_empty() {
                         text.push('\n');
@@ -96,20 +99,21 @@ pub fn tag_body(text: &str) -> TagBody {
         let end = rest.find(char::is_whitespace).unwrap_or(rest.len());
         let name = &rest[..end];
         rest = rest[end..].trim_start();
-        match name
-            .strip_prefix('[')
-            .and_then(|n| n.strip_suffix(']'))
-            .and_then(|n| n.split_once('='))
-        {
-            Some((n, d)) => {
-                body.name = n.to_owned();
-                body.default = Some(d.to_owned());
-            }
+        // `[name]` marks an optional name, `[name=default]` adds a default.
+        match name.strip_prefix('[').and_then(|n| n.strip_suffix(']')) {
+            Some(inner) => match inner.split_once('=') {
+                Some((n, d)) => {
+                    body.name = n.to_owned();
+                    body.default = Some(d.to_owned());
+                }
+                None => body.name = inner.to_owned(),
+            },
             None => body.name = name.to_owned(),
         }
     }
-    let rest = rest.strip_prefix('-').unwrap_or(rest).trim();
-    body.description = (!rest.is_empty()).then(|| rest.to_owned());
+    let rest = rest.strip_prefix('-').unwrap_or(rest);
+    let rest = rest.split_whitespace().collect::<Vec<_>>().join(" ");
+    body.description = (!rest.is_empty()).then_some(rest);
     body
 }
 
@@ -133,8 +137,12 @@ mod tests {
 
     #[test]
     fn tag_text_continues_on_following_lines() {
-        let doc = Doc::parse("* @fires x - One\n * two.\n * @slot a");
+        let doc = Doc::parse("* @fires x - One\n *   two.\n * @slot a");
         assert_eq!(doc.tag("fires"), Some("x - One\ntwo."));
+        assert_eq!(
+            tag_body(doc.tag("fires").unwrap()).description.as_deref(),
+            Some("One two.")
+        );
         assert_eq!(doc.tag("slot"), Some("a"));
     }
 
@@ -161,6 +169,7 @@ mod tests {
         );
         let part = tag_body("base");
         assert_eq!((part.name.as_str(), part.description), ("base", None));
+        assert_eq!(tag_body("[--y] - Optional.").name, "--y");
         let prop = tag_body("[--x=4px] - Gap.");
         assert_eq!(
             (prop.name.as_str(), prop.default.as_deref()),

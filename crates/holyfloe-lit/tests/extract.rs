@@ -179,12 +179,14 @@ interface Local { n: number }
 /**
  * @fires {CustomEvent<Local>} x-local - Documented.
  * @event x-docs-only
+ * @event {CustomEvent<Local>} x-local - Documented twice: merged, later text wins.
  */
 export class XEl extends LitElement {
   go() {
     this.dispatchEvent(new CustomEvent<Detail>('x-pick', { detail: { id: 'a' } }));
     this.dispatchEvent(new CustomEvent('x-local'));
     this.dispatchEvent(new Event('x-plain'));
+    this.shadowRoot.querySelector('slot').dispatchEvent(new Event('slotchange'));
   }
 }
 "#,
@@ -196,7 +198,7 @@ export class XEl extends LitElement {
     assert_eq!(
         events,
         json!([
-            { "name": "x-local", "description": "Documented.",
+            { "name": "x-local", "description": "Documented twice: merged, later text wins.",
               "type": { "text": "CustomEvent<Local>", "references": [{ "name": "Local", "module": "src/x-el.ts" }] } },
             { "name": "x-docs-only" },
             { "name": "x-pick",
@@ -303,6 +305,59 @@ window.customElements.define('x-el', XEl);
     );
     assert_eq!(module(&m, "x-el.js")["exports"][0]["name"], "x-el");
     assert_eq!(el["tagName"], "x-el", "the defined tag beats `@tag`");
+}
+
+#[test]
+fn static_define_helper_registers_an_imported_class() {
+    let root = package(
+        "static-define",
+        &[
+            (
+                "src/x-el.component.ts",
+                "export default class XEl extends HTMLElement {}\n",
+            ),
+            (
+                "src/x-el.ts",
+                "import XEl from './x-el.component.js';\nexport default XEl;\nXEl.define('x-el');\nXEl.define(name);\n",
+            ),
+        ],
+    );
+    let m = extract(&root, &["src/x-el.ts"]);
+    let exports = module(&m, "src/x-el.ts")["exports"].as_array().unwrap();
+    let defs: Vec<_> = exports
+        .iter()
+        .filter(|e| e["kind"] == "custom-element-definition")
+        .collect();
+    assert_eq!(
+        defs,
+        [
+            &json!({ "kind": "custom-element-definition", "name": "x-el",
+                  "declaration": { "name": "default", "module": "src/x-el.component.ts" } })
+        ]
+    );
+}
+
+#[test]
+fn class_tags_describe_members_and_parts() {
+    let root = package(
+        "class-tags",
+        &[(
+            "x-el.ts",
+            "/**\n * @part base - The base.\n * @property modal - Focus trap.\n * @property ghost - Not a member.\n */\nexport class XEl extends HTMLElement {\n  modal = 1;\n}\ncustomElements.define('x-el', XEl);\n",
+        )],
+    );
+    let m = extract(&root, &["x-el.ts"]);
+    let el = decl(module(&m, "x-el.ts"), "XEl");
+    assert_eq!(
+        el["cssParts"],
+        json!([{ "name": "base", "description": "The base." }])
+    );
+    assert_eq!(member(el, "modal")["description"], "Focus trap.");
+    assert_eq!(
+        names(el, "members"),
+        ["modal"],
+        "a class tag adds no member"
+    );
 }
 
 #[test]

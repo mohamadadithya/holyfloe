@@ -34,8 +34,17 @@ pub enum LitError {
     },
 }
 
-/// Lit lifecycle members the analyzer leaves out of manifests; leaving them out too keeps parity.
+/// Lit lifecycle members the analyzer leaves out of manifests (leaving them out too keeps parity),
+/// and the platform's custom element callbacks, which are not API (D-094).
 const DENIED: &[&str] = &[
+    "connectedCallback",
+    "disconnectedCallback",
+    "adoptedCallback",
+    "attributeChangedCallback",
+    "formAssociatedCallback",
+    "formResetCallback",
+    "formDisabledCallback",
+    "formStateRestoreCallback",
     "requestUpdate",
     "createRenderRoot",
     "scheduleUpdate",
@@ -521,6 +530,13 @@ impl Ctx<'_> {
 
         let mut members = Members::new(self, class);
         members.collect(m);
+        // Class-level `@property name - text` documents a member. It never adds one: a stale tag
+        // would give a prop the class lacks (Web Awesome's wa-drawer `modal`, D-059).
+        for b in doc.all(&["property", "prop"]).map(tag_body) {
+            if let (Some(member), Some(text)) = (members.by_name.get_mut(&b.name), b.description) {
+                member.entry("description").or_insert(json!(text));
+            }
+        }
         decl.insert("members".into(), json!(members.into_values()));
 
         let events = self.events(m, class, &doc);
@@ -544,7 +560,7 @@ impl Ctx<'_> {
         };
         for (key, tags, with_default) in [
             ("slots", &["slot"][..], false),
-            ("cssParts", &["csspart"][..], false),
+            ("cssParts", &["csspart", "part"][..], false),
             ("cssProperties", &["cssprop", "cssproperty"][..], true),
             ("cssStates", &["cssstate"][..], false),
         ] {
@@ -578,12 +594,20 @@ impl Ctx<'_> {
             found: Vec::new(),
         };
         dispatched.visit_class_body(&class.body);
-        let mut events: Vec<(String, Option<String>, Option<String>)> = doc
-            .all(&["fires", "event"])
-            .map(tag_body)
-            .filter(|b| !b.name.is_empty())
-            .map(|b| (b.name, b.ty, b.description))
-            .collect();
+        let mut events: Vec<(String, Option<String>, Option<String>)> = Vec::new();
+        for b in doc.all(&["fires", "event"]).map(tag_body) {
+            if b.name.is_empty() {
+                continue;
+            }
+            // A repeated tag merges into the first, later text winning, as in the analyzer.
+            match events.iter_mut().find(|(n, _, _)| *n == b.name) {
+                Some((_, ty, description)) => {
+                    *ty = b.ty.or(ty.take());
+                    *description = b.description.or(description.take());
+                }
+                None => events.push((b.name, b.ty, b.description)),
+            }
+        }
         for (name, ty) in dispatched.found {
             match events.iter_mut().find(|(n, _, _)| *n == name) {
                 Some((_, t, _)) => {
@@ -1134,8 +1158,10 @@ struct Dispatches<'s> {
 
 impl<'a> Visit<'a> for Dispatches<'_> {
     fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
+        // Only the host's own events: `slot.dispatchEvent(...)` (Web Awesome) is not one.
         if let Some(member) = call.callee.as_member_expression()
             && member.static_property_name() == Some("dispatchEvent")
+            && matches!(member.object(), Expression::ThisExpression(_))
             && let Some(Expression::NewExpression(new)) =
                 call.arguments.first().and_then(|a| a.as_expression())
             && let Some(Expression::StringLiteral(name)) =
@@ -1155,7 +1181,8 @@ impl<'a> Visit<'a> for Dispatches<'_> {
     }
 }
 
-/// `customElements.define('tag', Class)`, also through `window.` or `globalThis.`.
+/// `customElements.define('tag', Class)`, also through `window.` or `globalThis.`, and a base
+/// class's static helper `Class.define('tag')` (Shoelace 2).
 #[derive(Default)]
 struct Defines {
     found: Vec<(String, String)>,
@@ -1172,6 +1199,14 @@ impl<'a> Visit<'a> for Defines {
                 .get(1)
                 .and_then(|a| a.as_expression())
                 .map(|e| e.get_inner_expression())
+        {
+            self.found.push((tag, class.name.to_string()));
+        } else if let Some(member) = call.callee.as_member_expression()
+            && member.static_property_name() == Some("define")
+            && let Expression::Identifier(class) = member.object().get_inner_expression()
+            && class.name != "customElements"
+            && call.arguments.len() == 1
+            && let Some(tag) = string_arg(call).filter(|t| t.contains('-'))
         {
             self.found.push((tag, class.name.to_string()));
         }

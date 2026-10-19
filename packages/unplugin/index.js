@@ -59,7 +59,7 @@ function isLitSource(file, { lit, out }) {
     !file.startsWith(out + path.sep) &&
     !file.split(path.sep).includes('node_modules') &&
     /\.(ts|tsx|mts|js|mjs|jsx)$/.test(file) &&
-    !/\.d\.m?ts$/.test(file)
+    !/\.(d|test|spec|stories)\./.test(path.basename(file))
   );
 }
 
