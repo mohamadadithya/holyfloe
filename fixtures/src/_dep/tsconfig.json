@@ -1,0 +1,7 @@
+{
+  // For editors: the fixture settings (legacy decorators) on this package's sources. The build
+  // uses tsconfig.build.json.
+  "extends": "../../tsconfig.src.json",
+  "include": ["src"],
+  "exclude": []
+}

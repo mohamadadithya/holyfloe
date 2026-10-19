@@ -1,0 +1,6 @@
+{
+  // Editors only (referenced from fixtures/tsconfig.json): the hand-written expected/ output
+  // with this project's settings. CI checks fixtures/out, which gen-fixtures keeps identical.
+  "extends": "./tsconfig.json",
+  "include": ["../../expected/vue/**/*"]
+}

@@ -19,6 +19,9 @@ fixtures/
   consumers/react{,-types,-ref-prop}/, consumers/vue/, consumers/svelte/  # consumer tests per output, see below
   typecheck/react18, react19/  # pinned @types/react; `just typecheck-react` runs tsc --strict in each
   typecheck/vue, svelte/       # vue-tsc and svelte-check --fail-on-warnings, on TypeScript 6 (D-071)
+  tsconfig.json                # solution-style, for editors only: each file opens in the project that checks it
+  tsconfig.src.json            # src/ (tsconfig.build.json extends it; src/_dep/tsconfig.json too)
+  typecheck/*/tsconfig.expected.json  # editors only: expected/ with the matching typecheck settings
   custom-elements-manifest.config.mjs  # analyzer config, uses `@holyfloe/core/cem-plugin` (`@model` -> `x-holyfloe-models`, D-063)
 ```
 
