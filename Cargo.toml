@@ -7,6 +7,7 @@ version = "0.0.0"
 edition = "2024"
 rust-version = "1.97"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/mohamadadithya/holyfloe"
 publish = false
 
 # Exact pins, see "Pinned versions" in CLAUDE.md. Upgrade only in a dedicated PR.
@@ -36,3 +37,8 @@ oxc_parser = "=0.154.0"
 oxc_ast = "=0.154.0"
 oxc_semantic = "=0.154.0"
 oxc_resolver = "=11.24.3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

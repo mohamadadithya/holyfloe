@@ -5,6 +5,7 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository.workspace = true
 publish.workspace = true
 
 [dependencies]
@@ -26,3 +27,7 @@ watch = ["dep:notify", "dep:notify-debouncer-full"]
 [[bin]]
 name = "holyfloe"
 path = "src/main.rs"
+
+[package.metadata.dist]
+# The workspace is `publish = false`; this crate is the one binary cargo-dist ships (D-044).
+dist = true

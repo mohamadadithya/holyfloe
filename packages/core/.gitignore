@@ -7,3 +7,6 @@ holyfloe.wasi.cjs
 holyfloe.wasi.d.cts
 wasi-worker-browser.mjs
 wasi-worker.mjs
+# napi create-npm-dirs / artifacts (CI)
+npm/
+artifacts/
