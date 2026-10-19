@@ -19,7 +19,7 @@ fixtures/
   consumers/react{,-types,-ref-prop}/, consumers/vue/, consumers/svelte/  # consumer tests per output, see below
   typecheck/react18, react19/  # pinned @types/react; `just typecheck-react` runs tsc --strict in each
   typecheck/vue, svelte/       # vue-tsc and svelte-check --fail-on-warnings, on TypeScript 6 (D-071)
-  holyfloe-cem-plugin.mjs      # analyzer plugin: `@model` -> `x-holyfloe-models` (D-063)
+  custom-elements-manifest.config.mjs  # analyzer config, uses `@holyfloe/core/cem-plugin` (`@model` -> `x-holyfloe-models`, D-063)
 ```
 
 ## Corpus (12 components)

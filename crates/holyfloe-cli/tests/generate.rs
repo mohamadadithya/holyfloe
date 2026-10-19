@@ -112,6 +112,31 @@ fn emit_error_prints_code_and_hint() {
     fs::remove_dir_all(&dir).unwrap();
 }
 
+/// Frameworks are all emitted before any is written: Svelte's `element` clash (D-064) must not
+/// leave React output behind.
+#[test]
+fn emit_error_in_one_framework_writes_nothing() {
+    let dir = temp_out("partial");
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("package.json"), r#"{ "name": "pkg" }"#).unwrap();
+    let cem = r#"{ "schemaVersion": "1.0.0", "modules": [{ "kind": "javascript-module", "path": "x.js",
+        "declarations": [{ "kind": "class", "name": "XEl", "tagName": "x-el", "customElement": true,
+          "members": [{ "kind": "field", "name": "element" }] }] }] }"#;
+    fs::write(dir.join("custom-elements.json"), cem).unwrap();
+    let run = Command::new(env!("CARGO_BIN_EXE_holyfloe"))
+        .args(["generate", "--frameworks", "react,svelte", "--cem"])
+        .arg(dir.join("custom-elements.json"))
+        .arg("--out")
+        .arg(dir.join("out"))
+        .output()
+        .unwrap();
+    assert_eq!(run.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&run.stderr);
+    assert!(stderr.starts_with("error[E013]: "), "{stderr}");
+    assert!(!dir.join("out").exists(), "react output was written");
+    fs::remove_dir_all(&dir).unwrap();
+}
+
 /// A nameless `dist/package.json` (`{"type": "module"}`) is a build marker, not the package.
 #[test]
 fn skips_nameless_package_json() {

@@ -13,6 +13,8 @@ test:
 
 clippy:
     cargo clippy --workspace --all-targets -- -D warnings
+    # The wasm build's feature set (D-087).
+    cargo clippy -p holyfloe-napi --all-targets --no-default-features -- -D warnings
 
 fmt:
     cargo fmt --all -- --check
@@ -104,10 +106,37 @@ e2e-vue: gen-fixtures
 e2e-svelte: gen-fixtures
     pnpm -C e2e test:svelte
 
+# Node addon for the host (debug build) into packages/core. It regenerates index.js and index.d.ts,
+# which are committed.
+build-napi:
+    pnpm -C packages/core build
+
+# @holyfloe/core on the native binding: generate() on every fixture matches fixtures/expected,
+# second run writes nothing, error codes, watch().
+test-core: build-napi
+    pnpm -C packages/core test
+
+# The same suite on the wasm32-wasip1-threads binding (D-087); watch() must throw there.
+# First time: rustup target add wasm32-wasip1-threads
+test-core-wasm:
+    pnpm -C packages/core build:wasm
+    pnpm -C packages/core test:wasm
+
+# Vite dev server with @holyfloe/unplugin: a manifest edit rewrites one wrapper and Vite sends
+# an HMR update for it.
+test-unplugin: build-napi build-fixtures
+    pnpm -C packages/unplugin test
+
+# cargo-dist 0.33.0 (D-044): the release artifacts the tag workflow builds. Not part of verify,
+# so verify needs no cargo-dist install.
+dist-plan:
+    dist plan
+
 parity:
     @echo "not yet: M4" >&2; exit 1
 
 # Everything that exists today, in order. Extend as milestones land.
-# Committed analyzer output and generated wrappers must match what the tools produce now.
-verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte
-    git diff --exit-code -- fixtures/src fixtures/out
+# Committed analyzer output, generated wrappers and the napi loader must match what the tools
+# produce now.
+verify: fmt build clippy test gen-fixtures-cem gen-fixtures typecheck-react typecheck-vue typecheck-svelte e2e-react e2e-vue e2e-svelte test-core test-core-wasm test-unplugin
+    git diff --exit-code -- fixtures/src fixtures/out packages/core/index.js packages/core/index.d.ts

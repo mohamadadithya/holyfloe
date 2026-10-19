@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: M2 done (2026-10-18), M3 next.** `holyfloe generate --frameworks react,vue,svelte` works end to end. All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). The lit and napi crates are stubs; `packages/` doesn't exist yet. Recipes for later milestones in the `justfile` exit 1 on purpose. The `@model` analyzer plugin lives in `fixtures/holyfloe-cem-plugin.mjs` until M3 ships it. First run on a machine: `pnpm install`, then `pnpm -C e2e exec playwright install chromium`.
+**Current state: M3 done (2026-10-19), M4 next (optional).** `holyfloe generate --frameworks react,vue,svelte [--watch]` works end to end. All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). `@holyfloe/core` (napi, native + wasm32-wasip1-threads, D-087) exposes `generate()`, `watch()`, `version()` and the `@model` analyzer plugin `@holyfloe/core/cem-plugin`; `@holyfloe/unplugin` regenerates on manifest edits and Vite HMR picks the wrappers up (D-088). Standalone binaries come from cargo-dist (`dist-workspace.toml`, `.github/workflows/release.yml`), npm platform packages from `.github/workflows/napi.yml`; both run on a version tag and nothing is published yet (D-045). The lit crate is a stub; `just parity` exits 1 on purpose until M4. First run on a machine: `pnpm install`, `pnpm -C e2e exec playwright install chromium`, `rustup target add wasm32-wasip1-threads`.
 
 ## Pipeline (big picture)
 
@@ -73,11 +73,11 @@ crates/
   holyfloe-emit-vue/
   holyfloe-emit-svelte/
   holyfloe-fs/         # output planning, content hashing, write-if-changed
-  holyfloe-cli/        # clap + notify
+  holyfloe-cli/        # lib: the on-disk generate + watch pipeline (shared with napi, D-085); bin: clap
   holyfloe-napi/       # napi-rs v3 bindings
 packages/
-  core/             # npm wrapper around napi binaries
-  unplugin/         # unplugin factory calling core
+  core/             # @holyfloe/core: napi loader + types (generated, committed), cem-plugin.mjs
+  unplugin/         # @holyfloe/unplugin: unplugin factory calling core (plain ESM)
 fixtures/           # Lit component corpus + expected outputs (the spec)
 e2e/                # react18/ react19/ next-app/ vue3/ nuxt/ svelte5/ sveltekit/
 ```
@@ -107,7 +107,7 @@ just e2e                                # Playwright matrix in e2e/
 just verify                             # everything that exists today, in order (see justfile)
 ```
 
-Focused variants (the `typecheck-*`, `e2e-*` and `parity` recipes are placeholders until their milestone):
+Focused variants (`parity` is a placeholder until M4):
 
 ```
 cargo test -p holyfloe-ir <test_name>   # single test in one crate
@@ -117,8 +117,10 @@ just gen-cem-types                      # re-patch the schema and re-run typify 
 just typecheck-react | typecheck-vue | typecheck-svelte
 just e2e-react | e2e-vue | e2e-svelte
 just parity                             # M4: oxc IR == analyzer IR on every fixture
-pnpm -C packages/core test              # M3
-pnpm -C packages/unplugin test          # M3
+just test-core                          # build the host napi addon, then pnpm -C packages/core test
+just test-core-wasm                     # same suite on the wasm32-wasip1-threads binding
+just test-unplugin                      # Vite + @holyfloe/unplugin HMR test (pnpm -C packages/unplugin test)
+just dist-plan                          # cargo-dist 0.33.0 release plan (needs `dist` on PATH)
 ```
 
 ## Pinned versions
@@ -137,6 +139,7 @@ notify                             8.2.0     CC0-1.0
 notify-debouncer-full              0.7.0     MIT OR Apache-2.0
 napi                               3.14.2    MIT
 napi-derive                        3.6.12    MIT
+napi-build                         2.6.0     MIT               1.88     # M3, resolved 2026-10-19
 serde 1.0.229, serde_json 1.0.154, thiserror 2.0.21   (MIT OR Apache-2.0)
 cargo-dist                         0.33.0 (GitHub release; crates.io has 0.32.0)  MIT OR Apache-2.0
 
@@ -146,7 +149,9 @@ lit                                3.3.3     BSD-3-Clause   # fixtures only
 custom-elements-manifest (schema)  2.1.0     BSD-3-Clause
 unplugin                           3.4.0     MIT   node ^20.19 || >=22.12
 @napi-rs/cli                       3.10.8    MIT
-typescript                         7.0.2     Apache-2.0     # fixtures build + typecheck, next-app
+@napi-rs/wasm-runtime              1.2.5     MIT            # M3, packages/core wasm build
+emnapi, @emnapi/core, @emnapi/runtime  2.0.0-alpha.6  MIT  # one version for all three; not beta.2 (D-087)
+typescript                         7.0.2     Apache-2.0     # fixtures build + typecheck, next-app, packages/unplugin typecheck.ts
 react, react-dom                   18.3.1 / 19.3.1   MIT   # e2e/react18, e2e/react19 (+ next-app)
 @types/react                       18.3.31 / 19.3.0  MIT   # fixtures/typecheck/react18, react19
 vite                               8.3.4     MIT            # e2e

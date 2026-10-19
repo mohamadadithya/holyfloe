@@ -10,6 +10,7 @@ packages:
   - e2e/svelte5
   - e2e/nuxt
   - e2e/sveltekit
+  - packages/*
 
 # Postinstall only matters for the analyzer --dependencies scan, which we do not use.
 allowBuilds:

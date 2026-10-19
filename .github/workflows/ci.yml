@@ -17,6 +17,7 @@ jobs:
       # Installs the toolchain from rust-toolchain.toml (1.97.1 + clippy, rustfmt).
       # rustup >= 1.28 no longer auto-installs on `rustup show`.
       - run: rustup toolchain install
+      - run: rustup target add wasm32-wasip1-threads # just test-core-wasm (D-087)
       - uses: Swatinem/rust-cache@v2
       - uses: pnpm/action-setup@v6 # version from package.json "packageManager"
       - uses: actions/setup-node@v7

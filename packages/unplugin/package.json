@@ -1,0 +1,35 @@
+{
+  "name": "@holyfloe/unplugin",
+  "version": "0.0.0",
+  "description": "Vite, Rollup, webpack, Rspack and esbuild plugin that keeps holyfloe wrappers in sync with a Custom Elements Manifest",
+  "license": "MIT OR Apache-2.0",
+  "repository": "github:mohamadadithya/holyfloe",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "engines": {
+    "node": "^20.19 || >=22.12"
+  },
+  "scripts": {
+    "test": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --skipLibCheck typecheck.ts && node --test"
+  },
+  "dependencies": {
+    "@holyfloe/core": "workspace:*",
+    "unplugin": "3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.4"
+  }
+}

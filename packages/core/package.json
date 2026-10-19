@@ -1,0 +1,53 @@
+{
+  "name": "@holyfloe/core",
+  "version": "0.0.0",
+  "description": "Typed React, Vue and Svelte wrappers for Lit web components, from a Custom Elements Manifest",
+  "license": "MIT OR Apache-2.0",
+  "repository": "github:mohamadadithya/holyfloe",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./cem-plugin": "./cem-plugin.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "cem-plugin.mjs"
+  ],
+  "engines": {
+    "node": "^20.19 || >=22.12"
+  },
+  "napi": {
+    "binaryName": "holyfloe",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-musl",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "wasm32-wasip1-threads"
+    ]
+  },
+  "scripts": {
+    "build": "napi build --platform --manifest-path ../../crates/holyfloe-napi/Cargo.toml --package holyfloe-napi --output-dir .",
+    "build:release": "pnpm build --release",
+    "build:wasm": "pnpm build --target wasm32-wasip1-threads --no-default-features",
+    "test": "node --test",
+    "test:wasm": "NAPI_RS_FORCE_WASI=error node --test"
+  },
+  "devDependencies": {
+    "@emnapi/core": "2.0.0-alpha.6",
+    "@emnapi/runtime": "2.0.0-alpha.6",
+    "@napi-rs/cli": "3.10.8",
+    "@napi-rs/wasm-runtime": "1.2.5",
+    "emnapi": "2.0.0-alpha.6"
+  }
+}

@@ -118,7 +118,7 @@ Inferred bindings are marked `inferred: true` and can be disabled with config `b
 
 ## Explicit bindings (D-062, D-063)
 
-- JSDoc on the class: `@model <prop> <event> [<path>]`, e.g. `@model open open-change detail.open`. The CEM analyzer drops unknown tags, so `fixtures/holyfloe-cem-plugin.mjs` writes them to the declaration as `"x-holyfloe-models": [{ "prop", "event", "value"? }]` (schema patch 4).
+- JSDoc on the class: `@model <prop> <event> [<path>]`, e.g. `@model open open-change detail.open`. The CEM analyzer drops unknown tags, so the analyzer plugin `@holyfloe/core/cem-plugin` (`packages/core/cem-plugin.mjs`) writes them to the declaration as `"x-holyfloe-models": [{ "prop", "event", "value"? }]` (schema patch 4).
 - Config: `overrides.<tag>.bindings: [{ "prop": "value", "event": "fx-change", "value": "detail.value" }]`.
 - `<path>` / `value`: `detail` (default), `detail.<field>`, `target.<prop>` (read from the host element).
 - An unknown or read-only prop, an unknown event, a malformed path, or the same prop twice in one source is `E015`.

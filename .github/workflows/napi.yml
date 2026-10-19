@@ -1,0 +1,87 @@
+# Builds @holyfloe/core for every napi target (packages/core/package.json `napi.targets`) and
+# assembles the per-platform npm packages. Publishing is manual for now (D-045): the `npm`
+# artifact holds packages/core with its npm/<target> directories filled in.
+name: napi
+
+on:
+  push:
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: aarch64-apple-darwin, host: macos-latest }
+          - { target: x86_64-apple-darwin, host: macos-latest }
+          # --use-napi-cross: glibc 2.17 floor, not the runner's (2.39 would fail on Debian 12).
+          - { target: x86_64-unknown-linux-gnu, host: ubuntu-latest, flags: --use-napi-cross }
+          - { target: aarch64-unknown-linux-gnu, host: ubuntu-latest, flags: --use-napi-cross }
+          - { target: x86_64-unknown-linux-musl, host: ubuntu-latest, flags: --cross-compile, zig: true }
+          - { target: aarch64-unknown-linux-musl, host: ubuntu-latest, flags: --cross-compile, zig: true }
+          - { target: x86_64-pc-windows-msvc, host: windows-latest }
+          - { target: aarch64-pc-windows-msvc, host: windows-latest }
+          - { target: wasm32-wasip1-threads, host: ubuntu-latest, flags: --no-default-features }
+    runs-on: ${{ matrix.host }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      # The toolchain comes from rust-toolchain.toml; rustup >= 1.28 does not auto-install it.
+      - run: rustup toolchain install
+      - run: rustup target add ${{ matrix.target }}
+      - if: matrix.zig
+        uses: mlugg/setup-zig@v2
+      - if: matrix.zig
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild
+      - run: pnpm install --frozen-lockfile --filter @holyfloe/core
+      - run: pnpm -C packages/core build --release --target ${{ matrix.target }} ${{ matrix.flags }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bindings-${{ matrix.target }}
+          path: |
+            packages/core/*.node
+            packages/core/*.wasm
+            packages/core/*.wasi*
+            packages/core/wasi-worker*.mjs
+          if-no-files-found: error
+
+  npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @holyfloe/core
+      - uses: actions/download-artifact@v8
+        with:
+          path: packages/core/artifacts
+      - working-directory: packages/core
+        run: |
+          pnpm exec napi create-npm-dirs
+          pnpm exec napi artifacts --output-dir artifacts
+          ls -R npm
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm
+          path: |
+            packages/core/npm
+            packages/core/index.js
+            packages/core/index.d.ts
+            packages/core/cem-plugin.mjs
+            packages/core/package.json

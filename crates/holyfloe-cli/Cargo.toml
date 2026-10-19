@@ -5,6 +5,7 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository.workspace = true
 publish.workspace = true
 
 [dependencies]
@@ -15,8 +16,18 @@ holyfloe-emit-svelte.workspace = true
 holyfloe-emit-vue.workspace = true
 holyfloe-fs.workspace = true
 holyfloe-ir.workspace = true
+notify = { workspace = true, optional = true }
+notify-debouncer-full = { workspace = true, optional = true }
 serde_json.workspace = true
+
+[features]
+default = ["watch"]
+watch = ["dep:notify", "dep:notify-debouncer-full"]
 
 [[bin]]
 name = "holyfloe"
 path = "src/main.rs"
+
+[package.metadata.dist]
+# The workspace is `publish = false`; this crate is the one binary cargo-dist ships (D-044).
+dist = true
