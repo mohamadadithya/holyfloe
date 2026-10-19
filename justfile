@@ -133,6 +133,51 @@ test-unplugin: build-napi build-fixtures
 dist-plan:
     dist plan
 
+# Release, step 1 (D-096): bump every version to X.Y.Z, regenerate the napi loader, draft a
+# changelog entry from the commits since the last tag, and open a release PR.
+release version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    v="{{version}}"
+    [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "usage: just release X.Y.Z" >&2; exit 1; }
+    git diff --quiet && git diff --cached --quiet || { echo "commit or stash your changes first" >&2; exit 1; }
+    git fetch -q --tags origin
+    prev=$(git show origin/main:packages/core/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+    git rev-parse -q --verify "refs/tags/v$v" >/dev/null && { echo "v$v is already tagged" >&2; exit 1; }
+    git switch -q -c "release-$v" origin/main
+    perl -0pi -e "s/^version = \"[^\"]+\"/version = \"$v\"/m" Cargo.toml
+    for p in core unplugin; do
+      node -e 'const f=process.argv[1], p=JSON.parse(require("fs").readFileSync(f)); p.version=process.argv[2]; require("fs").writeFileSync(f, JSON.stringify(p, null, 2) + "\n")' "packages/$p/package.json" "$v"
+    done
+    cargo update -q --workspace
+    pnpm -C packages/core build >/dev/null   # the napi loader embeds the version
+    notes=$(git log --no-merges --pretty='- %s' "v$prev..HEAD" | grep -v '^- release' || true)
+    node -e 'const f="CHANGELOG.md", s=require("fs").readFileSync(f,"utf8"); require("fs").writeFileSync(f, s.replace("# Changelog\n\n", `# Changelog\n\n## ${process.argv[1]}\n\n${process.argv[2] || "- (describe the changes)"}\n\n`))' "$v" "$notes"
+    git add Cargo.toml Cargo.lock packages/core/package.json packages/unplugin/package.json packages/core/index.js packages/core/index.d.ts CHANGELOG.md
+    git commit -q -m "release: $v"
+    git push -q -u origin "release-$v"
+    gh pr create --base main --title "release: $v" --body "Bumps every version to $v and drafts the CHANGELOG entry from the commits since v$prev. Edit the entry in this PR if needed. After merging: \`just tag\`, then \`just approve\` once CI has staged the packages (D-096)."
+
+# Release, step 2: after the release PR is merged, tag origin/main with its version and push the
+# tag, which starts release.yml (binaries) and napi.yml (stages the npm packages).
+tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git fetch -q --tags origin
+    v=$(git show origin/main:packages/core/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+    cargo=$(git show origin/main:Cargo.toml | sed -nE 's/^version = "([^"]+)"/\1/p' | head -1)
+    [ "$v" = "$cargo" ] || { echo "version mismatch on main: package.json $v, Cargo.toml $cargo" >&2; exit 1; }
+    git rev-parse -q --verify "refs/tags/v$v" >/dev/null && { echo "v$v is already tagged; merge a release PR first (just release X.Y.Z)" >&2; exit 1; }
+    read -r -p "Tag origin/main ($(git log -1 --format='%h %s' origin/main)) as v$v and push? [y/N] " ok
+    [ "$ok" = y ] || exit 1
+    git tag "v$v" origin/main
+    git push -q origin "v$v"
+    echo "Pushed v$v. When napi.yml has staged the packages: just approve"
+
+# Release, step 3: approve the staged npm packages, platform packages first, with your 2FA.
+approve:
+    node scripts/approve-staged.mjs
+
 # IR from the Lit source (holyfloe-lit) == IR from the committed analyzer manifest, every fixture.
 parity:
     cargo test -p holyfloe-lit --test parity
