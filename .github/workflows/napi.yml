@@ -89,3 +89,42 @@ jobs:
             packages/core/package.json
             packages/core/README.md
             packages/core/LICENSE-*
+
+  # On a version tag: stage every package on npm through trusted publishing (OIDC, no token).
+  # Nothing goes live until a maintainer approves it with 2FA (npmjs.com, Staged Packages):
+  # approve the platform packages first, then @holyfloe/core, then @holyfloe/unplugin.
+  publish:
+    needs: npm
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      # `npm stage` needs npm >= 11.15.
+      - run: npm install -g npm@11.19.0
+      - run: pnpm install --frozen-lockfile --filter @holyfloe/core --filter @holyfloe/unplugin
+      - name: Tag matches the package version
+        run: test "v$(node -p "require('./packages/core/package.json').version")" = "$GITHUB_REF_NAME"
+      - uses: actions/download-artifact@v8
+        with:
+          name: npm
+          path: release
+      - name: Stage the platform packages
+        run: for dir in release/npm/*/; do (cd "$dir" && npm stage publish --access public); done
+      - name: Stage @holyfloe/core and @holyfloe/unplugin
+        run: |
+          cp -R release/npm packages/core/npm
+          # Adds the platform packages as optionalDependencies, without publishing them again.
+          pnpm -C packages/core exec napi pre-publish -t npm --skip-optional-publish
+          # pnpm pack rewrites unplugin's `workspace:*` dependency to the real version.
+          for pkg in core unplugin; do
+            pnpm -C "packages/$pkg" pack --pack-destination "$RUNNER_TEMP"
+            npm stage publish "$RUNNER_TEMP"/holyfloe-$pkg-*.tgz --access public
+          done
