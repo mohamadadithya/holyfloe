@@ -60,6 +60,8 @@ Names verified free on 2026-10-17 (D-045). Use these names everywhere; if one be
 | What to do next, exit commands | `docs/roadmap.md` |
 | Fixture components and expected outputs | `fixtures/README.md` |
 | Unresolved facts | `docs/open-questions.md` |
+| Cutting a release, release CI, npm publishing | `docs/releasing.md` |
+| Contributor setup, PR expectations | `CONTRIBUTING.md` |
 
 ## Workspace layout
 
@@ -184,5 +186,5 @@ typescript (Vue/Svelte tooling)    6.0.3     Apache-2.0     # vue-tsc, svelte-ch
 
 - Rust edition 2024, MSRV 1.97 (set by oxc 0.154), toolchain pinned in `rust-toolchain.toml`. `rustfmt` defaults.
 - JS tooling: pnpm 12 workspace (root `package.json` `packageManager`). TypeScript 7 removed `baseUrl`; use `paths` only.
-- Commit per logical step. Message format: `m1: add react prop-kind pass`.
+- Commit per logical step. Message format: `<area>: <what changed>`, e.g. `ir: add react prop-kind pass` (milestone work used `m1:` to `m4:`; areas are listed in CONTRIBUTING.md).
 - Docs are source of truth for behavior. If code and docs disagree, fix the docs in the same commit.
