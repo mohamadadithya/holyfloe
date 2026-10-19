@@ -7,6 +7,12 @@ use std::path::{Path, PathBuf};
 use holyfloe_emit_react::{ReactConfig, ReactMode};
 use holyfloe_ir::{Config, Dependency, PackageInfo};
 
+#[cfg(feature = "watch")]
+mod watch;
+#[cfg(feature = "watch")]
+pub use watch::{Watcher, watch};
+
+#[derive(Clone)]
 pub struct Options {
     /// `custom-elements.json`. The `package.json` nearest to it names the package and its exports.
     pub cem: PathBuf,

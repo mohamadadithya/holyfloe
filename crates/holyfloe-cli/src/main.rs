@@ -39,6 +39,9 @@ struct Generate {
     /// Overrides `react.mode` from the config.
     #[arg(long)]
     react_mode: Option<ReactModeArg>,
+    /// Keep running and regenerate when the manifest or config changes.
+    #[arg(long)]
+    watch: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy)]
@@ -59,9 +62,12 @@ fn main() -> ExitCode {
             ReactModeArg::Types => ReactMode::Types,
         }),
     };
+    if args.watch {
+        return watch(opts);
+    }
     match holyfloe_cli::generate(&opts) {
         Ok(runs) => {
-            print_runs(&opts, &runs);
+            print_runs(&opts.out, &runs);
             ExitCode::SUCCESS
         }
         Err(e) => {
@@ -71,14 +77,35 @@ fn main() -> ExitCode {
     }
 }
 
-fn print_runs(opts: &Options, runs: &[holyfloe_cli::Run]) {
+/// Runs until killed. A failed run is printed and the watch goes on.
+fn watch(opts: Options) -> ExitCode {
+    let out = opts.out.clone();
+    let report = move |res: Result<Vec<holyfloe_cli::Run>, holyfloe_cli::Error>| match res {
+        Ok(runs) => print_runs(&out, &runs),
+        Err(e) => eprintln!("{e}"),
+    };
+    let _watcher = match holyfloe_cli::watch(opts.clone(), report.clone()) {
+        Ok(w) => w,
+        Err(e) => {
+            eprintln!("{e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    report(holyfloe_cli::generate(&opts));
+    println!("watching for changes (Ctrl-C to stop)");
+    loop {
+        std::thread::park();
+    }
+}
+
+fn print_runs(out: &std::path::Path, runs: &[holyfloe_cli::Run]) {
     for run in runs {
         let dir = run.framework.dir();
         println!(
             "{dir}: {} written, {} unchanged in {}",
             run.report.written.len(),
             run.report.unchanged.len(),
-            opts.out.join(dir).display()
+            out.join(dir).display()
         );
     }
 }
