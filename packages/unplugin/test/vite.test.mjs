@@ -21,20 +21,28 @@ function project() {
   fs.copyFileSync(path.join(fixtures, 'package.json'), path.join(dir, 'package.json'));
   fs.symlinkSync(path.join(fixtures, 'dist'), path.join(dir, 'dist'), 'junction');
   fs.copyFileSync(path.join(fixtures, 'holyfloe.config.json'), path.join(dir, 'holyfloe.config.json'));
-  fs.copyFileSync(path.join(fixtures, 'src/fx-button/custom-elements.json'), path.join(dir, 'src/fx-button/custom-elements.json'));
+  for (const f of ['custom-elements.json', 'fx-button.ts']) {
+    fs.copyFileSync(path.join(fixtures, 'src/fx-button', f), path.join(dir, 'src/fx-button', f));
+  }
   fs.writeFileSync(path.join(dir, 'main.tsx'), "import { FxButton } from './out/react/index.js';\nconsole.log(FxButton);\n");
   return dir;
 }
 
-test('options cem and out are required', () => {
-  assert.throws(() => holyfloe.vite(), /options `cem` and `out` are required/);
-  assert.throws(() => holyfloe.vite({ cem: 'a.json' }), /options `cem` and `out` are required/);
+test('options need out and exactly one of cem and lit', () => {
+  const message = /options need `out` and exactly one of `cem` and `lit`/;
+  assert.throws(() => holyfloe.vite(), message);
+  assert.throws(() => holyfloe.vite({ cem: 'a.json' }), message);
+  assert.throws(() => holyfloe.vite({ cem: 'a.json', lit: 'src', out: 'out' }), message);
 });
 
-test('regenerates on manifest edit and Vite sends an HMR update for the wrapper', async (t) => {
+// The manifest edit is in place, as the analyzer writes it; with `lit`, the Lit source is edited.
+for (const [input, option, edited] of [
+  ['cem', { cem: 'src/fx-button/custom-elements.json' }, 'src/fx-button/custom-elements.json'],
+  ['lit', { lit: 'src/fx-button' }, 'src/fx-button/fx-button.ts'],
+]) test(`${input}: an edit regenerates the wrapper and Vite sends an HMR update for it`, async (t) => {
   const dir = project();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const cem = path.join(dir, 'src/fx-button/custom-elements.json');
+  const target = path.join(dir, edited);
   const wrapper = path.join(dir, 'out/react/FxButton.tsx');
 
   const server = await createServer({
@@ -44,7 +52,7 @@ test('regenerates on manifest edit and Vite sends an HMR update for the wrapper'
     server: { port: 0, strictPort: false },
     plugins: [
       react(),
-      holyfloe.vite({ cem: 'src/fx-button/custom-elements.json', out: 'out', frameworks: ['react'], config: 'holyfloe.config.json' }),
+      holyfloe.vite({ ...option, out: 'out', frameworks: ['react'], config: 'holyfloe.config.json' }),
     ],
   });
   t.after(() => server.close());
@@ -81,8 +89,7 @@ test('regenerates on manifest edit and Vite sends an HMR update for the wrapper'
   await new Promise((resolve) => setTimeout(resolve, 1000));
   const mark = messages.length;
   const unchanged = fs.statSync(path.join(dir, 'out/react/react-utils.ts')).mtimeMs;
-  // In place, as the analyzer writes it.
-  fs.writeFileSync(cem, fs.readFileSync(cem, 'utf8').replace('A clickable button.', 'A shiny button.'));
+  fs.writeFileSync(target, fs.readFileSync(target, 'utf8').replace('A clickable button.', 'A shiny button.'));
 
   const update = await until((m, i) => i >= mark && m.type === 'update', 'an HMR update');
   assert.ok(update.updates.some((u) => u.path === '/out/react/FxButton.tsx'), JSON.stringify(update));

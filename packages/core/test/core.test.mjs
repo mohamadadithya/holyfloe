@@ -38,18 +38,26 @@ function assertSameTree(actual, expected) {
   }
 }
 
-test('generate() matches fixtures/expected for every fixture and framework', () => {
-  for (const name of names) {
-    const out = tmp();
-    const reports = generate(options(name, out, ['react', 'vue', 'svelte']));
-    assert.deepEqual(reports.map((r) => r.framework), ['react', 'vue', 'svelte']);
-    for (const fw of ['react', 'vue', 'svelte']) {
-      assertSameTree(path.join(out, fw), path.join(fixtures, 'expected', fw, name));
+/** The same fixture read from its Lit source instead of the manifest (D-089). */
+function litOptions(name, out, frameworks) {
+  const { cem, ...rest } = options(name, out, frameworks);
+  return { ...rest, lit: path.dirname(cem) };
+}
+
+for (const [input, opts] of [['cem', options], ['lit', litOptions]]) {
+  test(`generate({ ${input} }) matches fixtures/expected for every fixture and framework`, () => {
+    for (const name of names) {
+      const out = tmp();
+      const reports = generate(opts(name, out, ['react', 'vue', 'svelte']));
+      assert.deepEqual(reports.map((r) => r.framework), ['react', 'vue', 'svelte']);
+      for (const fw of ['react', 'vue', 'svelte']) {
+        assertSameTree(path.join(out, fw), path.join(fixtures, 'expected', fw, name));
+      }
+      const again = generate(opts(name, out, ['react', 'vue', 'svelte']));
+      assert.ok(again.every((r) => r.written.length === 0 && r.unchanged.length > 0), name);
     }
-    const again = generate(options(name, out, ['react', 'vue', 'svelte']));
-    assert.ok(again.every((r) => r.written.length === 0 && r.unchanged.length > 0), name);
-  }
-});
+  });
+}
 
 test('reactMode overrides the config', () => {
   const out = tmp();
@@ -64,6 +72,8 @@ test('holyfloe errors carry their code and hint', () => {
   assert.throws(() => generate({ ...opts, cem: '/nope.json' }), (e) => e.code === 'GenericFailure' && e.message.includes('/nope.json'));
   assert.throws(() => generate({ ...opts, frameworks: ['angular'] }), (e) => e.code === 'InvalidArg');
   assert.throws(() => generate({ ...opts, frameworks: [] }), (e) => e.code === 'InvalidArg');
+  assert.throws(() => generate({ ...opts, lit: '.' }), (e) => e.code === 'InvalidArg' && /exactly one of `cem` and `lit`/.test(e.message));
+  assert.throws(() => generate({ ...opts, cem: undefined }), (e) => e.code === 'InvalidArg');
 });
 
 test('version() is the package version', () => {

@@ -14,7 +14,7 @@ test:
 clippy:
     cargo clippy --workspace --all-targets -- -D warnings
     # The wasm build's feature set (D-087), and the CLI library without watch and Lit input.
-    cargo clippy -p holyfloe-napi --all-targets --no-default-features -- -D warnings
+    cargo clippy -p holyfloe-napi --all-targets --no-default-features --features lit -- -D warnings
     cargo clippy -p holyfloe-cli --all-targets --no-default-features -- -D warnings
 
 fmt:
