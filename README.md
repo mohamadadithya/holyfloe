@@ -163,6 +163,10 @@ export default { litelement: true, plugins: [holyfloeModels()] };
 
 Early releases (0.1.x). Tested against Shoelace 2 and Web Awesome 3: every component compiles in all three frameworks. Design decisions are logged in [`docs/decisions.md`](docs/decisions.md). AI coding assistants can read [`llms.txt`](llms.txt), a summary with links to every doc.
 
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, how changes are checked and what a pull request needs. Maintainers release with [`docs/releasing.md`](docs/releasing.md).
+
 ## License
 
 MIT or Apache-2.0, at your option.

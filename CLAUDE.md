@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rust engine that reads Custom Elements Manifest (CEM) data for Lit web components and generates idiomatic, typed wrappers for React, Vue 3 and Svelte 5.
 
-**Current state: 0.1.0 released (2026-10-19): npm `@holyfloe/core` + `@holyfloe/unplugin` and GitHub Release binaries. All roadmap milestones complete. To release: bump the version (Cargo.toml + both package.json), merge, push tag `vX.Y.Z`, approve the staged npm packages (D-096).** `holyfloe generate (--cem <manifest> | --lit <dir>) --frameworks react,vue,svelte [--watch]` works end to end. `--lit` reads Lit source with oxc (`holyfloe-lit`, D-089..D-094), no analyzer needed; `just parity` proves it gives the analyzer's IR on all 12 fixtures, and Shoelace 2 / Web Awesome 3 sources compile with 0 errors in all three frameworks (D-094). All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). `@holyfloe/core` (napi, native + wasm32-wasip1-threads, D-087) exposes `generate()`, `watch()`, `version()` and the `@model` analyzer plugin `@holyfloe/core/cem-plugin`; `@holyfloe/unplugin` regenerates on manifest or Lit source edits (`cem` or `lit` option, D-093) and Vite HMR picks the wrappers up (D-088). Standalone binaries come from cargo-dist (`dist-workspace.toml`, `.github/workflows/release.yml`), npm platform packages from `.github/workflows/napi.yml`; both run on a version tag and nothing is published yet (D-045). First run on a machine: `pnpm install`, `pnpm -C e2e exec playwright install chromium`, `rustup target add wasm32-wasip1-threads`.
+**Current state: 0.1.0 released (2026-10-19): npm `@holyfloe/core` + `@holyfloe/unplugin` and GitHub Release binaries. All roadmap milestones complete. To release: `just release X.Y.Z` (opens the version PR), merge it, `just tag`, then `just approve` once CI has staged the npm packages (D-096, D-098).** `holyfloe generate (--cem <manifest> | --lit <dir>) --frameworks react,vue,svelte [--watch]` works end to end. `--lit` reads Lit source with oxc (`holyfloe-lit`, D-089..D-094), no analyzer needed; `just parity` proves it gives the analyzer's IR on all 12 fixtures, and Shoelace 2 / Web Awesome 3 sources compile with 0 errors in all three frameworks (D-094). All 12 fixtures have hand-written expected output for React (`wrapper`, `types`, `ref: "prop"`), Vue and Svelte that the emitters match byte for byte; they type-check (tsc on React 18/19, vue-tsc and svelte-check on TypeScript 6, D-071) and run in Playwright on React 18/19, Next 16, Vue 3, Nuxt 4, Svelte 5 and SvelteKit 3. Shoelace 2 and Web Awesome 3 wrappers compile with 0 errors in all three (D-084). `@holyfloe/core` (napi, native + wasm32-wasip1-threads, D-087) exposes `generate()`, `watch()`, `version()` and the `@model` analyzer plugin `@holyfloe/core/cem-plugin`; `@holyfloe/unplugin` regenerates on manifest or Lit source edits (`cem` or `lit` option, D-093) and Vite HMR picks the wrappers up (D-088). Standalone binaries come from cargo-dist (`dist-workspace.toml`, `.github/workflows/release.yml`), npm platform packages from `.github/workflows/napi.yml`; both run on a version tag and nothing is published yet (D-045). First run on a machine: `pnpm install`, `pnpm -C e2e exec playwright install chromium`, `rustup target add wasm32-wasip1-threads`.
 
 ## Pipeline (big picture)
 
@@ -60,6 +60,8 @@ Names verified free on 2026-10-17 (D-045). Use these names everywhere; if one be
 | What to do next, exit commands | `docs/roadmap.md` |
 | Fixture components and expected outputs | `fixtures/README.md` |
 | Unresolved facts | `docs/open-questions.md` |
+| Cutting a release, release CI, npm publishing | `docs/releasing.md` |
+| Contributor setup, PR expectations | `CONTRIBUTING.md` |
 
 ## Workspace layout
 
@@ -122,6 +124,9 @@ just test-core                          # build the host napi addon, then pnpm -
 just test-core-wasm                     # same suite on the wasm32-wasip1-threads binding
 just test-unplugin                      # Vite + @holyfloe/unplugin HMR test (pnpm -C packages/unplugin test)
 just dist-plan                          # cargo-dist 0.33.0 release plan (needs `dist` on PATH)
+just release X.Y.Z                      # release step 1: bump all versions + loader + changelog, open the PR
+just tag                                # release step 2: after merging, tag origin/main and push (starts CI)
+just approve                            # release step 3: approve the 11 staged npm packages in order, with 2FA
 ```
 
 ## Pinned versions
@@ -181,5 +186,5 @@ typescript (Vue/Svelte tooling)    6.0.3     Apache-2.0     # vue-tsc, svelte-ch
 
 - Rust edition 2024, MSRV 1.97 (set by oxc 0.154), toolchain pinned in `rust-toolchain.toml`. `rustfmt` defaults.
 - JS tooling: pnpm 12 workspace (root `package.json` `packageManager`). TypeScript 7 removed `baseUrl`; use `paths` only.
-- Commit per logical step. Message format: `m1: add react prop-kind pass`.
+- Commit per logical step. Message format: `<area>: <what changed>`, e.g. `ir: add react prop-kind pass` (milestone work used `m1:` to `m4:`; areas are listed in CONTRIBUTING.md).
 - Docs are source of truth for behavior. If code and docs disagree, fix the docs in the same commit.
