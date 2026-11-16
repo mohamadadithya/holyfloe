@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@holyfloe/fixtures": "workspace:*",
-    "nuxt": "4.6.2",
+    "nuxt": "4.6.4",
     "vue": "3.5.44"
   }
 }
